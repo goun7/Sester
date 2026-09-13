@@ -4,7 +4,7 @@
 # Kullanım:
 #   bash scripts/publish_gate.sh                      # yalnız yerel-kapı (test/derleme/E2E)
 #   PUSH=1 bash scripts/publish_gate.sh               # + commit & push (private)
-#   PUSH=1 REPO_RENAME=1 bash scripts/publish_gate.sh # + repo adı pugio-meter → sester + About/topics
+#   PUSH=1 REPO_RENAME=1 bash scripts/publish_gate.sh # + repo adı goun7/sikke → goun7/sester + About/topics
 #
 # Kural: her adım fail-loud — ilk RED'de durur, sessiz-geçiş yoktur.
 set -euo pipefail
@@ -57,7 +57,8 @@ git push origin HEAD
 
 if [[ "${REPO_RENAME:-0}" == "1" ]]; then
   step "8) GitHub repo-detayları — rename + About/topics"
-  gh repo edit goun7/pugio-meter --name sester \
+  # Uzak-değeri VARSAY; sağlamlaştırılmış ad kökü kullan (push-kanıtı 2026-09-13: goun7/sikke)
+  gh repo edit goun7/sikke --name sester \
     --description "x402-style metering, quota, fail-closed policy and hash-chain receipts for AI-agent APIs — one ASGI middleware" \
     --add-topic x402 --add-topic ai-agents --add-topic metering --add-topic payments \
     --add-topic asgi-middleware --add-topic fintech

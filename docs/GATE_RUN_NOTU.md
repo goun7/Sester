@@ -4,6 +4,21 @@
 > bizim kapı-yeşilimize kilitlediği unutulmasın
 > (`64-Tenderix/docs/internal/63_SESTER_ALINAN_NOT.md` teyit-satırı).
 
+## Karar-kaydı (2026-09-13, kullanıcı-onaylı — arayüz-decision-aracıyla)
+
+1. **Repo-rename: ŞİMDİ** — `PUSH=1 REPO_RENAME=1 bash scripts/publish_gate.sh`
+   onaylandı; komut goun7/sikke → **goun7/sester**'a çevirir + About/topics
+   ayarlar (config.yml security-URL küzeltmesi de bu push'la gider).
+2. **PyPI lisans-eşiği: A) AÇIK-ÇEKİRDEK (Apache-2.0)** — "para-kazanma-şansını
+   en-arttıran" seçim olarak kullanıcı onayladı: benimseme + güven + katkı;
+   hasılat hosted-facilitator (lane-1: %1 + $0.005) + destek/entegrasyon.
+   **Sonuç-yükümlülüğü:** (a) proje kamusal-yayın-günü `01_unicorn` klasöründen
+   taşınabilir (klasör-adı iç-organizasyon ifşa eder) — kullanıcının kendisi
+   belirtti; (b) **upload-öncesi kamusal-yüzey taraması ŞART**: docs/'taki
+   kardeş-repo referansları (Tenderix/Tamga iç-yolları, AGENT_MESH_PROTOCOLU,
+   oturum-kayıtları) kamu-öncesi anonimleştirilecek — md5 eşik: public-tree
+   grep iç-organizasyon-adı = sıfır (Tamga'nın 20:27 hijyen-standardı).
+
 ## Terminalde (repo-kökünde) koşulacaklar — sırayla:
 
 ```bash
@@ -54,5 +69,6 @@ PUSH=1 REPO_RENAME=1 bash scripts/publish_gate.sh
 - **S1/S2:** KABUL — **build/twine:** PASSED (sester-0.5.0) — **canlı-E2E:** 21/21
 - **Sıfır RED → 100/100 mührü verildi.** Tenderix'e sinyal-notu yazıldı
   (`64-Tenderix/docs/internal/S6_KAPI_YESILI_SINYALI.md`) — S6 ortak-turu açık.
-- Kalan (kullanıcı-eylemi, kod-dışı): `PUSH=1` (+`REPO_RENAME=1`) push ·
-  GitHub Social preview + CI billing · PyPI upload (twine komutu checklist'te).
+- Kalan (kullanıcı-eylemi, kod-dışı): `PUSH=1 REPO_RENAME=1` push (**ONAYLI**,
+  yukarıdaki karar-kaydı) · GitHub Social preview + CI billing · PyPI upload
+  (karar A: açık — upload-ÖNCESİ kamusal-yüzey taraması yapılacak, checklist §5).
