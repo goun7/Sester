@@ -1,0 +1,37 @@
+{
+  "wallet_policy": {
+    "id": "wpol-2026-09-f1-demo",
+    "owner": "did:agent:kok:f1-treasury",
+    "wallet": "evm:0xDEMO000000000000000000000000000000000000",
+    "defaults": {
+      "currency": "USDC-sim",
+      "per_request_max": 0.50,
+      "daily_max": 25.00,
+      "timezone": "Europe/Istanbul"
+    },
+    "rules": [
+      {
+        "id": "require-human-for-large",
+        "when": { "amount_gt": 0.20 },
+        "then": "escalate"
+      },
+      {
+        "id": "allow-demo-endpoints",
+        "when": {
+          "host_in": ["/weather", "/histogram"],
+          "hour_between": ["00:00", "24:00"]
+        },
+        "then": "allow"
+      },
+      {
+        "id": "deny-unknown-hosts",
+        "when": { "host_in": [] },
+        "then": "deny"
+      }
+    ],
+    "audit": {
+      "ledger": "tamga://f1-demo/agent-payments",
+      "on_violation": "block+log"
+    }
+  }
+}

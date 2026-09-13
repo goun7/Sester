@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <!-- PUGIO ana marka · Pugio-Tally · 2026-09-12 onaylı -->
+  <!-- Saydam zemin: her zeminde kullanılabilir; kare/parşömen varyantı atölyede -->
+  <g stroke="#171717" stroke-width="11" stroke-linecap="round">
+    <line x1="55" y1="64" x2="51" y2="136"/>
+    <line x1="86" y1="64" x2="88" y2="136"/>
+    <line x1="117" y1="64" x2="115" y2="136"/>
+    <line x1="147" y1="64" x2="145" y2="136"/>
+  </g>
+  <line x1="42" y1="100" x2="158" y2="100" stroke="#B8860B" stroke-width="11" stroke-linecap="round"/>
+  <path d="M 49 52 L 55 64 L 61 52 L 55 40 Z" fill="#B8860B"/>
+</svg>

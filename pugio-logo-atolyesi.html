@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>Pugio — Logo Atölyesi (Mürekkep + Eski Altın)</title>
+<style>
+  :root { --ink:#171717; --gold:#B8860B; --gold2:#C9A227; --paper:#F5F0E4; --bg:#EDE7D8; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--ink); font-family: Georgia, 'Times New Roman', serif; padding: 40px 24px 64px; }
+  header { max-width: 1180px; margin: 0 auto 8px; }
+  h1 { font-size: 30px; letter-spacing: 0.5px; }
+  h1 .punct { color: var(--gold); }
+  header p.sub { margin-top: 6px; font-style: italic; opacity: .75; max-width: 72ch; line-height: 1.5; }
+  .rule { max-width: 1180px; height: 3px; background: var(--ink); margin: 18px auto 30px; position: relative; }
+  .rule::after { content:""; position:absolute; right:0; top:-3px; width:34px; height:9px; background: var(--gold); }
+  .grid { max-width: 1180px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 26px; }
+  .card { background: #FCFAF3; border: 2.5px solid var(--ink); padding: 18px 18px 20px; position: relative; }
+  .card .badge { position: absolute; top: -13px; left: 14px; background: var(--gold); color: #FFF; font-family: Georgia, serif; font-size: 13px; letter-spacing: 2px; padding: 3px 10px; border: 2px solid var(--ink); }
+  .stage { border: 1.5px solid rgba(23,23,23,.35); background: var(--paper); display:flex; align-items:center; justify-content:center; padding: 14px; }
+  .stage svg { width: 220px; height: 220px; display: block; }
+  .meta { margin-top: 14px; }
+  .meta h2 { font-size: 19px; letter-spacing: .4px; }
+  .meta h2 span.usage { float: right; font-size: 11.5px; font-style: italic; opacity: .7; letter-spacing: .3px; }
+  .meta p.story { margin-top: 7px; font-size: 14.5px; line-height: 1.55; opacity: .85; min-height: 66px; }
+  .swatches { margin-top: 10px; display: flex; gap: 8px; align-items: center; font-size: 11.5px; font-family: 'Courier New', monospace; }
+  .sw { width: 18px; height: 18px; border: 1.5px solid var(--ink); display:inline-block; }
+  footer { max-width: 1180px; margin: 34px auto 0; font-size: 13.5px; font-style: italic; opacity: .7; line-height: 1.6; border-top: 1.5px solid rgba(23,23,23,.3); padding-top: 14px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>PUGIO<span class="punct"> · </span>Logo Atölyesi</h1>
+  <p class="sub">Altı el-yapımı konsept — mürekkep + eski altın. Her marka kasıtlı kusur taşır:
+  eğik tally çizgileri, el-vurulmuş elmas uç, mühür halkasında ton kayması. Hiçbir geometri mükemmel değil;
+  hepsi ledger'daki bir el-yazısı kayıt gibi durur.</p>
+</header>
+<div class="rule"></div>
+
+<div class="grid">
+
+  <div class="card">
+    <div class="badge">A · ÖNERİLEN</div>
+    <div class="stage">
+      <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <rect width="200" height="200" fill="#F5F0E4"/>
+        <rect x="5" y="5" width="190" height="190" fill="none" stroke="#171717" stroke-width="3"/>
+        <g stroke="#171717" stroke-width="11" stroke-linecap="round">
+          <line x1="55" y1="64" x2="51" y2="136"/>
+          <line x1="86" y1="64" x2="88" y2="136"/>
+          <line x1="117" y1="64" x2="115" y2="136"/>
+          <line x1="147" y1="64" x2="145" y2="136"/>
+        </g>
+        <line x1="42" y1="100" x2="158" y2="100" stroke="#B8860B" stroke-width="11" stroke-linecap="round"/>
+        <path d="M 49 52 L 55 64 L 61 52 L 55 40 Z" fill="#B8860B"/>
+      </svg>
+    </div>
+    <div class="meta">
+      <h2>Pugio-Tally <span class="usage">uygulama + favicon + sosyal</span></h2>
+      <p class="story">Dört sayaç-çizgisi = metering; altın çapraz = pugio darbesi (fail-closed karar);
+      elmas uç = imzalı olay. Ürün kapısı testi: 16px'te tally deseni okunur, pika-karşılığı fark edilir.</p>
+      <div class="swatches"><span class="sw" style="background:#F5F0E4"></span> F5F0E4 &nbsp;<span class="sw" style="background:#171717"></span> 171717 &nbsp;<span class="sw" style="background:#B8860B"></span> B8860B</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="badge">B</div>
+    <div class="stage">
+      <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <rect width="200" height="200" fill="#F5F0E4"/>
+        <rect x="50" y="50" width="13" height="100" rx="6.5" fill="#171717"/>
+        <rect x="79" y="50" width="13" height="100" rx="6.5" fill="#171717"/>
+        <rect x="108" y="50" width="13" height="100" rx="6.5" fill="#B8860B"/>
+        <rect x="137" y="50" width="13" height="100" rx="6.5" fill="#171717"/>
+        <rect x="38" y="156" width="124" height="10" rx="5" fill="none" stroke="#171717" stroke-width="4"/>
+      </svg>
+    </div>
+    <div class="meta">
+      <h2>Blade-Dot Matrix <span class="usage">doküman + slide</span></h2>
+      <p class="story">Dört dikey bıçak, biri altın: ödeme-kabul sütunu. Alttaki kontur-bant = kota sınırı
+      (limit çizgisi). En sakin konsept; küçük boyutta en stabil.</p>
+      <div class="swatches"><span class="sw" style="background:#F5F0E4"></span> F5F0E4 &nbsp;<span class="sw" style="background:#171717"></span> 171717 &nbsp;<span class="sw" style="background:#B8860B"></span> B8860B</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="badge">C</div>
+    <div class="stage">
+      <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <rect width="200" height="200" fill="#F5F0E4"/>
+        <circle cx="100" cy="100" r="86" fill="#171717"/>
+        <circle cx="100" cy="100" r="86" fill="none" stroke="#B8860B" stroke-width="3"/>
+        <g stroke="#F5F0E4" stroke-width="11" stroke-linecap="round">
+          <line x1="58" y1="64" x2="54" y2="136"/>
+          <line x1="88" y1="64" x2="86" y2="136"/>
+          <line x1="118" y1="64" x2="116" y2="136"/>
+          <line x1="146" y1="64" x2="144" y2="136"/>
+        </g>
+        <line x1="45" y1="100" x2="156" y2="100" stroke="#B8860B" stroke-width="11" stroke-linecap="round"/>
+        <path d="M 52 54 L 58 66 L 64 54 L 58 42 Z" fill="#B8860B"/>
+      </svg>
+    </div>
+    <div class="meta">
+      <h2>Mühür (Seal) <span class="usage">sertifika + kurumsal mühür</span></h2>
+      <p class="story">Mürekkep diski + altın halka: kanıt-mühürü. 81-güvence kanıt-bundle'ının görsel dili —
+      belge köşesine basılan damga. Sertifika ve kurumsal bağlamda tutarlı; tally deseni aile bağını taşır.</p>
+      <div class="swatches"><span class="sw" style="background:#F5F0E4"></span> F5F0E4 &nbsp;<span class="sw" style="background:#171717"></span> 171717 &nbsp;<span class="sw" style="background:#B8860B"></span> B8860B</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="badge">D</div>
+    <div class="stage">
+      <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <rect width="200" height="200" fill="#F5F0E4"/>
+        <rect x="42" y="66" width="116" height="66" rx="10" fill="none" stroke="#171717" stroke-width="10"/>
+        <rect x="120" y="88" width="24" height="13" rx="3" fill="#B8860B"/>
+        <line x1="100" y1="106" x2="100" y2="146" stroke="#171717" stroke-width="11" stroke-linecap="round"/>
+        <path d="M 91 142 L 100 162 L 109 142 Q 100 150 91 142 Z" fill="#B8860B"/>
+      </svg>
+    </div>
+    <div class="meta">
+      <h2>Dagger-Wallet <span class="usage">ürün-ilk anlatım</span></h2>
+      <p class="story">Cüzdan gövdesi + altın toka; gövdeden çıkan pika = "ajan cüzdandan harcar,
+      politika baltalar". Anlatımı tek bakışta anlatan tek konsept — ama detayı en çok olan.</p>
+      <div class="swatches"><span class="sw" style="background:#F5F0E4"></span> F5F0E4 &nbsp;<span class="sw" style="background:#171717"></span> 171717 &nbsp;<span class="sw" style="background:#B8860B"></span> B8860B</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="badge">E</div>
+    <div class="stage">
+      <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <rect width="200" height="200" fill="#F5F0E4"/>
+        <g stroke="#171717" stroke-width="11" stroke-linecap="round">
+          <line x1="55" y1="62" x2="51" y2="138"/>
+          <line x1="86" y1="62" x2="88" y2="138"/>
+          <line x1="117" y1="62" x2="115" y2="138"/>
+          <line x1="147" y1="62" x2="145" y2="138"/>
+        </g>
+        <g stroke="#B8860B" stroke-width="11" stroke-linecap="round">
+          <line x1="41" y1="84" x2="159" y2="84"/>
+          <line x1="41" y1="116" x2="159" y2="116"/>
+        </g>
+      </svg>
+    </div>
+    <div class="meta">
+      <h2>Hash-Blade (#) <span class="usage">CLI + terminal başlık</span></h2>
+      <p class="story">Dört tally + iki altın kesişim = hash işareti: hash-chain ledger'ının doğrudan glifi.
+      Terminal penceresinde `#` prompt'u gibi okunur; geliştirici-estetiğinin saf hâli.</p>
+      <div class="swatches"><span class="sw" style="background:#F5F0E4"></span> F5F0E4 &nbsp;<span class="sw" style="background:#171717"></span> 171717 &nbsp;<span class="sw" style="background:#B8860B"></span> B8860B</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="badge">F</div>
+    <div class="stage">
+      <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <rect width="200" height="200" fill="#F5F0E4"/>
+        <path d="M 64 164 L 64 52 L 116 52 A 31 31 0 0 1 116 114 L 64 114" fill="none" stroke="#171717" stroke-width="14"/>
+        <line x1="152" y1="106" x2="152" y2="122" stroke="#B8860B" stroke-width="14" stroke-linecap="round"/>
+        <path d="M 64 164 L 75 153 M 64 164 L 53 153" fill="none" stroke="#171717" stroke-width="10" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="meta">
+      <h2>Monogram P· <span class="usage">wordmark ortağı</span></h2>
+      <p class="story">P + nokta: harf tabanlı kurumsal-logo geleneği. Keskin ayak-serifleri hurufat-ocağından;
+      altın nokta = her ledger kaydının tek tek imzalanışı. Logotype ile en kolay eşleşen.</p>
+      <div class="swatches"><span class="sw" style="background:#F5F0E4"></span> F5F0E4 &nbsp;<span class="sw" style="background:#171717"></span> 171717 &nbsp;<span class="sw" style="background:#B8860B"></span> B8860B</div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  Palet: Mürekkep #171717 · Eski Altın #B8860B (parlak alternatif #C9A227, D–E için önerilir) · Parşömen #F5F0E4.
+  Tüm konseptler tek-dosya SVG — AI-jenerik türlere (gradient küre, geometrik maskot, yarıçapsal parlama) bilinçli olarak yer verilmedi;
+  çizgilerde 2–4px'lik el-sürüklenmesi korunmuştur.
+</footer>
+</body>
+</html>

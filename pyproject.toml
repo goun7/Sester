@@ -1,0 +1,45 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pugio-meter"
+version = "0.3.1"
+description = "PUGIO — x402-style metering, quota, fail-closed policy and hash-chain receipts for AI-agent APIs, as one ASGI middleware."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+authors = [{ name = "PUGIO contributors" }]
+keywords = ["x402", "ai-agents", "metering", "payments", "middleware", "asgi", "quota", "ap2", "acp", "escalation"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "Framework :: FastAPI",
+  "Topic :: Internet :: WWW/HTTP :: WSGI :: Middleware",
+  "Topic :: Office/Business :: Financial",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+]
+# Çekirdek saf ASGI + stdlib: sıfır zorunlu bağımlılık
+dependencies = []
+
+[project.optional-dependencies]
+evm = ["eth-account>=0.13"]           # exact-pugio EVM imza-dogrulaması
+jws = ["cryptography>=42"]            # AP2 mandate ES256 (HS256 stdlib'te)
+pg = ["psycopg[binary]>=3.1"]         # Postgres ledger backend
+demo = ["fastapi>=0.110", "uvicorn[standard]>=0.29"]  # demo API + panel sunucusu
+dev = ["pytest>=8", "httpx>=0.27", "eth-account>=0.13", "fastapi>=0.110", "uvicorn[standard]>=0.29", "cryptography>=42", "psycopg[binary]>=3.1"]
+
+[project.urls]
+Homepage = "https://github.com/pugio/pugio"
+Documentation = "https://github.com/pugio/pugio/tree/main/docs"
+# Not: PyPI'da 'pugio' adı ilgisiz bir ETL motorunda (2026-08) — dağıtım-adı pugio-meter.
+
+[tool.hatch.build.targets.wheel]
+packages = ["pugio"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
