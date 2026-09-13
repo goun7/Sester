@@ -1,4 +1,4 @@
-"""PUGIO bridges testleri — K1 Tamga-çıpası + K2 Veridict-claim'leri."""
+"""SESTER bridges testleri — K1 Tamga-çıpası + K2 Veridict-claim'leri."""
 
 from __future__ import annotations
 
@@ -7,10 +7,10 @@ import json
 
 import pytest
 
-from pugio.bridges import (BRIDGE_VERSION, tamga_anchor, tamga_anchor_json,
-                           veridict_claims, veridict_claims_json, verify_tamga_anchor)
-from pugio.evidence import produce_bundle
-from pugio.ledger import Ledger
+from sester.bridges import (BRIDGE_VERSION, tamga_anchor, tamga_anchor_json,
+                            veridict_claims, veridict_claims_json, verify_tamga_anchor)
+from sester.evidence import produce_bundle
+from sester.ledger import Ledger
 
 
 @pytest.fixture()
@@ -33,7 +33,7 @@ def test_55_tamga_anchor_fields_and_deterministic_id(led):
     b = produce_bundle(led, agent_id="a1")
     a1 = tamga_anchor(b, agent_label="f1-telemetri")
     a2 = tamga_anchor(produce_bundle(led, agent_id="a1"), agent_label="f1-telemetri")
-    assert a1["type"] == "external_anchor" and a1["source"] == "pugio"
+    assert a1["type"] == "external_anchor" and a1["source"] == "sikke"
     assert a1["anchor_id"] == a2["anchor_id"]  # deterministik (generated hariç alanlar)
     assert len(a1["anchor_id"]) == 32
     # id bağları: sha256(head|merkle|count)[:32]
@@ -81,7 +81,7 @@ def test_60_veridict_claims_count_events(led):
     summaries = [x["summary"] for x in c["claims"]]
     assert any("1 aşım-engeli" in s for s in summaries)   # quota_exceeded × 1
     assert any("1 tekrar-nonce reddi" in s for s in summaries)  # replay × 1
-    assert c["source"] == "pugio"
+    assert c["source"] == "sikke"
 
 
 def test_61_veridict_claim_id_rule():

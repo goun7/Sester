@@ -1,4 +1,4 @@
-"""PUGIO v0.2 — facilitator hattı + integer-kota testleri."""
+"""SESTER v0.2 — facilitator hattı + integer-kota testleri."""
 
 from __future__ import annotations
 
@@ -10,10 +10,10 @@ import os
 import pytest
 from eth_account import Account
 
-from pugio.facilitator import Facilitator, FacilitatorError, FakeTransport, UrllibTransport
-from pugio.ledger import Ledger
-from pugio.middleware import MINOR, PugioMeter
-from pugio.schemes import ExactPugioV2
+from sester.facilitator import Facilitator, FacilitatorError, FakeTransport, UrllibTransport
+from sester.ledger import Ledger
+from sester.middleware import MINOR, SesterMeter
+from sester.schemes import ExactSesterV2
 
 SK1 = "0x" + "44" * 32
 ADDR1 = Account.from_key(SK1).address.lower()
@@ -31,7 +31,7 @@ def _meter(led, facilitator=None, quota=25.0, **kw):
         await send({"type": "http.response.start", "status": 200, "headers": []})
         await send({"type": "http.response.body", "body": b"ok"})
 
-    return PugioMeter(app, led, price=0.05, daily_quota=quota,
+    return SesterMeter(app, led, price=0.05, daily_quota=quota,
                       facilitator=facilitator, **kw)
 
 
@@ -56,7 +56,7 @@ def _call(meter, path, headers):
 
 
 def _exact_header(nonce_hex: str) -> str:
-    return ExactPugioV2.client_header(from_addr=ADDR1, to_addr=TO, amount_usd=0.05,
+    return ExactSesterV2.client_header(from_addr=ADDR1, to_addr=TO, amount_usd=0.05,
                                       private_key=SK1, nonce_hex=nonce_hex)
 
 

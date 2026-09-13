@@ -1,4 +1,4 @@
-"""PUGIO policy testleri — KURAL_DSL_V0 §4 vektör-seti (fail-closed odaklı)."""
+"""SESTER policy testleri — KURAL_DSL_V0 §4 vektör-seti (fail-closed odaklı)."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ import json
 
 import pytest
 
-from pugio.policy import ALLOW, DENY, ESCALATE, DenyAll, Policy, PolicyCorruptError
+from sester.policy import ALLOW, DENY, ESCALATE, DenyAll, Policy, PolicyCorruptError
 
 VALID = {
     "wallet_policy": {

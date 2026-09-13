@@ -1,4 +1,4 @@
-"""PUGIO ledger + middleware testleri — zincir-bütünlüğü, replay, kota, sayaç-çakışma."""
+"""SESTER ledger + middleware testleri — zincir-bütünlüğü, replay, kota, sayaç-çakışma."""
 
 from __future__ import annotations
 
@@ -10,8 +10,8 @@ import threading
 
 import pytest
 
-from pugio.ledger import Ledger
-from pugio.middleware import PugioMeter
+from sester.ledger import Ledger
+from sester.middleware import SesterMeter
 
 SECRET = "t-secret"
 
@@ -24,7 +24,7 @@ def mac_of(agent: str, nonce: str, amount: str, path: str) -> str:
 
 
 def payment_header(agent: str, nonce: str, amount: str, path: str) -> str:
-    return f"pugio0 {agent}:{nonce}:{amount}:{mac_of(agent, nonce, amount, path)}"
+    return f"pugio0 {agent}:{nonce}:{amount}:{mac_of(agent, nonce, amount, path)}"  # pugio0: DONUK şema
 
 
 async def dummy_app(scope, receive, send):
@@ -37,7 +37,7 @@ def make_meter(tmp_path, ledger, **kw):
     kw.setdefault("price", 0.05)
     kw.setdefault("daily_quota", 25.0)
     kw.setdefault("secret", SECRET)
-    return PugioMeter(dummy_app, ledger, **kw)
+    return SesterMeter(dummy_app, ledger, **kw)
 
 
 # ---------- v0.2: kalıcı replay-koruması ----------
@@ -167,9 +167,9 @@ def test_29_valid_payment_passes_with_receipt(tmp_path):
     led = Ledger(tmp_path / "t.sqlite3")
     m = make_meter(tmp_path, led)
     h = payment_header("f1", "n1", "0.05", "/weather")
-    status, hdrs, _ = call(m, "/weather", {"X-Pugio-Agent": "f1", "X-Payment": h})
+    status, hdrs, _ = call(m, "/weather", {"X-Sester-Agent": "f1", "X-Payment": h})
     assert status == 200
-    assert "x-pugio-receipt" in hdrs and "x-pugio-seq" in hdrs
+    assert "x-sester-receipt" in hdrs and "x-sester-seq" in hdrs
     kinds = [e["event_type"] for e in led.recent_events(10)]
     assert "charge_receipt" in kinds
     led.close()

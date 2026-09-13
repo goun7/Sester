@@ -1,4 +1,4 @@
-"""PUGIO ACP satıcı-tarafı testleri — issue_acp_session + imza-politikası (v0.3.1).
+"""SESTER ACP satıcı-tarafı testleri — issue_acp_session + imza-politikası (v0.3.1).
 
 Kapsam: üretici→alıcı çemberi (imzalı/imzasız), gövde-bağı (line_item-kazıma +
 geçerli-imza → ret), require_signature üretim-bayrağı (middleware-dahil),
@@ -14,7 +14,7 @@ import time
 
 import pytest
 
-from pugio.adapters import (
+from sester.adapters import (
     AdapterError,
     SignatureRequiredError,
     AcpSession,
@@ -22,8 +22,8 @@ from pugio.adapters import (
     issue_acp_session,
     verify_acp_session,
 )
-from pugio.ledger import Ledger
-from pugio.middleware import PugioMeter
+from sester.ledger import Ledger
+from sester.middleware import SesterMeter
 
 WALLET = "0xacs000000000000000000000000000000000000"
 SELLER = b"acp-seller-secret"
@@ -96,7 +96,7 @@ def test_151_require_signature_flag_rejects_unsigned():
 
 def test_152_middleware_require_acp_signature_end_to_end(tmp_path):
     led = Ledger(tmp_path / "acs.sqlite3", secret="acs")
-    meter = PugioMeter(None, led, price=0.05, daily_quota=25.0, secret="acs")
+    meter = SesterMeter(None, led, price=0.05, daily_quota=25.0, secret="acs")
     install_adapters(meter.register_scheme, price_minor=meter.price_minor,
                      key_resolver=lambda kid, alg: SELLER,
                      require_acp_signature=True)

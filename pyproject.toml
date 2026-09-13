@@ -3,15 +3,15 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "pugio-meter"
-version = "0.3.1"
-description = "PUGIO — x402-style metering, quota, fail-closed policy and hash-chain receipts for AI-agent APIs, as one ASGI middleware."
+name = "sester"
+version = "0.5.0"
+description = "SESTER — x402-style metering, quota, fail-closed policy and hash-chain receipts for AI-agent APIs, as one ASGI middleware."
 readme = "README.md"
 requires-python = ">=3.11"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
-authors = [{ name = "PUGIO contributors" }]
-keywords = ["x402", "ai-agents", "metering", "payments", "middleware", "asgi", "quota", "ap2", "acp", "escalation"]
+authors = [{ name = "SESTER contributors" }]
+keywords = ["x402", "ai-agents", "metering", "payments", "middleware", "asgi", "quota", "ap2", "acp", "ucp", "escalation", "sester"]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Intended Audience :: Developers",
@@ -27,19 +27,22 @@ classifiers = [
 dependencies = []
 
 [project.optional-dependencies]
-evm = ["eth-account>=0.13"]           # exact-pugio EVM imza-dogrulaması
+evm = ["eth-account>=0.13"]           # exact-sester EVM imza-dogrulaması
 jws = ["cryptography>=42"]            # AP2 mandate ES256 (HS256 stdlib'te)
 pg = ["psycopg[binary]>=3.1"]         # Postgres ledger backend
 demo = ["fastapi>=0.110", "uvicorn[standard]>=0.29"]  # demo API + panel sunucusu
-dev = ["pytest>=8", "httpx>=0.27", "eth-account>=0.13", "fastapi>=0.110", "uvicorn[standard]>=0.29", "cryptography>=42", "psycopg[binary]>=3.1"]
+facilitator = ["fastapi>=0.110", "uvicorn[standard]>=0.29"]  # S5 hosted-facilitator servisi
+dev = ["pytest>=8", "httpx>=0.27", "eth-account>=0.13", "fastapi>=0.110", "uvicorn[standard]>=0.29", "cryptography>=42", "psycopg[binary]>=3.1", "pillow>=10", "build>=1", "twine>=5"]
 
 [project.urls]
-Homepage = "https://github.com/pugio/pugio"
-Documentation = "https://github.com/pugio/pugio/tree/main/docs"
-# Not: PyPI'da 'pugio' adı ilgisiz bir ETL motorunda (2026-08) — dağıtım-adı pugio-meter.
+Homepage = "https://github.com/goun7/sester"
+Documentation = "https://github.com/goun7/sester/tree/main/docs"
+# Not (ESKI_KIMLIK.md): dağıtım-adı `sester` — PyPI/Crates/NPM/.ai/.io taramaları
+# %100 temiz (2026-09-13). Donuk kablo-alanları (pugio0, pugio_bundle_version,
+# pugio_evidence_bundle, source:sikke) alıcı-uyumu için korunur.
 
 [tool.hatch.build.targets.wheel]
-packages = ["pugio"]
+packages = ["sester"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

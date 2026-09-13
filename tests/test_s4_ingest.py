@@ -1,6 +1,6 @@
 """S4-kapanış testleri — 81-MERGEN tarafı K0-bundle okuma (IS_PLANI §7 senaryo-4).
 
-tamga_pugio_ingest.py (Tamga repo'sunda, pür-stdlib) gerçek PUGIO kanıt-
+tamga_pugio_ingest.py (Tamga repo'sunda, pür-stdlib) gerçek SESTER kanıt-
 bundle'larını doğrular + deterministik makbuz üretir; kazınmış bundle RED.
 Kardeş-repo yoksa atlanır (K0 §7: additive-only, foreign test yok).
 """
@@ -15,11 +15,11 @@ import sys
 
 import pytest
 
-from pugio.evidence import produce_bundle
-from pugio.ledger import Ledger
+from sester.evidence import produce_bundle
+from sester.ledger import Ledger
 
 TAMGA = os.environ.get(
-    "PUGIO_TAMGA_PATH", "/home/gokun/projects/02_sahis/Tamga Protocol")
+    "SESTER_TAMGA_PATH", "/home/gokun/projects/02_sahis/Tamga Protocol")
 INGEST = os.path.join(TAMGA, "tamga_pugio_ingest.py")
 
 pytestmark = pytest.mark.skipif(
@@ -31,7 +31,7 @@ def _py() -> str:
 
 
 def _bundle(tmp_path, amounts=(0.05, 0.05, 0.10)):
-    """Gerçek PUGIO ledger'ından gerçek K0-bundle'ı (ücretli-işlem + kararlar)."""
+    """Gerçek SESTER ledger'ından gerçek K0-bundle'ı (ücretli-işlem + kararlar)."""
     led = Ledger(tmp_path / "s4.sqlite3", secret="s4-ingest")
     led.append("permission_decision", "ag-s4", "/weather",
                payload={"decision": "deny", "rule_id": "quota_exceeded"})

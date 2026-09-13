@@ -94,8 +94,9 @@
 
 ## 5) v3 adaptör-öncelik yeniden-değerlendirmesi (TUR-2)
 
-Kod-gerçekleri (v0.3.1): `register_scheme` Registry'sinde 6 şema canlı
-(`pugio0`, `Pugio-EVM`, `exact`, `x402`, `AP2-Mandate`, `ACP-Session`);
+Kod-gerçekleri (v0.4.0): `register_scheme` Registry'sinde 7+ şema canlı
+(`pugio0` [DONUK], `Sester-EVM` [eski adı Sikke-EVM], `exact`, `x402`,
+`AP2-Mandate`, `ACP-Session`, `UCP-Checkout`);
 AP2 JWS (HS256/ES256) + ACP satıcı-imzası + gövde-bağı testlerle kilitli.
 
 | Protokol | Öncelik | Gerekçe (v3-verisiyle) |
@@ -103,7 +104,7 @@ AP2 JWS (HS256/ES256) + ACP satıcı-imzası + gövde-bağı testlerle kilitli.
 | x402 `exact` | **1** (değişmez) | LF yönetişim + Cloudflare Agents SDK/MCP dağıtım-kanalı → vitrin-müşterisi burada |
 | AP2 mandate | **2** (yükselmedi, derinleşti) | FIDO standardizasyonu + "consent-katmanı" konumu → mandate-JWS 63'ün politika-motoruyla birebir örtüşür |
 | ACP | **3** (satıcı-ucu tamam) | Google teyidi: checkout-katmanı — 63 satıcı-sırasında sayaç+kanıt; buyer-tarafı oturum-üretimi artık `issue_acp_session` |
-| UCP | **4 — izleme** (yeni) | Tech-Council geniş ama spec 63'ün request-metering segmentine değil perakende-akışına oturur; `.well-known` keşfi 64-agents.txt ile hizalanır — adaptör v0.4 kararı, şimdi speki izlenir |
+| UCP | **4 — kodlandı (v0.4)** | Tech-Council geniş ama spec 63'ün request-metering segmentine değil perakende-akışına oturur; **v0.4.0'da adaptör kodlandı**: `UCP-Checkout <b64>` zarfı — satıcı-mühürlü (JWS) + merchant-bağı + `require_ucp_signature` üretim-bayrağı (test_159–166); canlı-trafik hizası ucp.dev SDK'sıyla izlenmeye devam eder |
 
 **Sonuç:** dördüncü oyuncu adaptör-tezini dördüncü kez doğruladı; öncelik-sırası
 değişmedi, UCP izleme-listesine girdi (K4-gibi karar-kaydı v0.4'te).

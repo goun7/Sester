@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640">
+  <!-- SESTER sosyal-önizleme kartı (OG) · 1280×640 · 2026-09-13
+       Palet: Parşömen #F5F0E4 · Mürekkep #171717 · Eski Altın #B8860B · Parlak Altın #C9A227
+       İlke: gradient-küre/maskot/ışıksal-parlama YOK; el-kusuru bilinçli (hand-ledger estetiği).
+       PNG ikizi: scripts/make_brand_assets.py → .github/assets/og.png -->
+  <rect width="1280" height="640" fill="#F5F0E4"/>
+
+  <!-- el-ledger çerçevesi (2px sürüklenme bilinçli) -->
+  <rect x="34" y="30" width="1213" height="581" fill="none" stroke="#171717" stroke-width="3"/>
+  <rect x="40" y="36" width="1213" height="581" fill="none" stroke="#B8860B" stroke-width="1.5" opacity="0.55"/>
+
+  <!-- Sester-sikkesi (coin + S-monogram), 200'lük mark'ın 1.9 ölçeği -->
+  <g transform="translate(150,130) scale(1.9)" fill="none">
+    <circle cx="101" cy="99" r="80" stroke="#171717" stroke-width="14"/>
+    <circle cx="100" cy="100" r="58" stroke="#B8860B" stroke-width="7"/>
+    <path d="M 129 73 C 119 61 81 61 77 82 C 73 101 127 99 123 118 C 119 139 81 139 70 126"
+          stroke="#171717" stroke-width="15" stroke-linecap="round"/>
+    <circle cx="100" cy="100" r="6" fill="#C9A227" stroke="none"/>
+  </g>
+
+  <!-- Wordmark: harf-aralıklı serif (tracking 14) -->
+  <text x="560" y="300" font-family="Georgia, 'Times New Roman', serif" font-size="120"
+        font-weight="bold" fill="#171717" letter-spacing="14">SESTER</text>
+
+  <!-- alt-başlık: konum-tek-satırlık -->
+  <text x="566" y="368" font-family="Georgia, 'Times New Roman', serif" font-size="34"
+        fill="#B8860B" letter-spacing="3">metering · policy · evidence — fail-closed by default</text>
+
+  <!-- mikro-özellik satırları (para-birim mühür dili) -->
+  <g font-family="Georgia, 'Times New Roman', serif" font-size="26" fill="#171717" letter-spacing="1">
+    <text x="566" y="452">✦ x402-style 402→payment→receipt handshake</text>
+    <text x="566" y="496">✦ AP2 mandates · ACP checkout · UCP monetization</text>
+    <text x="566" y="540">✦ hash-chain receipts + Merkle evidence bundles</text>
+  </g>
+
+  <!-- dipnot: versiyon mührü -->
+  <text x="1240" y="608" text-anchor="end" font-family="Georgia, 'Times New Roman', serif"
+        font-size="20" fill="#B8860B" letter-spacing="4">v0.5.0 · APACHE-2.0</text>
+</svg>

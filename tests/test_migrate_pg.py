@@ -1,4 +1,4 @@
-"""PUGIO migrasyon testleri — SQLite→PG hash-koruyan replay (v0.3.1).
+"""SESTER migrasyon testleri — SQLite→PG hash-koruyan replay (v0.3.1).
 
 Kapsam: taşınan zincirin hash-dizisi birebir aynı, verify_chain hedefte
 geçer, nonce-penceresi korunur (replay-hâlâ-yakalanır), tekrar-çalıştırma
@@ -9,13 +9,13 @@ from __future__ import annotations
 
 import pytest
 
-from pugio.ledger import Ledger
-from pugio.migrate_pg import main as migrate_main
-from pugio.pg_ledger import PgLedger
+from sester.ledger import Ledger
+from sester.migrate_pg import main as migrate_main
+from sester.pg_ledger import PgLedger
 
 S1 = "migrate-secret"
 
-PG_DSN = __import__("os").environ.get("PUGIO_PG_DSN", "")
+PG_DSN = __import__("os").environ.get("SESTER_PG_DSN", "")
 
 
 @pytest.fixture()
@@ -36,7 +36,7 @@ def sqlite_led(tmp_path):
 @pytest.fixture()
 def pg_led():
     if not PG_DSN:
-        pytest.skip("PUGIO_PG_DSN yok — PG-bacağı atlanır")
+        pytest.skip("SESTER_PG_DSN yok — PG-bacağı atlanır")
     led = PgLedger(secret=S1, dsn=PG_DSN)
     with led.conn().cursor() as cur:
         cur.execute("TRUNCATE events RESTART IDENTITY")

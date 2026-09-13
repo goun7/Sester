@@ -1,4 +1,4 @@
-# İS PLANI — 63 · PUGIO (AjanTicaretYigini) (2026-09-11, kimlik 2026-09-12)
+# İS PLANI — 63 · SESTER (AjanTicaretYigini) (2026-09-11, kimlik-göçü 2026-09-13: ESKI_KIMLIK.md)
 
 > Mükemmelliyet V2 katmanı. V1: `KAGIT.md` + `PRD.md` + `SPEC_FARK_TABLOSU.md`
 > (x402↔AP2 adaptör-kararları) + `KURAL_DSL_V0.md` (fail-closed cüzdan-politikası)
@@ -91,20 +91,29 @@ içi kontrat).
    ChargeReceipt çekirdeği (agent, host, amount) birebir aynı; ortak-cüzdan
    tek-kota (0.15 = 3×0.05); zincir SAĞLAM. (K4 adaptörlerinin canlı-kanıtı.)
 3. **S3:** politika-gevşetme talebi → 24s-gecikme + imzalı-onay akışı çalışır.
-   ✅ **2026-09-12 KABUL:** `pugio/policy_signed.py` + test_118–128 — JWS-mühürlü
+   ✅ **2026-09-12 KABUL:** `sester/policy_signed.py` + test_118–128 — JWS-mühürlü
    politika-zarfları (HS256/ES256); sıkılaştırma anında geçer, gevşetme
    `signed_at + 86400` vadesi dolmadan uygulanmaz (deterministik saat ile tam
    gecikme-senaryosu test_123); bekleyen gevşetme kararlara sızmaz (test_124);
    bozuk/imza-dışı zarf son-iyi-durumu korur (test_125).
 4. **S4:** 81-kanıt-bundle harici-doğrulanır (63↔81 kontratı canlı).
-   ✅ **2026-09-12 ilk-adım:** `pugio/evidence.py` + `scripts/dogrula.py` —
+   ✅ **2026-09-12 ilk-adım:** `sester/evidence.py` + `scripts/dogrula.py` —
    alıcı kütüphanesiz pür-sha256 doğrular; inkâr-saldırısı proof-uyuşmazlığıyla
    yakalanır (test_48–54). 81-MERGEN tarafının aynı şemayı okuması kalan adım.
    ✅ **2026-09-12 K1/Tamga-ucu:** çıpa-alıcı Tamga repo'sunda canlı (test_74–76).
+   ✅ **2026-09-13 kardeşsiz-kanıt:** gömülü ayna-alıcılar (`bridge_receivers/`,
+   pür-stdlib, kopya-hazır) + test_bridges_mirror — donuk zarf-sözleşmesi
+   kardeş-repo makinede olmasa da her koşumda regresyona-sabit (test_186-öncesi seri).
    ✅ **2026-09-12 KAPANDI:** 81-tarafı yerel-okuyucu — Tamga repo'sunda
    `tamga_pugio_ingest.py`: K0 bundle'ını pür-stdlib doğrular + deterministik
-   doğrulama-makbuzu üretir (test_136–140: temiz→SAĞLAM+makbuz, kazınmış→RED
+   doğrulama-makbuzu üretir   (test_136–140: temiz→SAĞLAM+makbuz, kazınmış→RED
    makbuz-üretimsiz, başlık-yalanı→RED). 63↔81 kontratı iki-ucundan canlı.
+5. **S5 (tanım 2026-09-13; kodlandı aynı gün):** Hosted-facilitator MVP
+   (MONETIZATION lane-1) — verify/settle/refund-servisi + satıcı-metering'i
+   (dogfood) + settlement-batch entegrasyonu; tasarım+test-haritası:
+   `docs/S5_FACILITATOR_MILESTONE.md`, ortak-sözleşme: `docs/S6_JOINT_ACCEPTANCE.md`
+   (64-Tenderix ile; 63-tarafı test_186–201 kodlu). Durum: **kodlandı —
+   koşu-kanıtı publish-gate'e bağlı**.
 
 ## 8) Çeyreklik haritası
 
@@ -117,8 +126,8 @@ içi kontrat).
 ## 9) Pitch paketi
 
 **Dönüşüm:** "Ajanınız ödeyecekse, kuralları siz koyarsınız — protokol-ne-olursa-
-olsun, cüzdan+sayaç+kanıt tek rayda." **Marka-dizisi:** PUGIO · Pugio-Tally
-(mürekkep+eski-altın) — palet ve kullanım `brand/MARKA_NOTU.md`.
+olsun, cüzdan+sayaç+kanıt tek rayda." **Marka:** SESTER · Sester-sikkesi
+(coin + S-monogram; mürekkep+eski-altın) — palet ve kullanım `brand/MARKA_NOTU.md`.
 Demo-script: (1) politika-yazımı (3-dakika), (2) x402-canlı-ücret-akışı,
 (3) 81-kanıt-bundle-doğrulama. One-pager: dönüşüm + non-custodial-tez + DSL-örnek +
 fiyat + protokol-tarafsızlığı. **Tarihli-kanıt satırları:** kurumsal-uygulamaların

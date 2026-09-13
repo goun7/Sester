@@ -1,12 +1,17 @@
 # K0 · Shared Evidence-Envelope Spec — draft v0.1 (2026-09-12)
 
-> One-page contract that lets **independent** projects (PUGIO · Tamga Protocol ·
+> One-page contract that lets **independent** projects (SESTER · Tamga Protocol ·
 > Veridict) anchor and audit each other's evidence **without merging**.
-> Reference implementation: `pugio/evidence.py` (+ `pugio/bridges.py`),
-> external verifier: `scripts/dogrula.py` (stdlib-only, no pugio import).
-> Status: DRAFT — adoption by each project is a separate decision (K0 row, §3
-> of `BIRLESTIRME_DEGERLENDIRMESI.md`). Every artifact carries a version field;
-> readers MUST reject unknown versions.
+> Reference implementation: `sester/evidence.py` (+ `sester/bridges.py`),
+> external verifier: `scripts/dogrula.py` (stdlib-only, no sester import).
+> Status: DRAFT — adoption by each project is a separate decision
+> (K0 row, §3 of `BIRLESTIRME_DEGERLENDIRMESI.md`). Every artifact carries a
+> version field; readers MUST reject unknown versions.
+>
+> **KIMLIK-NOTU (2026-09-13):** ürün adı Pugio → Sikke → **SESTER** oldu
+> (bkz. `../ESKI_KIMLIK.md`). Kablo-alanları DONUKTUR: `pugio_bundle_version`,
+> `pugio_evidence_bundle`, `source: "sikke"` — alıcılar bu değerleri bekler;
+> v2 sürüm-atılımına kadar değişmezler. Marka ≠ kablo-kimliği.
 
 ## 1) Canonical event line (the atom)
 
@@ -25,7 +30,7 @@ TS|EVENT_TYPE|AGENT_ID|HOST|AMOUNT|PAYLOAD|PREV
 ## 2) Proof chain (secretless tier)
 
 `proof_i = SHA256(canonical_line_i)` — the **public** chain. Projects may keep an
-additional sealed chain (e.g. PUGIO's HMAC-sealed internal ledger); the public
+additional sealed chain (e.g. SESTER's HMAC-sealed internal ledger); the public
 chain is what crosses project boundaries. Link rule: `PREV` of event *i* equals
 `proof_{i-1}`; a receiver re-hashes every line and fails on any mismatch
 (drop, edit, reorder → broken link or proof mismatch).
@@ -52,7 +57,7 @@ Head/merkle/count are redundant on purpose: three independent checks.
 A bundle summarized into ONE deterministic JSONL line for a foreign ledger:
 
 ```json
-{ "type": "external_anchor", "bridge_version": 1, "source": "pugio",
+{ "type": "external_anchor", "bridge_version": 1, "source": "sikke",
   "agent": "<label>", "anchor_id": "<32hex>",
   "head": "<64hex>", "merkle_root": "<64hex>", "event_count": N }
 ```
@@ -61,6 +66,13 @@ Binding: `anchor_id = SHA256(head|merkle_root|event_count)[:32]` (hex string
 concatenation, pipe separator). `generated` MUST be excluded from deterministic
 renditions. Receiver verifies the binding with SHA256 only; optional full check
 re-verifies the referenced bundle per §2–§4.
+
+**Read-compat rule (2026-09-13; ACCEPTED upstream — TamgaProtocol commit
+f6ee3b7, CI-green, AT-024 pin):** receivers MUST accept `source: "sikke"`
+(frozen primary) and MAY accept `source: "pugio"` (pre-migration historical
+output) — unknown sources still hard-reject; the `bridge_version` gate stays
+independent (anchor envelope version = 1). Producers always emit `sikke`
+(frozen); the read-compat is receiver-side only.
 
 ## 6) Watch feed (decision audit, K3)
 

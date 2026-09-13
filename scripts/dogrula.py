@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Alıcı-tarafı kanıt-dogrulayıcı — 81-MERGEN / müşteri-denetçisi perspektifi.
 
-Bu script BİLGİNCE pugio kütüphanesini İÇERMEZ (yalnız stdlib: json + hashlib):
+Bu script BİLGİNCE sester kütüphanesini İÇERMEZ (yalnız stdlib: json + hashlib):
 kanıt-bundle'ı üretenden bağımsız doğrulanır — 63↔81 kontratının S4 kabulü.
 
 Kullanım:  python scripts/dogrula.py adoption/s1-kanit-bundle.json

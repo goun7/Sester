@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <!-- SESTER avatar · 512×512 · 2026-09-13
+       Mark'ın 2.56 ölçeği; avatar-okunurluğu için zemin parşömen.
+       PNG ikizi: scripts/make_brand_assets.py → .github/assets/avatar.png -->
+  <rect width="512" height="512" fill="#F5F0E4"/>
+  <g fill="none">
+    <circle cx="259" cy="253" r="205" stroke="#171717" stroke-width="36"/>
+    <circle cx="256" cy="256" r="148" stroke="#B8860B" stroke-width="18"/>
+    <path d="M 330 187 C 305 156 207 156 197 210 C 187 259 325 253 315 302 C 305 356 207 356 179 323"
+          stroke="#171717" stroke-width="38" stroke-linecap="round"/>
+  </g>
+  <circle cx="256" cy="256" r="15" fill="#C9A227"/>
+</svg>

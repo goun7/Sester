@@ -1,4 +1,4 @@
-"""PUGIO policy_signed testleri — S3: imzalı politika + 24s gevşetme-gate.
+"""SESTER policy_signed testleri — S3: imzalı politika + 24s gevşetme-gate.
 
 Kapsam: JWS-mühür + yükleme (fail-closed), sıkılaştırma-anında, gevşetme-24s
 bekleme (deterministik saat), bekleyen politikanın kararlara sızmaması,
@@ -12,8 +12,8 @@ import time
 
 import pytest
 
-from pugio.policy import Policy
-from pugio.policy_signed import (
+from sester.policy import Policy
+from sester.policy_signed import (
     RELAXATION_DELAY,
     SignedPolicyError,
     SignedPolicyVault,

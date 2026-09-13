@@ -1,4 +1,4 @@
-"""PUGIO JWS testleri — AP2 mandate imza-katmanı (RFC 7515, KARAR_63B v0.3).
+"""SESTER JWS testleri — AP2 mandate imza-katmanı (RFC 7515, KARAR_63B v0.3).
 
 Kapsam: HS256 (stdlib) üret+doğrula uçtan-uca; ES256 (cryptography varsa);
 fail-closed retler (payload-kazıma, yanlış-anahtar, alg-none, bozuk-form);
@@ -14,7 +14,7 @@ import time
 
 import pytest
 
-from pugio.adapters import (
+from sester.adapters import (
     AdapterError,
     Ap2Mandate,
     install_adapters,
@@ -165,11 +165,11 @@ def test_116_without_resolver_form_binding_only():
 
 
 def test_117_middleware_accepts_signed_rejects_scraped(tmp_path):
-    from pugio.ledger import Ledger
-    from pugio.middleware import PugioMeter
+    from sester.ledger import Ledger
+    from sester.middleware import SesterMeter
 
     led = Ledger(tmp_path / "jws.sqlite3", secret="jws")
-    meter = PugioMeter(None, led, price=0.05, daily_quota=0.10, secret="jws")
+    meter = SesterMeter(None, led, price=0.05, daily_quota=0.10, secret="jws")
     install_adapters(meter.register_scheme, price_minor=meter.price_minor,
                      key_resolver=lambda kid, alg: HS_SECRET)
 

@@ -22,7 +22,7 @@ jobs:
       - name: Fail-closed smoke (bozuk politika testi)
         run: |
           python - <<'PY'
-          from pugio.policy import DenyAll
+          from sester.policy import DenyAll
           d = DenyAll().evaluate(0.05, "/weather")
           assert d.verdict == "deny" and d.rule_id == "fail-closed"
           print("fail-closed smoke OK")
@@ -35,19 +35,19 @@ jobs:
     runs-on: ubuntu-latest
     # Kardeş-repolar GitHub'a yayında olunca aç: repo variable'ları ayarla
     # (Settings → Secrets and variables → Actions → Variables):
-    #   PUGIO_TAMGA_REPO    = "org/tamga-protocol"
-    #   PUGIO_VERIDICT_REPO = "org/veridict"
-    if: vars.PUGIO_TAMGA_REPO && vars.PUGIO_VERIDICT_REPO
+    #   SESTER_TAMGA_REPO    = "org/tamga-protocol"
+    #   SESTER_VERIDICT_REPO = "org/veridict"
+    if: vars.SESTER_TAMGA_REPO && vars.SESTER_VERIDICT_REPO
     steps:
       - uses: actions/checkout@v4
       - uses: actions/checkout@v4
         with:
-          repository: ${{ vars.PUGIO_TAMGA_REPO }}
+          repository: ${{ vars.SESTER_TAMGA_REPO }}
           ref: main
           path: siblings/tamga
       - uses: actions/checkout@v4
         with:
-          repository: ${{ vars.PUGIO_VERIDICT_REPO }}
+          repository: ${{ vars.SESTER_VERIDICT_REPO }}
           ref: main
           path: siblings/veridict
       - uses: actions/setup-python@v5
@@ -57,8 +57,8 @@ jobs:
         run: pip install -e .[dev]
       - name: Cross-repo bridge tests (K1 + K3, temiz + bozuk)
         env:
-          PUGIO_TAMGA_PATH: ${{ github.workspace }}/siblings/tamga
-          PUGIO_VERIDICT_PATH: ${{ github.workspace }}/siblings/veridict
+          SESTER_TAMGA_PATH: ${{ github.workspace }}/siblings/tamga
+          SESTER_VERIDICT_PATH: ${{ github.workspace }}/siblings/veridict
         run: |
           python -m pytest tests/test_bridges_crossrepo.py -v
           # Alıcılar pür-stdlib: kardeş-repoların kendi selftestleri de koşar

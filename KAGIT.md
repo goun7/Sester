@@ -1,6 +1,6 @@
-# 63 — PUGIO (AjanTicaretYigini · Agent Commerce Stack)
+# 63 — SESTER (AjanTicaretYigini · Agent Commerce Stack)
 
-> Aile: `algoat` (F1 disiplini + platform hattı) · Durum: **KÂĞIT → B-PROTOTİP** · Açılış: 2026-09-11 · **Kimlik: PUGIO onaylı (logo: Pugio-Tally, 2026-09-12)**
+> Aile: `algoat` (F1 disiplini + platform hattı) · Durum: **KÂĞIT → B-PROTOTİP** · Açılış: 2026-09-11 · **Kimlik: SESTER kesin (2026-09-13; dizisi Pugio → Sikke → Sester — ESKI_KIMLIK.md)**
 > Kaynak: `Fikirler.md` §1.1 (AgentMeter) + §2.4 (AgentWallets) + §4.2 (AgentDefense) — **üç fikir tek yığında birleşti**
 > Kural: Bu klasör yalnız fikir/PRD geliştirme başlığıdır; kod kararı ayrı verilir.
 
@@ -93,14 +93,17 @@ unsur dolu → başlama izni: 81 sonrası B-blok sırası.**
 
 1. ~~Bu dosyayı PRD'ye büyüt: katman A kural motoru şeması (DSL taslağı).~~ ✅ PRD v1.1 + KURAL_DSL_V0
 2. ~~x402 + AP2 spec fark tablosu çıkar~~ ✅ SPEC_FARK_TABLOSU v2 (ACP dahil üçlü)
-3. ~~B Kattı prototipi için ayrı karar kaydı aç.~~ → **PUGIO-B v0 kodlandı** (`KARAR_63B.md`, `pugio/`)
+3. ~~B Kattı prototipi için ayrı karar kaydı aç.~~ → **SESTER-B v0 kodlandı** (`KARAR_63B.md`, `sester/`)
 
-## 🗡️ İSİM: PUGIO (2026-09-12)
+## İSİM: SESTER (2026-09-13; dizisi Pugio → Sikke → Sester)
 
-"Pugio adayı beklemede" satırı kapandı: ürün-adı **PUGIO** — Roma pikası
-(ikincil silah, fail-closed guvence hikâyesi). Niş-boş tarama + ASUS sınıf-9
-marka-review kalemi: `brand/MARKA_NOTU.md`. Ana marka: **Pugio-Tally**
-(4 sayaç-çizgisi + altın pika-çaprazı) — `brand/pugio-mark.svg`.
+Ürün-adı **SESTER** (Sestertius'tan): Antik Roma'nın ilk standart ticaret sikkesi —
+"herkesin kabul ettiği değer-ölçüsü" = ajan-ticaretinde herkesin kabul ettiği
+metering+kanit katmanı. Sikke adı İngilizce fonetik riski ("sick") nedeniyle elendi;
+Pugio ekosistem-kalabalığı nedeniyle elenmişti. Tarama: PyPI/Crates/NPM/.ai/.io
+**%100 temiz**. Kablo-alanları donduruldu (`pugio_bundle_version`, `pugio0`,
+`pugio_evidence_bundle`, `source:sikke` — ESKI_KIMLIK.md). Logo: `brand/sester-mark.svg`
++ `brand/sester_primary_logo.jpg`.
 
 
 ## 🎯 TUR-2 PRENSİP (2026-09-11, video-taraması)

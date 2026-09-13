@@ -1,4 +1,4 @@
-"""PUGIO onay-panel testleri — /approvals + decide-endpoint (v0.3).
+"""SESTER onay-panel testleri — /approvals + decide-endpoint (v0.3).
 
 Kapsam: sayfa-render (boş/dolu), approve→consume-akışı, deny→blok,
 hata-sözleşmesi (404/409/400), fail-closed TTL etkisi, XSS-kaçamak.
@@ -14,7 +14,7 @@ from fastapi.testclient import TestClient
 
 @pytest.fixture()
 def client():
-    from pugio import demo_api
+    from sester import demo_api
 
     # test-artefaktı bırakma: modül-kuyruğunu kullan, sonunda temizle
     c = TestClient(demo_api.app)
@@ -29,7 +29,7 @@ def test_129_approvals_page_renders_empty(client):
     c, q = client
     r = c.get("/approvals")
     assert r.status_code == 200
-    assert "PUGIO" in r.text and "Onay Paneli" in r.text
+    assert "SESTER" in r.text and "Onay Paneli" in r.text
 
 
 def test_130_approvals_page_lists_pending_ticket(client):

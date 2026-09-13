@@ -1,4 +1,4 @@
-"""PUGIO evidence testleri — 81-kanıt-köprüsü: üret + harici-doğrula + inkâr-saldırısı."""
+"""SESTER evidence testleri — 81-kanıt-köprüsü: üret + harici-doğrula + inkâr-saldırısı."""
 
 from __future__ import annotations
 
@@ -6,8 +6,8 @@ import json
 
 import pytest
 
-from pugio.evidence import GENESIS, bundle_json, produce_bundle, proof_hash, verify_bundle
-from pugio.ledger import Ledger
+from sester.evidence import GENESIS, bundle_json, produce_bundle, proof_hash, verify_bundle
+from sester.ledger import Ledger
 
 
 @pytest.fixture()

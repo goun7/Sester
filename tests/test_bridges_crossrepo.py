@@ -1,9 +1,9 @@
 """Cross-repo köprü testleri — K1 (Tamga alıcısı) + K3 (Veridict alıcısı).
 
-Kardeş-repo alıcıları PUGIO kütüphanesini import ETMEDEN, pür stdlib ile
-çalışır; bu testler üretici (pugio.bridges / pugio.watchfeed) ile alıcıyı
+Kardeş-repo alıcıları SESTER kütüphanesini import ETMEDEN, pür stdlib ile
+çalışır; bu testler üretici (sester.bridges / sester.watchfeed) ile alıcıyı
 subprocess üzerinden uçtan-uca bağlar. Kardeş-repo yoksa testler atlanır
-(CI'da yalnızca PUGIO-seti koşar).
+(CI'da yalnızca SESTER-seti koşar).
 
 Kural (K0 §7): üretici çıktısı deterministik; alıcı fail-loud (RED → exit 1).
 """
@@ -17,18 +17,20 @@ import sys
 
 import pytest
 
-from pugio.bridges import tamga_anchor_json, veridict_claims_json
-from pugio.evidence import produce_bundle
-from pugio.ledger import Ledger
-from pugio.watchfeed import produce_watch_feed, watch_feed_jsonl
+from sester.bridges import tamga_anchor_json, veridict_claims_json
+from sester.evidence import produce_bundle
+from sester.ledger import Ledger
+from sester.watchfeed import produce_watch_feed, watch_feed_jsonl
 
+# Kardeş-repolar 2026-09-13'te yeniden konumlandı (02_sahis → 05_acik_kaynak;
+# boşluk-klasör adları kaldırıldı: TamgaProtocol, Veridict).
 TAMGA = os.environ.get(
-    "PUGIO_TAMGA_PATH",
-    "/home/gokun/projects/02_sahis/Tamga Protocol",
+    "SESTER_TAMGA_PATH",
+    "/home/gokun/projects/05_acik_kaynak/TamgaProtocol",
 )
 VERIDICT = os.environ.get(
-    "PUGIO_VERIDICT_PATH",
-    "/home/gokun/projects/02_sahis/Veridict",
+    "SESTER_VERIDICT_PATH",
+    "/home/gokun/projects/05_acik_kaynak/Veridict",
 )
 K1_RECEIVER = os.path.join(TAMGA, "tamga_pugio_receiver.py")
 K3_RECEIVER = os.path.join(VERIDICT, "scripts", "pugio_watch_receiver.py")
@@ -107,7 +109,7 @@ def test_77_k3_veridict_receiver_accepts_clean_feed(tmp_path):
     led, b = _bundle(tmp_path)
     try:
         feed_file = tmp_path / "akis.jsonl"
-        feed_file.write_text(watch_feed_jsonl(b, watcher_id="pugio-ci") + "\n",
+        feed_file.write_text(watch_feed_jsonl(b, watcher_id="sester-ci") + "\n",
                              encoding="utf-8")
         r = _run(K3_RECEIVER, str(feed_file))
         assert r.returncode == 0, f"temiz-akış RED: {r.stdout} {r.stderr}"
@@ -121,7 +123,7 @@ def test_77_k3_veridict_receiver_accepts_clean_feed(tmp_path):
 def test_78_k3_veridict_receiver_rejects_tampered_feed(tmp_path):
     led, b = _bundle(tmp_path)
     try:
-        lines = watch_feed_jsonl(b, watcher_id="pugio-ci").splitlines()
+        lines = watch_feed_jsonl(b, watcher_id="sester-ci").splitlines()
         obj = json.loads(lines[1])  # ilk watch_event: deny → allow kazıması
         obj["decision"] = "allow"
         lines[1] = json.dumps(obj, sort_keys=True, separators=(",", ":"))
@@ -140,7 +142,7 @@ def test_79_k3_receiver_selftest_standalone():
     assert "SAĞLAM" in r.stdout
 
 
-# --------------------------------------------------- üretici tarafı (pugio-ici)
+# --------------------------------------------------- üretici tarafı (sester-ici)
 
 def test_80_watchfeed_producer_deterministic(tmp_path):
     led, b = _bundle(tmp_path)

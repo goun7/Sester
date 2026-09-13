@@ -1,4 +1,4 @@
-"""PUGIO backend-parite testleri — SQLite-Ledger ↔ PgLedger.
+"""SESTER backend-parite testleri — SQLite-Ledger ↔ PgLedger.
 
 Aynı davranış-senaryoları her iki backend'de koşar; özdeş sonuçlar şart:
 aynı zincir-hash'leri, sayaçlar, nonce-claim'leri, kanıt-bundle'ı ve
@@ -15,11 +15,11 @@ import sys
 
 import pytest
 
-from pugio.evidence import produce_bundle, verify_bundle
-from pugio.ledger import Ledger
-from pugio.pg_ledger import PgLedger
+from sester.evidence import produce_bundle, verify_bundle
+from sester.ledger import Ledger
+from sester.pg_ledger import PgLedger
 
-PG_DSN = os.environ.get("PUGIO_PG_DSN", "")
+PG_DSN = os.environ.get("SESTER_PG_DSN", "")
 PG_AVAILABLE = bool(PG_DSN)
 
 S1 = "parity-secret"
@@ -54,7 +54,7 @@ def sqlite_led(tmp_path):
 @pytest.fixture()
 def pg_led():
     if not PG_AVAILABLE:
-        pytest.skip("PUGIO_PG_DSN yok — PG-bacağı atlanır")
+        pytest.skip("SESTER_PG_DSN yok — PG-bacağı atlanır")
     led = PgLedger(secret=S1, dsn=PG_DSN)
     # PG kalıcıdır (restart'lar-arası): parite seq-alignment için temiz-başlangıç
     with led.conn().cursor() as cur:
@@ -142,8 +142,8 @@ def test_144_parity_pane_reads(sqlite_led, pg_led, monkeypatch):
 
 
 def test_145_pg_requires_dsn(monkeypatch):
-    monkeypatch.delenv("PUGIO_PG_DSN", raising=False)
-    with pytest.raises(RuntimeError, match="PUGIO_PG_DSN"):
+    monkeypatch.delenv("SESTER_PG_DSN", raising=False)
+    with pytest.raises(RuntimeError, match="SESTER_PG_DSN"):
         PgLedger(secret=S1)
 
 
@@ -153,16 +153,16 @@ def _pg_container_up() -> str | None:
     """Ephemeral PG kaldırıp DSN üretir; başarısızsa None."""
     import subprocess as sp
 
-    name = "pugio-pg-parity"
+    name = "sester-pg-parity"
     sp.run(["docker", "rm", "-f", name], capture_output=True)
     r = sp.run(["docker", "run", "-d", "--name", name, "-e",
-                "POSTGRES_PASSWORD=pugio", "-p", "5499:5432", "postgres:16-alpine"],
+                "POSTGRES_PASSWORD=sester", "-p", "5499:5432", "postgres:16-alpine"],
                capture_output=True, text=True)
     if r.returncode != 0:
         return None
     import time
 
-    dsn = "host=127.0.0.1 port=5499 dbname=postgres user=postgres password=pugio"
+    dsn = "host=127.0.0.1 port=5499 dbname=postgres user=postgres password=sester"
     for _ in range(30):
         try:
             probe = PgLedger(secret="probe", dsn=dsn)
@@ -178,5 +178,5 @@ if __name__ == "__main__":
     dsn = _pg_container_up()
     print("PG DSN:" if dsn else "PG yok", dsn or "")
     if dsn:
-        os.environ["PUGIO_PG_DSN"] = dsn
+        os.environ["SESTER_PG_DSN"] = dsn
         sys.exit(pytest.main([__file__, "-q"]))

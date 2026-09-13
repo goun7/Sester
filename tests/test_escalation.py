@@ -1,4 +1,4 @@
-"""PUGIO escalation testleri — insan-onay kuyruğu (KARAR_63B madde-3).
+"""SESTER escalation testleri — insan-onay kuyruğu (KARAR_63B madde-3).
 
 Kapsam: durum-makinesi (pending→approved→consumed / denied / expired),
 tek-kezlik tüketim, tek-bilet disiplini, fail-closed TTL, tam denetim-iz
@@ -9,15 +9,15 @@ from __future__ import annotations
 
 import pytest
 
-import pugio.escalation as esc_mod
-from pugio.escalation import (
+import sester.escalation as esc_mod
+from sester.escalation import (
     APPROVED,
     DENIED,
     EXPIRED,
     PENDING,
     EscalationQueue,
 )
-from pugio.ledger import Ledger
+from sester.ledger import Ledger
 
 
 @pytest.fixture()
@@ -114,7 +114,7 @@ def test_104_denied_path_also_audited(q, led):
 # ------------------------------------------------- demo-sarımı (entegrasyon)
 
 def test_105_demo_policy_guard_returns_verdicts():
-    from pugio.demo_api import policy_guard
+    from sester.demo_api import policy_guard
 
     # demo politika: /weather allow; büyük tutar escalate; bilinmeyen host deny
     assert policy_guard("k1", "/weather", 0.05)[0] == "allow"
@@ -126,7 +126,7 @@ def test_105_demo_policy_guard_returns_verdicts():
 
 def test_106_demo_escalations_endpoint_lists_pending(q):
     # canlı kuyruk (demo modülü) ile: park → /escalations görür
-    from pugio import demo_api
+    from sester import demo_api
 
     t = demo_api.esc_queue.park("demo-esc-agent", "/histogram", 5.00,
                                 "require-human-for-large")

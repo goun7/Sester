@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- SESTER ana marka · Sester-sikkesi (coin + S-monogram) · 2026-09-13
+       Palet: Mürekkep #171717 · Eski Altın #B8860B · Parlak Altın #C9A227
+       İlke: gradient-küre/maskot/ışık-halkası YOK; el-kusuru (2px sürüklenme) bilinçli.
+       Donuk bağ: panel.py MARK_SVG bu çizimin gömülü kopyasıdır. -->
+  <g fill="none">
+    <circle cx="101" cy="99" r="80" stroke="#171717" stroke-width="14"/>
+    <circle cx="100" cy="100" r="58" stroke="#B8860B" stroke-width="7"/>
+    <path d="M 129 73 C 119 61 81 61 77 82 C 73 101 127 99 123 118 C 119 139 81 139 70 126"
+          stroke="#171717" stroke-width="15" stroke-linecap="round"/>
+  </g>
+  <circle cx="100" cy="100" r="6" fill="#C9A227"/>
+</svg>

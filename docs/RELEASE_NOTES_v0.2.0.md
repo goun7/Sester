@@ -1,6 +1,6 @@
-# pugio-meter 0.2.0 — Sürüm Notları (2026-09-12)
+# sikke 0.2.0 — Sürüm Notları (2026-09-12)
 
-**Tek middleware, dört protokol-yolu, insan-onayı dahil.** PUGIO, AI-ajan
+**Tek middleware, dört protokol-yolu, insan-onayı dahil.** SIKKE, AI-ajan
 API'lerinize x402-tarzı ücretlendirme + kota + fail-closed politika takar;
 0.2.0 ile protokol-nötr çekirdek taahhüdü kod-karşılığına kavuştu.
 
@@ -18,7 +18,7 @@ API'lerinize x402-tarzı ücretlendirme + kota + fail-closed politika takar;
 ### 2 · İnsan-onay kuyruğu
 - Politika `then: escalate` artık gerçek akış: istek 402
   `escalation_required:<bilet>` ile park edilir.
-- Onay: `python -m pugio.escalation approve <id> --by sen` ya da
+- Onay: `python -m sikke.escalation approve <id> --by sen` ya da
   `GET /escalations`. Onaylı bilet **bir-kez** tüketilir; TTL (15 dk)
   dolan bilet otomatik-RED — sessiz onay imkânsız.
 - Her geçiş (park/approve/deny/consume) hash-chain'li ledger'a yazılır.
@@ -33,13 +33,13 @@ API'lerinize x402-tarzı ücretlendirme + kota + fail-closed politika takar;
 - **106 test** (pytest) — politika, ledger, şemalar, facilitator, adaptörler,
   eskalasyon, çapraz-repo köprüler.
 - S1 dogfood kabul-koşusu + pür-stdlib harici-dogrulayıcı (`scripts/dogrula.py`).
-- Sıfır zorunlu-bağımlılık çekirdek; `pip install pugio-meter[evm]` imza-katmanı.
+- Sıfır zorunlu-bağımlılık çekirdek; `pip install sikke[evm]` imza-katmanı.
 
 ## Kurulum
 ```bash
-pip install pugio-meter           # çekirdek (saf ASGI, stdlib)
-pip install "pugio-meter[evm]"    # EVM-imza doğrulaması
-pip install "pugio-meter[demo]"   # demo API + panel
+pip install sikke           # çekirdek (saf ASGI, stdlib)
+pip install "sikke[evm]"    # EVM-imza doğrulaması
+pip install "sikke[demo]"   # demo API + panel
 ```
 
 ## Bilinen sınırlar (dürüst liste)

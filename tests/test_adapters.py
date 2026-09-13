@@ -1,4 +1,4 @@
-"""PUGIO adapters testleri — K4: AP2 mandate + ACP checkout-session.
+"""SESTER adapters testleri — K4: AP2 mandate + ACP checkout-session.
 
 Kapsam: ChargeIntent/ChargeReceipt çekirdeği, AP2 scope/pencere/tutar
 reddetmeleri, ACP line_item eşleşmeleri, middleware-entegrasyonu (uçtan-uca
@@ -15,7 +15,7 @@ import time
 
 import pytest
 
-from pugio.adapters import (
+from sester.adapters import (
     AdapterError,
     AcpSession,
     Ap2Mandate,
@@ -25,7 +25,7 @@ from pugio.adapters import (
     verify_acp_session,
     verify_ap2_mandate,
 )
-from pugio.middleware import MINOR, PaymentErr, PugioMeter
+from sester.middleware import MINOR, PaymentErr, SesterMeter
 
 NOW = 1_789_000_000.0  # yalnızca doc/deterministik referans; pencereler time.time()'
 
@@ -143,10 +143,10 @@ def test_90_acp_session_rejects_expired():
 # ------------------------------------------------- middleware entegrasyonu
 
 def _meter(tmp_path):
-    from pugio.ledger import Ledger
+    from sester.ledger import Ledger
 
     led = Ledger(tmp_path / "k4.sqlite3", secret="k4")
-    meter = PugioMeter(None, led, price=0.05, daily_quota=0.10,
+    meter = SesterMeter(None, led, price=0.05, daily_quota=0.10,
                        secret="k4")
     on_intents = []
     install_adapters(
@@ -189,7 +189,7 @@ def test_91_ap2_header_end_to_end_receipt_and_intent_event(tmp_path):
     h = f"AP2-Mandate {_b64(_mandate())}"
     status, hdrs = _call(meter, "/weather", {"X-Payment": h})
     assert status == 200, "AP2 mandate akışı 200 dönmeli"
-    assert "x-pugio-receipt" in hdrs
+    assert "x-sester-receipt" in hdrs
     # protokol-niyeti olayı ledger'a düştü
     kinds = [r["event_type"] for r in led.recent_events(10)]
     assert "protocol_intent" in kinds and "charge_receipt" in kinds

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""PUGIO S1 kabul senaryosu (IS_PLANI §7): F1-botları dogfood.
+"""SESTER S1 kabul senaryosu (IS_PLANI §7): F1-botları dogfood.
 
 Senaryo: f1-telemetri ajanı, günlük-$50-cap + 08:00–22:00 saat-aralığı
 politikanın arkasına sokulur. Deterministik saat-enjeksiyonu ile:
@@ -25,11 +25,11 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from pugio.evidence import bundle_json, produce_bundle, verify_bundle
-from pugio.ledger import Ledger
-from pugio.middleware import PugioMeter
-from pugio.policy import Policy
-from pugio.schemes import sign_exact_pugio
+from sester.evidence import bundle_json, produce_bundle, verify_bundle
+from sester.ledger import Ledger
+from sester.middleware import SesterMeter
+from sester.policy import Policy
+from sester.schemes import sign_exact_sester
 from eth_account import Account
 
 PRICE = 9.99
@@ -59,7 +59,7 @@ class S1State:
     now = _dt.datetime(2026, 9, 12, 10, 0)
 
 
-class S1Meter(PugioMeter):
+class S1Meter(SesterMeter):
     """KURAL_DSL kapısı + enjeksiyonlu saat (demo_api.policy_guard'ın S1 hâli)."""
 
     def __init__(self, *a, policy: Policy, **kw):
@@ -71,7 +71,7 @@ class S1Meter(PugioMeter):
             scope.get("path", "").startswith(p) for p in self.exempt_prefixes
         ):
             payment = self._header(scope, "X-Payment")
-            if payment and payment.strip().startswith("Pugio-EVM "):
+            if payment and payment.strip().startswith("Sester-EVM "):
                 d = self.policy.evaluate(PRICE, scope.get("path", ""), now=S1State.now)
                 self.ledger.append("permission_decision", "s1-ön-karar", scope.get("path", ""),
                                    payload={"decision": d.verdict, "rule_id": d.rule_id,
@@ -104,11 +104,11 @@ def call(meter, path, headers):
 
 
 def pay(nonce: str) -> dict[str, str]:
-    return {"X-Payment": sign_exact_pugio(AGENT_SK, AGENT, nonce, f"{PRICE:.2f}", "/weather")}
+    return {"X-Payment": sign_exact_sester(AGENT_SK, AGENT, nonce, f"{PRICE:.2f}", "/weather")}
 
 
 def main() -> int:
-    tmp = tempfile.mkdtemp(prefix="pugio-s1-")
+    tmp = tempfile.mkdtemp(prefix="sester-s1-")
     ledger = Ledger(Path(tmp) / "s1.sqlite3", secret="s1-secret")
     policy = Policy.from_dict(S1_POLICY)
     meter = S1Meter(dummy_app, ledger, price=PRICE, daily_quota=DAILY_CAP,
@@ -138,7 +138,7 @@ def main() -> int:
 
     # S1.d — bilinmeyen-host (gün-içi)
     S1State.now = _dt.datetime(2026, 9, 12, 12, 0)
-    h = sign_exact_pugio(AGENT_SK, AGENT, "s1-d", f"{PRICE:.2f}", "/bilinmeyen")
+    h = sign_exact_sester(AGENT_SK, AGENT, "s1-d", f"{PRICE:.2f}", "/bilinmeyen")
     messages: list[dict] = []
 
     async def run_unknown():
@@ -170,7 +170,7 @@ def main() -> int:
                     ok, f"{bundle_path} · {msg}"))
 
     # --- rapor ---
-    print("\nPUGIO S1 — F1 dogfood kabul-koşusu")
+    print("\nSESTER S1 — F1 dogfood kabul-koşusu")
     print("=" * 64)
     all_ok = True
     for name, ok, note in results:
