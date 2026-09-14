@@ -1,0 +1,50 @@
+{
+  "_comment": [
+    "Daily-Cap-Only Starter Policy Example",
+    "",
+    "Purpose:",
+    "  Minimal starter configuration establishing hard spending bounds for a sandbox or",
+    "  development agent: $0.10 per-request maximum, $5.00 daily cap across all allowed calls.",
+    "",
+    "Fail-Closed Semantics:",
+    "  Any request attempting to exceed per_request_max or daily_max, or requesting an unlisted",
+    "  host, fails closed with an immediate deny verdict (unknown host -> deny).",
+    "",
+    "Covering Tests:",
+    "  - tests/test_policy.py::test_07_per_request_max_exceeded (verifies per-request limit enforcement)",
+    "  - tests/test_policy.py::test_08_daily_max_exceeded (verifies cumulative daily limit enforcement)",
+    "  - tests/test_policy.py::test_05_explicit_deny_rule (verifies fallback deny rule)"
+  ],
+  "wallet_policy": {
+    "id": "wpol-daily-cap-starter",
+    "owner": "did:agent:example:sandbox-agent",
+    "wallet": "evm:0xDEMO000000000000000000000000000000000003",
+    "defaults": {
+      "currency": "USDC",
+      "per_request_max": 0.10,
+      "daily_max": 5.00,
+      "timezone": "Europe/Istanbul"
+    },
+    "rules": [
+      {
+        "id": "allow-sandbox-endpoints",
+        "when": {
+          "host_in": ["/echo", "/health", "/ping"],
+          "hour_between": ["00:00", "24:00"]
+        },
+        "then": "allow"
+      },
+      {
+        "id": "deny-unknown-hosts",
+        "when": {
+          "host_in": []
+        },
+        "then": "deny"
+      }
+    ],
+    "audit": {
+      "ledger": "tamga://demo/starter-agent",
+      "on_violation": "block+log"
+    }
+  }
+}

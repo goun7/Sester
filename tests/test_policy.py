@@ -202,3 +202,16 @@ def test_22_bad_amount_gt_raises():
     v["wallet_policy"]["rules"][1]["when"]["amount_gt"] = "cok"
     with pytest.raises(PolicyCorruptError):
         Policy.from_dict(v)
+
+
+def test_23_example_policies_load_cleanly():
+    from pathlib import Path
+    examples_dir = Path(__file__).parent.parent / "examples" / "policies"
+    policy_files = list(examples_dir.glob("*.json"))
+    assert len(policy_files) >= 3
+    for pf in policy_files:
+        p = Policy.load(pf)
+        assert p.policy_id
+        assert p.per_request_max > 0
+        assert p.daily_max >= p.per_request_max
+
