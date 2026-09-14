@@ -1,0 +1,57 @@
+{
+  "_comment": [
+    "Per-Host Allow-List with Human Escalation Policy Example",
+    "",
+    "Purpose:",
+    "  Permits regular queries to approved endpoints under $0.20, but escalates any larger",
+    "  request (> $0.20) to a human approval queue before funds can be released.",
+    "",
+    "Fail-Closed Semantics:",
+    "  Any destination not explicitly permitted in the allow-list, or any unhandled condition,",
+    "  evaluates to deny (unknown host -> deny).",
+    "",
+    "Covering Tests:",
+    "  - tests/test_policy.py::test_03_escalate_large_amount (verifies threshold triggers escalation)",
+    "  - tests/test_policy.py::test_04_unknown_host_denied (verifies unknown hosts are denied)",
+    "  - tests/test_policy.py::test_09_precedence_first_match_wins (verifies rule ordering)"
+  ],
+  "wallet_policy": {
+    "id": "wpol-allowlist-escalate",
+    "owner": "did:agent:example:treasury-agent",
+    "wallet": "evm:0xDEMO000000000000000000000000000000000002",
+    "defaults": {
+      "currency": "USDC",
+      "per_request_max": 2.00,
+      "daily_max": 50.00,
+      "timezone": "Europe/Istanbul"
+    },
+    "rules": [
+      {
+        "id": "require-human-escalation-for-large",
+        "when": {
+          "amount_gt": 0.20
+        },
+        "then": "escalate"
+      },
+      {
+        "id": "allow-trusted-endpoints",
+        "when": {
+          "host_in": ["/analytics", "/inference", "/search"],
+          "hour_between": ["00:00", "24:00"]
+        },
+        "then": "allow"
+      },
+      {
+        "id": "deny-unknown-hosts",
+        "when": {
+          "host_in": []
+        },
+        "then": "deny"
+      }
+    ],
+    "audit": {
+      "ledger": "tamga://demo/allowlist-agent",
+      "on_violation": "block+log"
+    }
+  }
+}

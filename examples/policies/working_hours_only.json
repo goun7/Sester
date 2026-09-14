@@ -1,0 +1,50 @@
+{
+  "_comment": [
+    "Working-Hours-Only Agent Policy Example",
+    "",
+    "Purpose:",
+    "  Restricts automated agent spending strictly to working business hours (09:00 - 18:00).",
+    "  Off-hours requests are denied.",
+    "",
+    "Fail-Closed Semantics:",
+    "  First matching rule wins. Requests outside the 09:00 - 18:00 window, or to unlisted hosts,",
+    "  fall through to default-deny (unknown host -> deny).",
+    "",
+    "Covering Tests:",
+    "  - tests/test_policy.py::test_01_allow_inside_window (verifies allow within configured hour range)",
+    "  - tests/test_policy.py::test_02_deny_outside_window (verifies rejection outside hours)",
+    "  - tests/test_policy.py::test_11_fail_closed_empty_rules (verifies fall-through deny)"
+  ],
+  "wallet_policy": {
+    "id": "wpol-working-hours",
+    "owner": "did:agent:example:worker-agent",
+    "wallet": "evm:0xDEMO000000000000000000000000000000000001",
+    "defaults": {
+      "currency": "USDC",
+      "per_request_max": 0.50,
+      "daily_max": 10.00,
+      "timezone": "Europe/Istanbul"
+    },
+    "rules": [
+      {
+        "id": "allow-during-work-hours",
+        "when": {
+          "host_in": ["/data-query", "/api/v1/translate"],
+          "hour_between": ["09:00", "18:00"]
+        },
+        "then": "allow"
+      },
+      {
+        "id": "deny-unknown-hosts",
+        "when": {
+          "host_in": []
+        },
+        "then": "deny"
+      }
+    ],
+    "audit": {
+      "ledger": "tamga://demo/working-hours-agent",
+      "on_violation": "block+log"
+    }
+  }
+}
