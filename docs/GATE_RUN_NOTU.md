@@ -32,6 +32,9 @@ PUSH=1 bash scripts/publish_gate.sh
 
 # 3) İsterseniz — repo-rename + About/topics:
 PUSH=1 REPO_RENAME=1 bash scripts/publish_gate.sh
+
+# 4) PyPI-upload-öncesi ŞART — kamusal-yüzey taraması (sdist iç-ad = 0):
+SWEEP=1 bash scripts/publish_gate.sh
 ```
 
 ## Kapı-koşumunda ne olacak (adım-adım):
@@ -39,8 +42,9 @@ PUSH=1 REPO_RENAME=1 bash scripts/publish_gate.sh
 1. `sikke/` tombstone-silme → 2. tam-suite ×2 (SQLite + Postgres, sıfır-skip,
    **216 test-ayak** = 207+9; S6 63-tarafı + payee-küzeltme pinleri dahil) →
 3. S1/S2 kabul-kapıları → 4. marka-PNG'leri → 5. build + twine (v0.5.0) →
-6. canlı-E2E (rastgele-port, T0–T10) → (bayraklıysa) 7. commit+push →
-8. repo-rename + About/topics.
+6. (`SWEEP=1` ise) kamusal-yüzey taraması (sdist iç-ad = 0; PyPI-öncesi şart) →
+7. canlı-E2E (rastgele-port, T0–T10) → (bayraklıysa) 8. commit+push →
+9. repo-rename + About/topics.
 
 ## 2026-09-13 ilk-koşum düzeltmeleri (3 RED → küzeltildi):
 

@@ -51,7 +51,10 @@ _64_TRANSITIONS = {
     "CREATED": ("AUTHORIZED",),
     "AUTHORIZED": ("SETTLED", "REFUNDED", "DISPUTED"),
     "DISPUTED": ("SETTLED", "REFUNDED"),
-    "SETTLED": (),
+    # S6.d sözleşmesi: SETTLED mutlak-terminal değildir — teslim-sonrası itiraz
+    # kapısı açıktır; çözüm yalnız resolve() karar-geçidinden geçer (S6.e:
+    # SETTLED→REFUNDED ham yolu kapalı). 64-tarafı tablosuyla birebir hizalı.
+    "SETTLED": ("DISPUTED",),
     "REFUNDED": (),
 }
 

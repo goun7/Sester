@@ -1,19 +1,19 @@
 ---
 name: Bug report
-about: SESTER'da hatalı davranış / güvenlik-sorunu DEĞİL (aşağıya bak)
+about: Incorrect behavior in Sester / NOT a security issue (see below)
 labels: bug
 ---
 
-**Ne oldu?** (beklenen vs gerçekleşen davranış)
+**What happened?** (expected vs actual behavior)
 
-**Minimal yeniden-üretim** (kod/başlık-paketleri; secret paylaşmayın)
+**Minimal reproduction** (code / header envelopes; do not share secrets)
 
-**Ortam** (SESTER sürümü, Python, backend SQLite/PG, protokol: x402/AP2/ACP/UCP)
+**Environment** (Sester version, Python, backend SQLite/PG, protocol: x402/AP2/ACP/UCP)
 
-**Zincir-durumu** (`ledger.verify_chain()` sonucu)
+**Chain state** (result of `ledger.verify_chain()`)
 
 ---
 
-⚠️ **Güvenlik-sorunları için:** lütfen public issue AÇMAYIN — özel iletişim
-kanalını kullanın (bkz. SECURITY.md). Fail-closed aşımları (replay/quota/imza-
-atlatma) güvenlik-sayılır.
+⚠️ **For security issues:** do NOT open a public issue — use the private
+channel (see SECURITY.md). Fail-closed bypasses (replay / quota / signature
+evasion) count as security findings.

@@ -31,6 +31,9 @@
 - [ ] **Tek-komut:** `PUSH=1 REPO_RENAME=1 bash scripts/publish_gate.sh`
       → `gh repo edit goun7/sikke --name sester` + About/topics (commit/CI
       geçmişi korunur; değişiklik-yoksa `commit yok — devam` der, rename yine koşar)
+- [ ] **Repo-ayarları (rename-ötesi):** `docs/GITHUB_SETTINGS_CHECKLIST.md`
+      — social-preview/avatar, release-tag, branch-koruma, security-özellikleri,
+      workflow-permissions, homepage (PyPI-sonrası)
 - [ ] About/topics: description *"x402-style metering, quota, fail-closed policy
       and hash-chain receipts for AI-agent APIs — one ASGI middleware"*;
       topics: `x402` `ai-agents` `metering` `payments` `asgi-middleware` `fintech`

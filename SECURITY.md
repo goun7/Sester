@@ -1,25 +1,28 @@
-# Güvenlik Politikası (SECURITY)SESTER bir **fail-closed** ticaret-katmanıdır; güvenlik-bulguları birinci-sınıf
-kabul-edilir ve gizlilikle işlenir.
+# Security Policy
 
-## Bildirim-kanalı
-Lütfen **public issue AÇMAYIN**. GitHub Security Advisory kullanın:
+Sester is a **fail-closed** commerce layer; security findings are treated as
+first-class input and handled confidentially.
+
+## Reporting channel
+
+Please **do not open a public issue**. Use GitHub Security Advisory:
 https://github.com/goun7/sester/security/advisories/new
 
-## Kapsam (öncelikli ilgi alanları)
+## In scope (priority areas)
 
-- Replay/nonce-aşımı (`seen_nonces` tablosu, restart-davranışı)
-- Kota-atlatma (minor-unit sayaç, günlük-sıfırlama, refund-muhasebesi)
-- JWS/atribüt-doktrini: `key_resolver` atlatması, gövde-bağı (body-binding)
-  kazıması, alg-downgrade (`alg: none`), AP2/ACP/UCP zarf-sahteliği
-- Kanıt-zinciri bütünlüğü (HMAC-mühür, hash-koruyan migrasyon, keccak-batch)
-- Politika fail-closed bozukluğu (bozuk-dosya → DENY_ALL; S3 24h gevşetme-gate'i)
+- Replay / nonce bypass (`seen_nonces` persistence, restart behavior)
+- Quota evasion (integer minor-unit metering, daily reset, refund accounting)
+- JWS / attribute doctrine: `key_resolver` bypass, body-binding stripping,
+  algorithm downgrade (`alg: none`), AP2/ACP/UCP envelope forgery
+- Evidence-chain integrity (HMAC seal, hash-preserving migration, keccak batch)
+- Policy fail-closed breakage (corrupt file → DENY_ALL; 24 h loosening gate)
 
-## Kapsam-dışı
+## Out of scope
 
-- Demo-amacıyla sabitlenmiş demo-secret'lar (`examples/`, `scripts/`)
-- Zayıf-anahtar kullanımı kullanan entegratör-kurulumları
+- Demo secrets pinned for examples (`examples/`, `scripts/`)
+- Integrator deployments that use weak keys
 
-## Sürüm-desteği
+## Version support
 
-Yalnız en-son minor sürüm güvenlik-yaması alır (0.x disiplini);
-KARAR-kaydına bağlanan breaking-değişiklikler CHANGELOG'dan izlenir.
+Only the latest minor release receives security patches (0.x discipline);
+breaking changes are tracked via the changelog and decision records.

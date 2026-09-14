@@ -1,13 +1,13 @@
 ---
 name: Feature request
-about: Yeni protokol-adaptörü, kanıt/raporlama ya da politika yeteneği
+about: New protocol adapter, evidence/reporting, or policy capability
 labels: enhancement
 ---
 
-**Problem:** hangi gerçek-dünya senaryosu desteklenmiyor?
+**Problem:** which real-world scenario is unsupported today?
 
-**Önerilen çözüm:** fail-closed varsayılanla nasıl davranmalı?
+**Proposed solution:** how should it behave with fail-closed defaults?
 
-**Protokol-kesişimi:** x402 / AP2 / ACP / UCP / hiçbiri — spec referansı varsa ekleyin.
+**Protocol intersection:** x402 / AP2 / ACP / UCP / none — add a spec reference if you have one.
 
-**K0-etkisi:** öneri kanıt-bundle/proof-şemasını etkiliyor mu? (etkiliyse gerekçe şart)
+**K0 impact:** does the proposal affect the evidence-bundle / proof schema? (If yes, rationale is mandatory.)

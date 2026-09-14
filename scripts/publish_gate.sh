@@ -41,7 +41,12 @@ rm -rf dist
 .venv/bin/python -m build
 .venv/bin/python -m twine check dist/*
 
-step "6) Canlı-E2E — uvicorn + tüm akışlar (T0–T10; rastgele-port — çakışma-direnci)"
+if [[ "${SWEEP:-0}" == "1" ]]; then
+  step "6) Kamusal-yüzey taraması (sdist iç-ad = 0) — PyPI-öncesi şart"
+  .venv/bin/python scripts/public_surface_sweep.py
+fi
+
+step "7) Canlı-E2E — uvicorn + tüm akışlar (T0–T10; rastgele-port — çakışma-direnci)"
 bash scripts/live_gate.sh $(( 8500 + RANDOM % 400 ))
 
 if [[ "${PUSH:-0}" != "1" ]]; then
@@ -49,14 +54,14 @@ if [[ "${PUSH:-0}" != "1" ]]; then
   exit 0
 fi
 
-step "7) Git — durum, commit, push (private)"
+step "8) Git — durum, commit, push (private)"
 git add -A
 git commit -m "SESTER v0.5.0 — identity migration Sikke→Sester + S5 facilitator_svc + S6 joint acceptance (frozen wire fields preserved)" \
   || echo "commit yok (değişiklik yok) — devam"
 git push origin HEAD
 
 if [[ "${REPO_RENAME:-0}" == "1" ]]; then
-  step "8) GitHub repo-detayları — rename + About/topics"
+  step "9) GitHub repo-detayları — rename + About/topics"
   # Uzak-değeri VARSAY; sağlamlaştırılmış ad kökü kullan (push-kanıtı 2026-09-13: goun7/sikke)
   gh repo edit goun7/sikke --name sester \
     --description "x402-style metering, quota, fail-closed policy and hash-chain receipts for AI-agent APIs — one ASGI middleware" \
