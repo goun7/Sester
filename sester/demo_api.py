@@ -45,7 +45,7 @@ esc_queue = EscalationQueue(ESC_DB, ledger=ledger)
 class _PolicyState:
     """Fail-closed politika-durumu: dosya her istekte mtime ile izlenir;
     değişimde yeniden doğrulanır; bozuk/eksik → DenyAll (tüm harcama durur).
-    KURAL_DSL_V0 §4 'kural dosyası bozuksa → harcama durur' canlı-semantiği."""
+    Policy-DSL-v0 §4 'kural dosyası bozuksa → harcama durur' canlı-semantiği."""
 
     def __init__(self) -> None:
         self.mtime: float | None = self._stat()
@@ -77,7 +77,7 @@ _policy_state = _PolicyState()
 
 
 def policy_guard(agent: str, path: str, amount: float) -> tuple[str, str]:
-    """KURAL_DSL kapısı: per-request üst-sınırı + kural-semantiği; karar ledger'a.
+    """Policy-DSL kapısı: per-request üst-sınırı + kural-semantiği; karar ledger'a.
     Politika dosyası her istekte izlenir: bozuk/eksik → DenyAll → hepsi reddedilir.
     Döner: (verdict, rule_id) — verdict allow/deny/escalate."""
     policy = _policy_state.current()
@@ -117,7 +117,7 @@ def _agent_of(payment: str, resource: str = "") -> str | None:
 
 
 class SesterPolicyMeter(SesterMeter):
-    """Demo sarımı: x402 kapısına KURAL_DSL politikasını da bağlar (host=kaynak-yolu).
+    """Demo sarımı: x402 kapısına Policy-DSL politikasını da bağlar (host=kaynak-yolu).
     v0.4: AP2/ACP/UCP adaptörleri de kurulu — dört-protokol canlı-akış; satıcı-
     sırrı/merchant env-override'lı (SESTER_UCP_SECRET / SESTER_UCP_MERCHANT);
     SESTER_DEMO_STRICT=1 → imzasız ACP/UCP zarfları fail-closed ret edilir."""
@@ -148,7 +148,7 @@ class SesterPolicyMeter(SesterMeter):
                 agent = _agent_of(payment, path) or "bilinmeyen"
                 verdict, rule = policy_guard(agent, path, self.price)
                 if verdict == "escalate":
-                    # insan-onay kuyruğu (KARAR_63B madde-3): onaylı bilet varsa
+                    # insan-onay kuyruğu (architecture decision record madde-3): onaylı bilet varsa
                     # bir-kezlik tüket → ödeme akışı; yoksa park + 402 escalate
                     approved = esc_queue.approved_for(agent, path)
                     if approved and esc_queue.consume(approved["esc_id"]):

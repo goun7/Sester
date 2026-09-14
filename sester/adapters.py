@@ -1,7 +1,7 @@
 """SESTER adapters — K4: AP2 mandate + ACP checkout + UCP web-monetization
 → ChargeIntent/Receipt.
 
-63-A mimari tezi (KAGIT §TUR): "Protokol-galibi riskine karşı tek çekirdek".
+63-A mimari tezi (concept paper §TUR): "Protokol-galibi riskine karşı tek çekirdek".
 ChargeIntent (fiyat+kimlik+kanıt-istemi) ve ChargeReceipt (ödeme-kanıtı) K0
 ortak-zarfı soyutlamasıdır; her protokol bunlara çevrilir. Bu modül üç
 protokolün çekirdek-akışını *yerel* taklit eder:
@@ -16,7 +16,7 @@ protokolün çekirdek-akışını *yerel* taklit eder:
     imza: `signature` alanı JWS-compact (RFC 7515). Üretimde `key_resolver`
     ŞART: HS256 (stdlib) veya ES256 (opsiyonel `cryptography`) ile
     doğrulanır; resolver'sız kurulumda imza yalnız form-bağlamı yapılır
-    (v0.2 uyumu — KARAR_63B: bilinçli v0.3 geçişi).
+    (v0.2 uyumu — architecture decision record: bilinçli v0.3 geçişi).
 
   ACP (Agentic Commerce Protocol — Stripe+OpenAI, Eyl 2025):
     "checkout_session" = satıcı-oturumu, ajan bakiyesinden tek-çekim.
@@ -24,7 +24,7 @@ protokolün çekirdek-akışını *yerel* taklit eder:
     Session:  {session_id, buyer (cüzdan-adresi), line_item: {resource,
                amount_minor, currency}, valid_to}
 
-  UCP (Universal Commerce Protocol — Google+Shopify, 2026; SPEC_FARK v3):
+  UCP (Universal Commerce Protocol — Google+Shopify, 2026; protocol-delta register v3):
     "web_monetization " = satıcının /.well-known/ucp manifestinde ilan ettiği
     satıcı-mühürlü tek-çekim satın-alma niyeti (402-akışına paralel biçim).
     Auth:     "UCP-Checkout <b64(intent)>"

@@ -6,7 +6,7 @@ x402 'authorization' akışı (docs.x402.org/schemes/exact, teyit 2026-09-12):
 
 Taşıma-katmanı enjektabl: gerçek HTTP istemcisi + testler için sahte taşıma.
 Mimari kural: facilitator ERİŞİLEMEZSE ödeme "unknown" kabul edilir ve istek
-RETREDİLİR (fail-closed) — asla açık-kapı bırakılmaz (KARAR_63B §5).
+RETREDİLİR (fail-closed) — asla açık-kapı bırakılmaz (architecture decision record §5).
 """
 
 from __future__ import annotations

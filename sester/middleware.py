@@ -35,7 +35,7 @@ class PaymentErr(Exception):
 class SesterMeter:
     """ASGI middleware: sarılan uygulamanın önünde ücretlendirme kapısı."""
 
-    VERSION = "pugio0"            # HMAC şeması — DONUK kablo-alanı (ESKI_KIMLIK.md)
+    VERSION = "pugio0"            # HMAC şeması — DONUK kablo-alanı (identity-migration record)
     EVM_SCHEME = "exact-sester"   # EIP-191 imzalı ajan-kimliği
 
     def __init__(

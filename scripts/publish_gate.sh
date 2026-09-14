@@ -4,7 +4,8 @@
 # Kullanım:
 #   bash scripts/publish_gate.sh                      # yalnız yerel-kapı (test/derleme/E2E)
 #   PUSH=1 bash scripts/publish_gate.sh               # + commit & push (private)
-#   PUSH=1 REPO_RENAME=1 bash scripts/publish_gate.sh # + repo adı goun7/sikke → goun7/sester + About/topics
+#   PUSH=1 REPO_ASSERT=1 bash scripts/publish_gate.sh # + About/topics yeniden-teyit
+# (rename 2026-09-14'te tamamlandı: goun7/Sester — bu adım artık ASSERT modunda)
 #
 # Kural: her adım fail-loud — ilk RED'de durur, sessiz-geçiş yoktur.
 set -euo pipefail
@@ -13,6 +14,7 @@ cd "$(dirname "$0")/.."
 step() { printf '\n\033[1;36m== %s ==\033[0m\n' "$1"; }
 
 step "0) Ölü sikke/ kalıntısı + demo-DB'leri temizliği (tombstone → silme)"
+# (rename tamamlandı: goun7/Sester — REPO_RENAME bayrağı REPO_ASSERT oldu)
 rm -rf sikke sikke-demo.sqlite3* sikke-escalation.sqlite3* __pycache__ tests/__pycache__ .pytest_cache
 test ! -d sikke || { echo "RED: sikke/ silinemedi"; exit 1; }
 echo "OK: sikke/ kaldırıldı (tombstone dönemi kapandı)"
@@ -60,14 +62,13 @@ git commit -m "SESTER v0.5.0 — identity migration Sikke→Sester + S5 facilita
   || echo "commit yok (değişiklik yok) — devam"
 git push origin HEAD
 
-if [[ "${REPO_RENAME:-0}" == "1" ]]; then
-  step "9) GitHub repo-detayları — rename + About/topics"
-  # Uzak-değeri VARSAY; sağlamlaştırılmış ad kökü kullan (push-kanıtı 2026-09-13: goun7/sikke)
-  gh repo edit goun7/sikke --name sester \
+if [[ "${REPO_ASSERT:-0}" == "1" ]]; then
+  step "9) GitHub repo-detayları — About/topics yeniden-teyit (rename TAMAM: goun7/Sester)"
+  gh repo edit goun7/Sester \
     --description "x402-style metering, quota, fail-closed policy and hash-chain receipts for AI-agent APIs — one ASGI middleware" \
     --add-topic x402 --add-topic ai-agents --add-topic metering --add-topic payments \
     --add-topic asgi-middleware --add-topic fintech
-  echo "OK: goun7/sester — About/topics ayarlandı"
+  echo "OK: goun7/Sester — About/topics teyitli"
 fi
 
 printf '\n\033[1;32mYAYIN-KAPISI TAMAM — v0.5.0 private yayında.\033[0m\n'

@@ -1,6 +1,6 @@
-"""SESTER policy_signed — S3 (IS_PLANI §7): imzalı politika + 24s gevşetme-gate.
+"""SESTER policy_signed — S3 (execution plan §7): imzalı politika + 24s gevşetme-gate.
 
-KURAL_DSL_V0 §3 değişim-yönetimi:
+Policy-DSL-v0 §3 değişim-yönetimi:
   · Politika dosyası **imzalı** değişir (sahip anahtarı) — imza bozuksa
     politika YÜKLENMEZ (SignedPolicyError → fail-closed DenyAll).
   · "Kural gevşetme" (deny→allow, limit-artışı, kapsam-genişletme)
@@ -41,7 +41,7 @@ from .adapters import AdapterError, KeyResolver, sign_mandate_jws, verify_mandat
 from .policy import Policy, PolicyCorruptError
 
 ENVELOPE_VERSION = 1
-RELAXATION_DELAY = 86400.0  # 24 saat (KURAL_DSL §3)
+RELAXATION_DELAY = 86400.0  # 24 saat (Policy-DSL §3)
 
 # JWS-payload ↔ zarf-gövdesi bağı: bu alanlar imzayla kilitli
 _BOUND_FIELDS = ("id", "defaults", "rules")

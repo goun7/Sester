@@ -1,4 +1,4 @@
-"""SESTER bridges — birleşme-değil, köprü kararı (BIRLESTIRME_DEGERLENDIRMESI.md §3).
+"""SESTER bridges — birleşme-değil, köprü kararı (interoperability decision record §3).
 
 K1 · Tamga çıpası:  SESTER kanıt-segmentinin chain-head + merkle-kökünü
       Tamga-uyumlu deterministik JSONL zarfı olarak dışa-verir — Tamga-node'u
@@ -13,7 +13,7 @@ K2 · Veridict talebi: SESTER politika/sayaç iddialarını Veridict'in
 doğrulanabilirlik korunur). Satır-formatları bilinçli-minimal: alıcı tarafı
 sester'suz doğrulayabilsin (scripts/dogrula.py disiplini).
 
-Not (ESKI_KIMLIK.md): `source: "sikke"` ve `pugio_evidence_bundle` DONUK
+Not (identity-migration record): `source: "sikke"` ve `pugio_evidence_bundle` DONUK
 kablo-alanlarıdır — kardeş-repo alıcıları (tamga_pugio_receiver.py vb.)
 bu değerleri bilmektedir; v2'ye kadar değişmezler.
 """

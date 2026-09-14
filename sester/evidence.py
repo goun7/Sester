@@ -1,6 +1,6 @@
 """SESTER evidence — 81-kanıt-köprüsü v0: dışa-doğrulanabilir kanıt-bundle'ı.
 
-63↔81 kontratı (IS_PLANI §7 S4): SESTER olayları, agent-filtreli kanıt-segmenti
+63↔81 kontratı (execution plan §7 S4): SESTER olayları, agent-filtreli kanıt-segmenti
 olarak export edilir. İç zincir HMAC-mühürlü (secret ister); bundle buna ek
 **kamuya proof-zinciri** taşır: her olayın proof'u yalnız sha256(canonical) —
 secret'sız, kütüphanesiz (pür sha256 + JSON) doğrulanır:
@@ -11,9 +11,9 @@ secret'sız, kütüphanesiz (pür sha256 + JSON) doğrulanır:
 
 Merkle: çiftler sha256(a+b); tek-son eleman kendisiyle eşlenir; boş → GENESIS.
 Alıcı: 81-MERGEN denetçisi / müşteri-denetimi / vergi-kanalı kaydı (₿-tahsilat §4
-şerhli-fatura kanıt-eşi) — "kanıt-okuma-oranı" metriğinin (IS_PLANI §4) altyapısı.
+şerhli-fatura kanıt-eşi) — "kanıt-okuma-oranı" metriğinin (execution plan §4) altyapısı.
 
-Not: `pugio_bundle_version` DONUK kablo-alanıdır (ESKI_KIMLIK.md) — alıcılar
+Not: `pugio_bundle_version` DONUK kablo-alanıdır (identity-migration record) — alıcılar
 bu alan-adını bilir; v2'ye kadar değişmez.
 """
 

@@ -13,7 +13,7 @@ sester'suz, pür sha256 (fail-loud: her uyuşmazlık explicit RED).
 Kurallar (K0 §7): yalnız-kamu alanları · sürümlü (bridge_version) ·
 deterministik JSON (sort_keys, compact) · alıcı-bağımsız doğrulama.
 
-Not (ESKI_KIMLIK.md): manifest'teki `source: "sikke"` DONUK kablo-alanıdır
+Not (identity-migration record): manifest'teki `source: "sikke"` DONUK kablo-alanıdır
 (Veridict-tarafı alıcı `scripts/pugio_watch_receiver.py` bu değeri bekler).
 """
 

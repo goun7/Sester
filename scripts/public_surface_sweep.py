@@ -33,21 +33,28 @@ ROOT = Path(__file__).resolve().parents[1]
 
 # Yasaklı-çekirdek: iç-organizasyon ifşa-adları (public-tree'de sıfır-hit şartı)
 FORBIDDEN = [
-    r"Tenderix",
-    r"Tamga",
-    r"Veridict",
-    r"Ostrakon",
-    r"MERGEN",
+    # iç-örgü yapısı (kontrat-public, örgü-özel doktrini: kardeş PROJE adları
+    # kablo-sözleşmelerinde kamuya açık olduğu için yasaklı DEĞİL; örgüyü ifşa
+    # eden klasör-yolları/rollar yasaklı)
     r"gokun",
     r"01_unicorn",
     r"02_sahis",
     r"05_acik_kaynak",
     r"HAT[_ ]?DEFTER",
     r"AGENT[_ ]?MESH",
-    r"guvence",
     r"AjanTicaret",
-    r"AgentShelf",  # 64'ün eski-adı — aynı aile, aynı kural
-    r"Ordervault",
+    r"AjanGuvence",
+    r"KAGIT\.md",
+    r"IS_PLANI\.md",
+    r"KARAR_63B\.md",
+    r"KURAL_DSL",
+    r"BIRLESTIRME_DEGERLENDIRMESI",
+    r"ARASTIRMA_\d{4}",
+    r"SPEC_FARK",
+    r"PRD\.md",
+    r"ESKI_KIMLIK",
+    r"63-Sester",
+    r"64-Tenderix",
 ]
 
 # Krasyon-ismi (belge-başına bir kez derlenir; hem whitelist hem word-guard)

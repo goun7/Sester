@@ -37,12 +37,18 @@ dev = ["pytest>=8", "httpx>=0.27", "eth-account>=0.13", "fastapi>=0.110", "uvico
 [project.urls]
 Homepage = "https://github.com/goun7/sester"
 Documentation = "https://github.com/goun7/sester/tree/main/docs"
-# Not (ESKI_KIMLIK.md): dağıtım-adı `sester` — PyPI/Crates/NPM/.ai/.io taramaları
+# Not: dağıtım-adı `sester` — PyPI/Crates/NPM/.ai/.io taramaları
 # %100 temiz (2026-09-13). Donuk kablo-alanları (pugio0, pugio_bundle_version,
 # pugio_evidence_bundle, source:sikke) alıcı-uyumu için korunur.
 
 [tool.hatch.build.targets.wheel]
 packages = ["sester"]
+
+[tool.hatch.build.targets.sdist]
+# Kamusal-yüzey disiplini (Tamga-20:27 standardı): sdist yalnız dağıtım-gerçeğini
+# taşır — iç-plan/karar-belgeleri ve testler GitHub'da yaşar, pakette değil.
+# public_surface_sweep.py bu sette iç-örgü-adı = 0 şartını pinler.
+only-include = ["sester", "README.md", "LICENSE", "pyproject.toml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

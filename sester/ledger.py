@@ -2,7 +2,7 @@
 
 Her olay bir öncekinin hash'ine bağlı (prev_hash); zincir kırılması tespit
 edilebilir (verify_chain). v0 HMAC-imza; tamga-protocol göçü olay-tipi şeması
-korunarak yapılır (KARAR_63B §bilinçli-sınırlar).
+korunarak yapılır (architecture decision record §bilinçli-sınırlar).
 
 v0.4: amount_minor yardımcı-kolonu (tam-sayı sayaç). K0 kuralı korunur:
 canonical_line donmuştur — kolon hash'e girmez; eski-kayıtlar NULL kalır ve

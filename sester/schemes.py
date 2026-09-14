@@ -11,7 +11,7 @@ exact (x402-uyum, iskelet):
   EIP-3009 alanlarıyla kurulur (spec: docs.x402.org/schemes/exact + EIP-3009;
   teyit 2026-09-12). settle/verify facilitator'su, Settler kontratınatransferWithAuthorization;
   v0.1'de yalnız şema-dozu + alan-kontrolü — zincir-settle 'pending_settlement'
-  permit-olayıyla ledger'a yazılır (KARAR_63B v0.1 §bilinçli-sınırlar).
+  permit-olayıyla ledger'a yazılır (architecture decision record v0.1 §bilinçli-sınırlar).
 """
 
 from __future__ import annotations

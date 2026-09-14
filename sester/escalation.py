@@ -1,6 +1,6 @@
-"""SESTER escalation — KARAR_63B madde-3: insan-onaylı harcama kuyruğu.
+"""SESTER escalation — architecture decision record madde-3: insan-onaylı harcama kuyruğu.
 
-KURAL_DSL_V0 `then: escalate` kararı artık "engelle+log" değil:
+Policy-DSL-v0 `then: escalate` kararı artık "engelle+log" değil:
   park     → istek 402 `escalation_required` ile durur, bilet açılır
              (aynı ajan+kaynak için pending bilet varsa YENİSİ AÇILMAZ —
              tek-bilet disiplini, spam-koruması)

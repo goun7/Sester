@@ -1,4 +1,4 @@
-"""SESTER policy — KURAL_DSL_V0 v0 alt-kümesi, fail-closed.
+"""SESTER policy — Policy-DSL-v0 v0 alt-kümesi, fail-closed.
 
 Kapsam (v0):
   defaults.per_request_max / daily_max   — üst sınırlar
@@ -8,7 +8,7 @@ Kapsam (v0):
   İlk eşleşen kural kazanır; hiçbiri eşleşmezse → DENY (fail-closed).
   Politika dosyası bozuk/eksikse → DENY_ALL (tüm harcama durur).
 
-Bilinçli v0-dışı (KARAR_63B): x402_payee_verified, reputation_min,
+Bilinçli v0-dışı (architecture decision record): x402_payee_verified, reputation_min,
 budget-per-rule, imzalı-policy + 24s gevşetme-gecikmesi, escalate kuyruğu.
 """
 
@@ -136,7 +136,7 @@ class Policy:
             when = r.get("when", {})
             if "host_in" in when:
                 allowed = [h.lower() for h in when["host_in"]]
-                # boş liste = yakala-hepsini (KURAL_DSL "deny-unknown-hosts" anlamı):
+                # boş liste = yakala-hepsini (Policy-DSL "deny-unknown-hosts" anlamı):
                 # önceki allow-kuralları bilinen hostları zaten tüketir.
                 if allowed and host_l not in allowed:
                     continue
@@ -164,7 +164,7 @@ class PolicyCorruptError(Exception):
 
 
 class DenyAll:
-    """Bozuk-politika hâli: her şey durur (KURAL_DSL_V0 §4 fail-closed)."""
+    """Bozuk-politika hâli: her şey durur (Policy-DSL-v0 §4 fail-closed)."""
 
     def evaluate(self, amount: float, host: str, *, now: _dt.datetime | None = None) -> Decision:
         return Decision(DENY, "fail-closed", "politika bozuk — tüm harcama durur")
