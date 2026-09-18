@@ -3,6 +3,11 @@
 All notable changes to SESTER (sester) are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/) · SemVer.
 
+## [Unreleased]
+
+### Added
+- Added a minimal FastAPI integration example in examples/fastapi_demo.py, with usage instructions in examples/README.md.
+
 ## [0.7.0] — 2026-09-14
 
 ### Added
