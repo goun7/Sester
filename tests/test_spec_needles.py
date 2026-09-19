@@ -14,6 +14,7 @@ spec'te-yazılı (test_spec_and_code_agree_on_taxonomy)."""
 from pathlib import Path
 
 import pytest
+import re
 
 SPEC = Path(__file__).resolve().parents[1] / "docs" / "K0_SHARED_ENVELOPE_SPEC.md"
 
@@ -63,13 +64,36 @@ def test_spec_and_code_agree_on_taxonomy():
     assert is_known_event_type("facilitator_bilinmeyen") is False
 
 
+def _call_spans(text: str, opener: str):
+    """`opener` ile-başlayan-çağrıların (start,end) aralıkları — basit
+    parantez-eşleme. `.append(`/`_proof(` çağrı-sınırlarını-bulmak-için."""
+    spans = []
+    for m in re.finditer(re.escape(opener), text):
+        i = m.end() - 1
+        if i >= len(text) or text[i] != "(":
+            continue
+        depth = 0
+        while i < len(text):
+            if text[i] == "(":
+                depth += 1
+            elif text[i] == ")":
+                depth -= 1
+                if depth == 0:
+                    spans.append((m.start(), i))
+                    break
+            i += 1
+    return spans
+
+
 def test_209_taxonomy_has_no_dead_entries():
     """E1(c) makine-karşılığı (Tamga-dersi): spec'in-liste-diği-her-değerin
     GERÇEK bir üreticisi olmalı — "listede-ama-corpus'ta-0" tuzağı. 2026-09-19'da
     `usage_event` tam-böyleydi: panel-etiketinden-varsayımsal-listeye-eklenmişti,
-    hiçbir-üretim-yolu-yayıyordu (ölçüm aslında charge_receipt yazar). Bu-test
-    iki-yönü-de-kilitler: (a) her-değerin-kaynağı-var, (b) kaynak-gerçekten-mevcut.
-    """
+    hiçbir-üretim-yolu-yayıyordu (ölçüm aslında charge_receipt yazar). Üç-yönü-de
+    kilitler: (a) her-değerin-kaynağı-var, (b) kaynak-dosya-mevcut, (c) needle
+    dosyada-değil **gerçek-bir-yazım-çağrısının-içinde** — "dosyada-var-ama-o-bir
+    yorum/parametre" yanlış-yeşilini-engeller (Tamga'nın-out(op="run") ve benim
+    service.py:104-lines.append()-tuzağım-la-aynı-sınıf)."""
     from sester.ledger import (CALLER_CONTRACT_EVENT_TYPES, EVENT_TYPES,
                                EVENT_TYPE_SOURCES, EVENT_TYPE_FAMILIES)
 
@@ -77,14 +101,28 @@ def test_209_taxonomy_has_no_dead_entries():
     # (a) kapsama: statik-kümenin-her-değeri kaynak-yolu veya çağıran-sözleşme
     unaccounted = EVENT_TYPES - set(EVENT_TYPE_SOURCES) - CALLER_CONTRACT_EVENT_TYPES
     assert not unaccounted, f"ölü-girdi (üreticisiz-spec-değeri): {sorted(unaccounted)}"
-    # çağıran-sözleşme-değerleri Sester-çekirdeğinde-yayılMAMALI (test-harici)
-    # (b) needle'lar belirtilen dosyalarda-gerçekten-mevcut
+    # (b)+(c) kaynak-mevcut VE yazım-çağrısı-içinde
     for value, (rel, needle) in EVENT_TYPE_SOURCES.items():
         path = root / rel
         assert path.exists(), f"{value}: kaynak-dosya yok: {rel}"
-        assert needle in path.read_text(encoding="utf-8"), (
-            f"{value}: kaynak-needle bulunamadı ({rel}): {needle!r}")
-    # aile-kind'ları-da-gerçek-emitter'lardan-geliyor
+        text = path.read_text(encoding="utf-8")
+        if needle.startswith("_proof("):
+            # needle-kendisi-çağrı-formu — doğrudan-doğrula
+            assert needle in text, f"{value}: çağrı-needle yok ({rel}): {needle!r}"
+            continue
+        assert _needle_in_call(text, needle), (
+            f"{value}: needle bir-yazım-çağrısında-değil ({rel}): {needle!r} — "
+            "yorum/parametre/payload-içinde-yanlış-eşleşme-riski")
+    # aile-kind'ları-da-gerçek-_proof-çağrılarının-içinde
+    svc = (root / "sester/facilitator_svc/service.py").read_text(encoding="utf-8")
     for kind in EVENT_TYPE_FAMILIES["facilitator_"]:
-        assert f'_proof("{kind}"' in (root / "sester/facilitator_svc/service.py")\
-            .read_text(encoding="utf-8"), f"facilitator_{kind}: emitter yok"
+        assert _needle_in_call(svc, f'"{kind}"', opener="_proof("), (
+            f"facilitator_{kind}: gerçek-bir-_proof-çağrısında-değil")
+
+
+def _needle_in_call(text: str, needle: str, opener: str = ".append(") -> bool:
+    """ needle, `opener` çağrılarından-en-az-birinin-içinde-mi? """
+    pos = text.find(needle)
+    if pos == -1:
+        return False
+    return any(s[0] <= pos < s[1] for s in _call_spans(text, opener))

@@ -55,6 +55,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/) · SemVer.
   source needle actually exists in its file. (The lock caught its own first
   error: a hand-entered source path pointed at `facilitator_svc` for
   `settlement`, which is actually emitted in `middleware.py`.)
+  **Strengthened to append-context:** the needle must now occur *inside* an
+  actual `.append(...)` / `_proof(...)` call span (paren-matched, multi-line
+  aware), not merely in the file — so a literal that appears only in a comment,
+  parameter or payload key cannot false-green. Negative-control proof: a
+  comment/param occurrence is rejected, a multi-line append is accepted. This
+  closes the exact trap Tamga flagged (`out(op="run")` function parameter / our
+  `lines.append(f"sester_facilitator_chain_valid …")` metrics label).
 
 ### Fixed
 - **ERRATUM-K0.3 (code-only rule closed):** replay protection — the producer
