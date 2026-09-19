@@ -25,11 +25,11 @@ CREATE TABLE IF NOT EXISTS events (
     seq        INTEGER PRIMARY KEY AUTOINCREMENT,
     ts         REAL NOT NULL,
     event_type TEXT NOT NULL,          -- ERRATUM-K0.2: taksonomi = ledger.EVENT_TYPES
-    -- usage_event | charge_receipt | refund | permission_decision | policy_denied
-    -- settlement | protocol_intent | webhook_delivery | escalation_parked |
+    -- charge_receipt | refund | permission_decision | policy_denied | settlement
+    -- protocol_intent | webhook_delivery | escalation_parked |
     -- escalation_approved | escalation_denied | escalation_consumed |
     -- facilitator_{verify,settle,metering,refund,batch} — bilinmeyen tip
-    -- append()'te RED (fail-closed)
+    -- append()'te RED (fail-closed); her-değerin üreticisi test_209 ile-sabit
     agent_id   TEXT NOT NULL,
     host       TEXT NOT NULL DEFAULT '',
     amount     REAL NOT NULL DEFAULT 0,
@@ -66,8 +66,16 @@ MINOR = 1_000_000  # USDC 6-dec — v0.4: tam-sayı sayaç-kolonu (middleware bu
 # (batch dahil) atlanmıştı. append() artık bilinmeyen tipi REDDEDiyor
 # (fail-closed); bu listede bir eksiklik varsa kendi test takımımız kırılır —
 # tükenmezlik sözle değil suite ile kanıtlanır (test_208 + tüm suite).
+#
+# DÜZELTME-2 (2026-09-19, Tamga E1(c)-dersi): "usage_event" listedeydi ama
+# HİÇBİR üretim yolu yaymıyordu (panel etiketinden-varsayımsal-eklenmişti;
+# ölçüm aslında charge_receipt yazar). Ölü-spec-girdisi — Tamga'nın "fee listede
+# ama corpus'ta 0 kayıt" bulgusunun birebir-karşılığı. Kaldırıldı; artık
+# EVENT_TYPE_SOURCES her-değerin gerçek-üretici-yolunu tutar ve test_209
+# listede-üreticisiz-girdi kalmadığını makine ile doğrular (E1(c)-kilidi).
+# Not: historical bir ledger'da zaten yoktu (git-tarihinde hiç append
+# edilmemiş), dolayısıyla okuma-yönünde hiçbir etki yok.
 EVENT_TYPES = frozenset({
-    "usage_event",           # ölçüm: çağrı-başına ücretlendirme
     "charge_receipt",        # harcama (+) — spent_today'e pozitif girer
     "refund",                # iade (−) — spent_today'den negatif düşer
     "permission_decision",   # K0 §6 watch-feed yalnızca bu tipi taşır
@@ -80,6 +88,27 @@ EVENT_TYPES = frozenset({
     "settlement",            # on-chain batch ayağı (sester/settlement.py)
     "webhook_delivery",      # çağıran disiplini: başarısız tesimat ledger'a düşer
 })
+
+# Üretici-yolu kanıtı — her statik-değer için GERÇEK bir emitter (kod-yolu).
+# test_209 bunu tarar: (a) her EVENT_TYPES-değeri burada veya CALLER_CONTRACT'te
+# olmalı (ölü-girdi → RED), (b) needle belirtilen dosyada gerçekten mevcut.
+# Tamga'nın "spec'te-yazıyor-ama-corporpus'ta-0" tuzağının makine-karşılığı.
+EVENT_TYPE_SOURCES: dict[str, tuple[str, str]] = {
+    "charge_receipt": ("sester/middleware.py", '"charge_receipt"'),
+    "refund": ("sester/facilitator_svc/service.py", '_proof("refund"'),
+    "permission_decision": ("sester/middleware.py", '"permission_decision"'),
+    "policy_denied": ("examples/fleet_lane/app.py", '"policy_denied"'),
+    "escalation_parked": ("sester/escalation.py", '"escalation_parked"'),
+    "escalation_approved": ("sester/escalation.py", 'escalation_{status}"'),
+    "escalation_denied": ("sester/escalation.py", 'escalation_{status}"'),
+    "escalation_consumed": ("sester/demo_api.py", '"escalation_consumed"'),
+    "protocol_intent": ("scripts/s2_protocol_parity.py", '"protocol_intent"'),
+    "settlement": ("sester/middleware.py", '"settlement"'),
+}
+
+# Çağıran-sözleşmesi değerleri — Sester-çekirdeği yaymaz ama belgelenmiş
+# bütünleştirici-sözleşmedir (webhooks.py: denetim-izi için düşür).
+CALLER_CONTRACT_EVENT_TYPES = frozenset({"webhook_delivery"})
 
 # Dinamik ön-ek aileleri: "{ön-ek}{kind}" biçiminde üretilir; kind kümesi kapalı.
 # Bağımsız doğrulayıcı ön-eke bakarak aileyi tanır, kind'ı ise kümeden doğrular.

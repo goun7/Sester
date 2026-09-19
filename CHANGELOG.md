@@ -43,6 +43,18 @@ Format: [Keep a Changelog](https://keepachangelog.com/) · SemVer.
   `escalation_consumed`, `protocol_intent`, `policy_denied`, `webhook_delivery`
   and the `facilitator_{verify|settle|metering|refund|batch}` family.
   Exhaustiveness is proven by the suite, not by inspection.
+- **No dead taxonomy entries (E1(c) mirror):** `usage_event` was listed in the
+  taxonomy but **no production path ever emitted it** — it had been added from a
+  panel display-label assumption while the metering path actually writes
+  `charge_receipt` (`git log -S'append("usage_event"'` shows only this session's
+  own test scenario). The exact "listed but 0 in corpus" trap Tamga found with
+  their `fee`. Removed from `EVENT_TYPES`, the schema comment, the K0 §1
+  enumeration and the panel labels. New `EVENT_TYPE_SOURCES` table tracks each
+  value's real producer path and `test_209_taxonomy_has_no_dead_entries`
+  machine-locks both directions: every listed value has a source, and each
+  source needle actually exists in its file. (The lock caught its own first
+  error: a hand-entered source path pointed at `facilitator_svc` for
+  `settlement`, which is actually emitted in `middleware.py`.)
 
 ### Fixed
 - **ERRATUM-K0.3 (code-only rule closed):** replay protection — the producer

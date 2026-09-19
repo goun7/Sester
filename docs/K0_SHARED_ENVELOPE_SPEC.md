@@ -45,10 +45,21 @@ TS|EVENT_TYPE|AGENT_ID|HOST|AMOUNT|PAYLOAD|PREV
 > taxonomy (SESTER's `Ledger.EVENT_TYPES` + `EVENT_TYPE_FAMILIES`, the single
 > code source of truth, kept in sync with the SQLite schema comment and
 > *enforced at the write boundary* by `test_208`):
-> `usage_event` · `charge_receipt` · `refund` · `permission_decision` ·
-> `escalation_parked` · `escalation_approved` · `escalation_denied` ·
-> `escalation_consumed` · `protocol_intent` · `settlement`, plus the dynamic
-> prefix family `facilitator_{verify|settle|metering|refund}`.
+> `charge_receipt` · `refund` · `permission_decision` · `escalation_parked` ·
+> `escalation_approved` · `escalation_denied` · `escalation_consumed` ·
+> `protocol_intent` · `settlement`, plus the dynamic prefix family
+> `facilitator_{verify|settle|metering|refund|batch}`.
+>
+> **No dead entries (E1(c) mirror, 2026-09-19):** every listed value is either
+> emitted by a documented producer path (tracked in Sester's
+> `EVENT_TYPE_SOURCES`, machine-checked by `test_209`) or is a documented
+> *caller-contract* value (`webhook_delivery` — integrators record webhook
+> delivery failures for the audit trail). A value the spec lists but no
+> producer ever emits is a divergence of the mirror class: it teaches a
+> receiver to expect a payload shape that never comes. (`usage_event` was such
+> a value — listed from a display-label assumption while the metering path
+> actually writes `charge_receipt`; removed. The family enumeration also missed
+> `batch`; both fixed same-day.)
 >
 > **Correction note (honesty, same day):** the first version of this erratum
 > enumerated only eight values and missed `escalation_consumed`,

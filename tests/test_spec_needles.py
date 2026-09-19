@@ -51,7 +51,7 @@ def test_spec_and_code_agree_on_taxonomy():
     from sester.ledger import EVENT_TYPES, is_known_event_type
 
     text = SPEC.read_text(encoding="utf-8")
-    documented = ["usage_event", "charge_receipt", "refund", "permission_decision",
+    documented = ["charge_receipt", "refund", "permission_decision",
                   "escalation_parked", "escalation_approved", "escalation_denied",
                   "escalation_consumed", "protocol_intent", "settlement"]
     for v in documented:
@@ -61,3 +61,30 @@ def test_spec_and_code_agree_on_taxonomy():
     assert "facilitator_" in text
     assert is_known_event_type("facilitator_batch") is True
     assert is_known_event_type("facilitator_bilinmeyen") is False
+
+
+def test_209_taxonomy_has_no_dead_entries():
+    """E1(c) makine-karşılığı (Tamga-dersi): spec'in-liste-diği-her-değerin
+    GERÇEK bir üreticisi olmalı — "listede-ama-corpus'ta-0" tuzağı. 2026-09-19'da
+    `usage_event` tam-böyleydi: panel-etiketinden-varsayımsal-listeye-eklenmişti,
+    hiçbir-üretim-yolu-yayıyordu (ölçüm aslında charge_receipt yazar). Bu-test
+    iki-yönü-de-kilitler: (a) her-değerin-kaynağı-var, (b) kaynak-gerçekten-mevcut.
+    """
+    from sester.ledger import (CALLER_CONTRACT_EVENT_TYPES, EVENT_TYPES,
+                               EVENT_TYPE_SOURCES, EVENT_TYPE_FAMILIES)
+
+    root = Path(__file__).resolve().parents[1]
+    # (a) kapsama: statik-kümenin-her-değeri kaynak-yolu veya çağıran-sözleşme
+    unaccounted = EVENT_TYPES - set(EVENT_TYPE_SOURCES) - CALLER_CONTRACT_EVENT_TYPES
+    assert not unaccounted, f"ölü-girdi (üreticisiz-spec-değeri): {sorted(unaccounted)}"
+    # çağıran-sözleşme-değerleri Sester-çekirdeğinde-yayılMAMALI (test-harici)
+    # (b) needle'lar belirtilen dosyalarda-gerçekten-mevcut
+    for value, (rel, needle) in EVENT_TYPE_SOURCES.items():
+        path = root / rel
+        assert path.exists(), f"{value}: kaynak-dosya yok: {rel}"
+        assert needle in path.read_text(encoding="utf-8"), (
+            f"{value}: kaynak-needle bulunamadı ({rel}): {needle!r}")
+    # aile-kind'ları-da-gerçek-emitter'lardan-geliyor
+    for kind in EVENT_TYPE_FAMILIES["facilitator_"]:
+        assert f'_proof("{kind}"' in (root / "sester/facilitator_svc/service.py")\
+            .read_text(encoding="utf-8"), f"facilitator_{kind}: emitter yok"

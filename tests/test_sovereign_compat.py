@@ -61,7 +61,7 @@ SOVEREIGN = os.path.join(TAMGA, "tools", "sovereign_verify.py")
 def _scenario(db: Path, secret: str = "dev-secret") -> None:
     """Üç olaylı sağlam zincir — sarmalayıcının beklediği default-secret."""
     led = Ledger(str(db), secret=secret)
-    led.append("usage_event", "ag-sv", host="h", amount=0.0025)
+    led.append("charge_receipt", "ag-sv", host="h", amount=0.0025)
     led.append("charge_receipt", "ag-sv", host="h", amount=0.0025,
                payload={"nonce": "n1", "paid": 0.0025, "scheme": "pugio0"})
     led.append("permission_decision", "ag-sv", host="h", amount=0.0,
@@ -192,7 +192,7 @@ def test_208_event_type_taxonomy_is_locked(tmp_path):
                                is_known_event_type)
 
     expected = {
-        "usage_event", "charge_receipt", "refund", "permission_decision",
+        "charge_receipt", "refund", "permission_decision",
         "policy_denied", "escalation_parked", "escalation_approved",
         "escalation_denied", "escalation_consumed", "protocol_intent",
         "settlement", "webhook_delivery",

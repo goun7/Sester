@@ -185,7 +185,7 @@ def render_panel(ledger: Any, quota: float) -> str:
     event_rows = []
     for e in events:
         et = {"charge_receipt": "ödeme", "permission_decision": "karar",
-              "refund": "iade", "usage_event": "kullanım",
+              "refund": "iade",
               "settlement": "tahsilat", "protocol_intent": "niyet",
               "escalation_parked": "onay-bekliyor",
               "escalation_approved": "onaylandı",

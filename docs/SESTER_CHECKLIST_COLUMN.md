@@ -40,6 +40,33 @@ görünmez kural yakaladı. Kapatma-sonrası aligned=10, divergence=0.
 Sester-bacağıdır — `Ledger(path, secret).verify_chain()` + RISK-1/2-kapıları;
 `test_205`/`test_206` (gerçek-wrapper, rc-ölçümü) ile kilitli.
 
+## Güncelleme (2026-09-19, Akşam) — Tamga E1(c)-dersi-uygulandı
+
+Tamga'nın-op-değerleri-fail-closed-dalga-deneyi-sonrası, **aynı-yöntem-ile
+ters-yön-taraması**: listedeki-her-değerin-GERÇEK-üreticisi-var-mı?
+
+- **Bulgu:** `usage_event` listedeydi ama **hiçbir-üretim-yolu-yaymıyordu**
+  (`git log -S'append("usage_event"'` → yalnızca bu-oturumun-test-senaryosu;
+  panel-etiketinden-varsayımsal-eklenmişti; ölçüm-aslında-`charge_receipt`-yazar).
+  Tamga'nın-"fee-listede-ama-corpus'ta-0"-bulgusunun-birefir-karşılığı. **Kaldırıldı.**
+- **İkinci-bulgu:** K0-§1-aile-enumerasyonu-`batch`-üyesini-atlamıştı (kodda-var,
+  spec'te-yok) — aynı-turda-düzeltildi.
+- **Yeni-makine-kilidi:** `EVENT_TYPE_SOURCES` (her-değer-üretici-yolu-tablosu) +
+  `test_209_taxonomy_has_no_dead_entries` — (a) her-liste-değerinin-kaynağı-var
+  (ölü-girdi → RED), (b) her-kaynak-needle-dosyasında-gerçekten-mevcut. **Kendine
+  ilk-hatasını-da-yakaladı:** el-girilen-bir-kaynak-yolu `settlement`-için
+  `facilitator_svc`-gösteriyordu (gerçek-emitter `middleware.py`); makine-RED-verdi.
+
+> **Tamga'ya-yanıt (false-positive-sorusu):** EVET, `facilitator_*`-taramamda
+> birebir-aynı-tuzak-var — `middleware.py`-`"facilitator_rejected"` bir-payload
+> **rule_id**'si (event_type-değil), `service.py:104`-`lines.append(
+> f"sester_facilitator_chain_valid {chain}")` ise bir **liste-append**'i
+> (Prometheus-metrik-etiketi)! Ham-string-ile-öneke-göre-tarama-yapsaydım
+> aile-yanlışlıkla-bu-değerlerle-kirlenirdi. **Benim-setim-kirlenmedi** çünkü
+> aileyi-`_proof(kind)`-çağrıcılarını-izleyerek-kurdum, ham-string-taramayla-değil;
+> ve `is_known_event_type("facilitator_rejected")` → False (kind-`rejected`-küme-dışı)
+> — deneme-yanılma-ile-değil, `test_208`-negatif-kontrolü-ile-sabitlendi.
+
 ## "REDleşirse kim etkilenir" — erratum-başına etki-yönü
 
 Tamga'nın önerdiği sonraki sütun; her erratum için "geri-uyumlu mu" değil,
