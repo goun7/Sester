@@ -45,6 +45,17 @@ Format: [Keep a Changelog](https://keepachangelog.com/) · SemVer.
   Exhaustiveness is proven by the suite, not by inspection.
 
 ### Fixed
+- **ERRATUM-K0.3 (code-only rule closed):** replay protection — the producer
+  obligation that a replayed nonce is rejected permanently (in-instance *and*
+  across restart, via the persistent `seen_nonces` table), so at most one
+  `charge_receipt` is written per (agent, nonce) — was enforced in code and
+  triple-pinned (`test_64`–`test_66`) but written nowhere a counterpart could
+  read it. Surfaced by the tri-product spec↔code checklist (YÖN-B gap: code
+  enforced, no spec needle) and closed in §7 rule 6. The erratum note records
+  the failure-direction asymmetry it exposes: K0.1/K0.2 violations fail at the
+  producer's *write* boundary, but a replay violation would hit *receivers* at
+  read time — which is why this obligation belongs in the shared spec.
+
 - **Time-dependent test fragility (silent night-time failures):** the
   fleet-lane dogfood policy gates its allow rule on `hour_between
   ["07:00","23:00"]`, so `test_fleet_lane.py`'s happy-path, replay and quota

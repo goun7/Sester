@@ -141,3 +141,25 @@ strictly larger than the feed.
    code, network, or trust ("verify, don't trust").
 5. **Fail loud.** Any mismatch → non-zero exit / explicit verdict; no silent
    passes (shared doctrine with Veridict).
+6. **No replayed receipts (producer obligation).** A producer that gates
+   payment on a nonce MUST reject a replayed nonce permanently — including
+   across its own restarts — so that at most one `charge_receipt` is ever
+   written per (agent, nonce). A receiver re-computing spend from the envelope
+   counts each receipt once; a replayed write would silently double-count and
+   the two sides would diverge. Sester enforces this with a persistent
+   `seen_nonces` table (in-instance and across-reopen), pinned by
+   `test_64`–`test_66`.
+
+> **ERRATUM-K0.3 (2026-09-19):** the replay-protection obligation above was
+> enforced in Sester's code (middleware gate + persistent `seen_nonces`) and
+> pinned by three tests, but was **not** written as a normative rule anywhere a
+> counterpart could read it — the code-only class that produced every other
+> erratum in the tri-product audit (K0.1, E1, A1). Surfaced by the
+> tri-product spec↔code checklist (`TRI-PRODUCT-CHECKLIST.md`, YÖN-B gap:
+> code enforced, no spec needle) and closed the same day. Note the
+> **failure-direction asymmetry** this rule exposes: K0.1/K0.2 violations fail
+> at the producer's *write* boundary (its own `append` rejects → producer
+> notices first, no artifact is ever emitted), whereas a replay violation would
+> write a duplicate receipt and hit the *receivers* at read time. That is why
+> this obligation belongs in the shared spec rather than a producer's internal
+> note — it is the one Sester rule whose failure crosses the product boundary.
