@@ -19,6 +19,7 @@ escalation_denied) — hash-chain'e girer, tamga/Veridict köprülerinde görün
 from __future__ import annotations
 
 import json
+import os
 import sqlite3
 import threading
 import time
@@ -186,7 +187,6 @@ class EscalationQueue:
 
 def main(argv: list[str]) -> int:
     """CLI: python -m sester.escalation pending|approve <id>|deny <id> [--by X]"""
-    import os
 
     db = os.environ.get("SESTER_ESCALATION_DB", "sester-escalation.sqlite3")
     q = EscalationQueue(db)

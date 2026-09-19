@@ -12,6 +12,23 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ["3.11", "3.12", "3.13", "3.14"]
+    services:
+      # PG-parite bacakları (test_pg_parity / test_migrate_pg / test_minor_unit)
+      # varsayılan CI'da da koşsun — SQLite↔PG aynı-hash tezi antrenilmiş
+      # olmadan "parite" iddiası boşta kalıyordu.
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: sester
+          POSTGRES_PASSWORD: sester
+          POSTGRES_DB: sester
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -28,6 +45,8 @@ jobs:
           print("fail-closed smoke OK")
           PY
       - name: Tests
+        env:
+          SESTER_PG_DSN: postgresql://sester:sester@localhost:5432/sester
         run: python -m pytest tests/ -q
 
   bridges:
@@ -61,6 +80,9 @@ jobs:
           SESTER_VERIDICT_PATH: ${{ github.workspace }}/siblings/veridict
         run: |
           python -m pytest tests/test_bridges_crossrepo.py -v
+          # sovereign_verify sarmalayıcısının çağırdığı donuk Sester yüzeyi
+          # (Ledger(path).verify_chain().close()) — gerçek wrapper ile koşar
+          python -m pytest tests/test_sovereign_compat.py -v
           # Alıcılar pür-stdlib: kardeş-repoların kendi selftestleri de koşar
           python siblings/tamga/tamga_pugio_receiver.py --selftest
           python siblings/veridict/scripts/pugio_watch_receiver.py --selftest

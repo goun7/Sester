@@ -19,6 +19,7 @@ from __future__ import annotations
 import base64
 import binascii
 import json
+import time
 from dataclasses import dataclass
 from typing import Any
 
@@ -160,9 +161,7 @@ class ExactSesterV2:
         (x402-uyum testleri ve ileride gerçek facilitator akışı için.)"""
         if not HAVE_ETH:
             raise PaymentError("eth-account kurulu değil")
-        import time as _t
-
-        now = int(_t.time())
+        now = int(time.time())
         va = valid_after if valid_after is not None else now - 60
         vb = valid_before if valid_before is not None else now + 300
         nonce_hex = nonce_hex or ("0x" + "ab" * 32)

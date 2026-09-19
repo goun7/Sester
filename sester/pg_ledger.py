@@ -20,6 +20,7 @@ information_schema-korumalı idempotent-eklenir.
 
 from __future__ import annotations
 
+import hmac
 import json
 import os
 import threading
@@ -147,9 +148,7 @@ class PgLedger:
                 return False
             expect = seal(self.secret, canonical_line(
                 ts, et, agent, host, amount, payload, prev_hash))
-            import hmac as _hmac
-
-            if not _hmac.compare_digest(expect, h):
+            if not hmac.compare_digest(expect, h):
                 return False
             prev = h
         return True

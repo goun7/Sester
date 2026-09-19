@@ -3,6 +3,38 @@
 All notable changes to SESTER (sester) are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/) · SemVer.
 
+## [Unreleased]
+
+### Added
+- **Sovereign-wrapper surface lock** — `tests/test_sovereign_compat.py` (5
+  tests): pins the exact call shape Tamga's `tools/sovereign_verify.py`
+  depends on (`Ledger(path)` → `verify_chain()` → `close()`), clean→GREEN and
+  tamper→RED. Two cross-repo legs run the **real** wrapper when
+  `SESTER_TAMGA_PATH` is set; otherwise they skip and the three surface tests
+  still run. Follows the AT-038/039 "lock it with a test, not a promise"
+  doctrine both sides now share.
+- **x402 spec-currency note** — `docs/adr/0010_x402_spec_currency_2026-09-19.md`:
+  live-spec sweep after ADR-0008. Core flow unchanged (validates the
+  implementation basis); `exact` now also supports Solana/SVM, and the
+  extension surface (Bazaar, ERC-8021 builder code, payment-identifier, SIWX,
+  signed offers/receipts, gas sponsoring) is recorded as deliberately out of
+  the adapter scope. Batch settlement is confirmed on-direction with
+  `sester/settlement.py`. Volume figures could **not** be re-verified this
+  cycle (search APIs down) and stay as 09-12 claims.
+
+### Fixed
+- **Inline-import cleanup (technical-debt sweep):** stdlib imports that sat
+  inside functions moved to module level — `hmac` in `PgLedger.verify_chain`
+  (it was re-imported once per chain row), `time` in `schemes.py`, `os` in
+  `escalation.main()`.
+
+### Changed
+- **CI now trains the Postgres parity legs:** a `postgres:16` service
+  container plus `SESTER_PG_DSN` runs the 12 previously-always-skipped tests
+  (`test_pg_parity`, `test_migrate_pg`, `test_minor_unit`), so the
+  SQLite↔PG identical-chain claim is exercised instead of asserted. The
+  cross-repo `bridges` job additionally runs `tests/test_sovereign_compat.py`.
+
 ## [0.7.0] — 2026-09-14
 
 ### Added
