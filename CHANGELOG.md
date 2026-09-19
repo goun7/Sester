@@ -29,6 +29,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/) · SemVer.
   `sovereign_verify` does) would diverge silently. Pinned by a
   negative-control test (`test_207…`): editing `amount_minor` in place keeps
   the chain valid, whereas amount tampering breaks it.
+- **K0 erratum (shared spec), §1 taxonomy:** `event_type` was a documented
+  field with an *undocumented* value set — the envelope carries all of its
+  values, so any receiver interpreting it semantically diverged silently.
+  Enumerated the producer-side taxonomy (`Ledger.EVENT_TYPES`, now the single
+  code source of truth kept in sync with the SQLite schema comment) and the
+  spend-netting sign convention (`charge_receipt` +, `refund` −). Locked by
+  `test_208_event_type_taxonomy_is_locked` on three directions: schema-sync,
+  escalation-family coverage, netting arithmetic.
 
 ### Fixed
 - **Inline-import cleanup (technical-debt sweep):** stdlib imports that sat

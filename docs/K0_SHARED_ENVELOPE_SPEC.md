@@ -38,6 +38,23 @@ TS|EVENT_TYPE|AGENT_ID|HOST|AMOUNT|PAYLOAD|PREV
 > `tests/test_sovereign_compat.py::test_207_amount_minor_column_stays_outside_hash`
 > (auxiliary column changed in place → chain still valid).
 
+> **ERRATUM-K0.2 (2026-09-19):** `event_type` is a field in the canonical line,
+> but its allowed values were never enumerated here — they lived only in code,
+> while the envelope carries all of them. Any receiver that interprets
+> `event_type` semantically must know the set. Producer-side taxonomy (SESTER's
+> `Ledger.EVENT_TYPES`, the single code source of truth, kept in sync with the
+> SQLite schema comment by `test_208`):
+> `usage_event` · `charge_receipt` · `refund` · `permission_decision` ·
+> `escalation_parked` · `escalation_approved` · `escalation_denied` ·
+> `settlement`.
+> Cross-project contracts: only `permission_decision` has a feed-level meaning
+> (§6 — the watch feed carries it alone). **Spend netting:** `charge_receipt`
+> contributes **+amount** and `refund` **−amount** to any running total; a
+> receiver re-computing spend from the envelope must apply the same sign
+> convention or the two sides diverge. Producers MUST NOT emit values outside
+> their declared set; receivers that do not interpret `event_type` should treat
+> it as opaque (§7 rule 3, additive only).
+
 ## 2) Proof chain (secretless tier)
 
 `proof_i = SHA256(canonical_line_i)` — the **public** chain. Projects may keep an

@@ -179,3 +179,31 @@ def test_207_amount_minor_column_stays_outside_hash(tmp_path):
     finally:
         c.close()
     assert Ledger(str(db)).verify_chain() is True
+
+
+def test_208_event_type_taxonomy_is_locked(tmp_path):
+    """ERRATUM-K0.2: olay-tipi taksonomisi tek kaynak (``Ledger.EVENT_TYPES``).
+    (a) SCHEMA yorumu kümenin TAMAMASINI belgeler — kod/spec senkronu;
+    (b) escalation ailesi zarfa geçen olaylar — küme dışı kalamaz;
+    (c) refund netting işareti: charge_receipt +, refund − (bağımsız doğrulayıcı
+    türetmesiyle aynı soylem)."""
+    from sester.ledger import EVENT_TYPES, SCHEMA
+
+    expected = {
+        "usage_event", "charge_receipt", "refund", "permission_decision",
+        "escalation_parked", "escalation_approved", "escalation_denied",
+        "settlement",
+    }
+    assert EVENT_TYPES == expected
+    # (a) SCHEMA yorumu her tipi belgeler — ayrışma = kod/spec kayması
+    assert all(v in SCHEMA for v in EVENT_TYPES)
+    # (b) insan-onay olayları zincire yazılıp zarfa taşınır — kümede olmalı
+    assert {"escalation_parked", "escalation_approved",
+            "escalation_denied"} <= EVENT_TYPES
+    # (c) netting işareti: 0.10 charge − 0.03 refund = 0.07 net harcama
+    db = tmp_path / "t208.sqlite3"
+    led = Ledger(str(db), secret="t208")
+    led.append("charge_receipt", "ag-t", amount=0.10)
+    led.append("refund", "ag-t", amount=0.03)
+    led.close()
+    assert abs(Ledger(str(db), secret="t208").spent_today("ag-t") - 0.07) < 1e-9

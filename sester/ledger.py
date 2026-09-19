@@ -24,7 +24,9 @@ SCHEMA = """
 CREATE TABLE IF NOT EXISTS events (
     seq        INTEGER PRIMARY KEY AUTOINCREMENT,
     ts         REAL NOT NULL,
-    event_type TEXT NOT NULL,          -- usage_event | charge_receipt | permission_decision | refund
+    event_type TEXT NOT NULL,          -- ERRATUM-K0.2: taksonomi = ledger.EVENT_TYPES
+    -- usage_event | charge_receipt | refund | permission_decision
+    -- escalation_parked | escalation_approved | escalation_denied | settlement
     agent_id   TEXT NOT NULL,
     host       TEXT NOT NULL DEFAULT '',
     amount     REAL NOT NULL DEFAULT 0,
@@ -50,6 +52,21 @@ CREATE TABLE IF NOT EXISTS seen_nonces (
 GENESIS = "0" * 64
 
 MINOR = 1_000_000  # USDC 6-dec — v0.4: tam-sayı sayaç-kolonu (middleware bundan yönlendirilir)
+
+# Olay-tipi taksonomisi — ERRATUM-K0.2 (docs/K0_SHARED_ENVELOPE_SPEC.md §1).
+# events tablosuna yazılabilen tek küme; zarf (bundle) bu tipleri taşır ve
+# bağımsız doğrulayıcılar event_type'ı anlamsal olarak yorumluyorsa bu kümeyi
+# bilmek zorundadır. SCHEMA yorumu ile BİREBİTİR (test_208 ile senkron-kilit).
+EVENT_TYPES = frozenset({
+    "usage_event",           # ölçüm: çağrı-başına ücretlendirme
+    "charge_receipt",        # harcama (+) — spent_today'e pozitif girer
+    "refund",                # iade (−) — spent_today'den negatif düşer
+    "permission_decision",   # K0 §6 watch-feed yalnızca bu tipi taşır
+    "escalation_parked",     # insan-onay: bilet açıldı (istek 402'de park)
+    "escalation_approved",   # onaylandı (tek-seferlik tüketim)
+    "escalation_denied",     # reddedildi
+    "settlement",            # on-chain batch ayağı (sester/settlement.py)
+})
 
 
 def canonical_line(ts: float, event_type: str, agent_id: str, host: str,
