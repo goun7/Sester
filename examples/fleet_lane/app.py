@@ -21,6 +21,8 @@ import json
 import os
 from pathlib import Path
 
+import datetime as _dt
+
 from sester.ledger import Ledger
 from sester.middleware import SesterMeter
 from sester.policy import DenyAll, Policy, PolicyCorruptError
@@ -95,6 +97,13 @@ class _PolicyState:
 class FleetPolicyMeter(SesterMeter):
     """Ödeme-kapısından ÖNCE politika-kapısı: her karar ledger'a."""
 
+    def __init__(self, *args, now: _dt.datetime | None = None, **kw) -> None:
+        # Test-determinizmi: politikanın hour_between penceresi gerçek-zamana
+        # bağımlıdır — olmasaydı test takımı iş-saatleri dışında sessizce
+        # kırmış olurdu. Sabit bir iş-saatleri anı enjekte edilebilsin.
+        super().__init__(*args, **kw)
+        self._now = now
+
     async def __call__(self, scope, receive, send):
         if scope["type"] == "http" and not any(
             scope.get("path", "").startswith(p) for p in self.exempt_prefixes
@@ -104,7 +113,7 @@ class FleetPolicyMeter(SesterMeter):
                 path = scope.get("path", "")
                 agent = payment.split(" ", 1)[1].split(":")[0]
                 policy = _PolicyState.current()
-                d = policy.evaluate(self.price, path)
+                d = policy.evaluate(self.price, path, now=self._now)
                 if d.verdict != "allow":
                     await self._challenge(send, scope, f"policy_denied:{d.rule_id}")
                     self.ledger.append(

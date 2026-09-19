@@ -182,28 +182,36 @@ def test_207_amount_minor_column_stays_outside_hash(tmp_path):
 
 
 def test_208_event_type_taxonomy_is_locked(tmp_path):
-    """ERRATUM-K0.2: olay-tipi taksonomisi tek kaynak (``Ledger.EVENT_TYPES``).
-    (a) SCHEMA yorumu kümenin TAMAMASINI belgeler — kod/spec senkronu;
-    (b) escalation ailesi zarfa geçen olaylar — küme dışı kalamaz;
-    (c) refund netting işareti: charge_receipt +, refund − (bağımsız doğrulayıcı
-    türetmesiyle aynı soylem)."""
-    from sester.ledger import EVENT_TYPES, SCHEMA
+    """ERRATUM-K0.2: olay-tipi taksonomisi tek kaynak (``Ledger.EVENT_TYPES``
+    + ``EVENT_TYPE_FAMILIES``). (a) SCHEMA yorumu kümenin TAMAMINI belgeler;
+    (b) escalation ailesi (consumed dahil) ve facilitator ailesi kümede;
+    (c) bilinmeyen tip ``append``'te RED — tükenmezlik suite ile kanıtlanır
+    (bu satır bir üretim yolunu kırarsa taksonomi eksik demektir);
+    (d) refund netting: charge_receipt +, refund −."""
+    from sester.ledger import (EVENT_TYPE_FAMILIES, EVENT_TYPES, SCHEMA,
+                               is_known_event_type)
 
     expected = {
         "usage_event", "charge_receipt", "refund", "permission_decision",
-        "escalation_parked", "escalation_approved", "escalation_denied",
-        "settlement",
+        "policy_denied", "escalation_parked", "escalation_approved",
+        "escalation_denied", "escalation_consumed", "protocol_intent",
+        "settlement", "webhook_delivery",
     }
     assert EVENT_TYPES == expected
     # (a) SCHEMA yorumu her tipi belgeler — ayrışma = kod/spec kayması
     assert all(v in SCHEMA for v in EVENT_TYPES)
-    # (b) insan-onay olayları zincire yazılıp zarfa taşınır — kümede olmalı
-    assert {"escalation_parked", "escalation_approved",
-            "escalation_denied"} <= EVENT_TYPES
-    # (c) netting işareti: 0.10 charge − 0.03 refund = 0.07 net harcama
-    db = tmp_path / "t208.sqlite3"
-    led = Ledger(str(db), secret="t208")
+    assert all(prefix in SCHEMA for prefix in EVENT_TYPE_FAMILIES)
+    # (b) aileler: kapalı kind'lar bilinir, bogus kind bilinmez
+    for kind in EVENT_TYPE_FAMILIES["facilitator_"]:
+        assert is_known_event_type(f"facilitator_{kind}") is True
+    assert is_known_event_type("facilitator_bogus") is False
+    # (c) fail-closed: taksonomi dışı tip YAZILMAMALI (sessiz ayrışmayı önler)
+    led = Ledger(str(tmp_path / "t208.sqlite3"), secret="t208")
+    with pytest.raises(ValueError, match="bilinmeyen event_type"):
+        led.append("sesterci_bilinmeyen", "ag-t")
+    # (d) netting işareti: 0.10 charge − 0.03 refund = 0.07 net harcama
     led.append("charge_receipt", "ag-t", amount=0.10)
     led.append("refund", "ag-t", amount=0.03)
     led.close()
-    assert abs(Ledger(str(db), secret="t208").spent_today("ag-t") - 0.07) < 1e-9
+    assert abs(Ledger(str(tmp_path / "t208.sqlite3"), secret="t208")
+               .spent_today("ag-t") - 0.07) < 1e-9

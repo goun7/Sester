@@ -38,22 +38,36 @@ TS|EVENT_TYPE|AGENT_ID|HOST|AMOUNT|PAYLOAD|PREV
 > `tests/test_sovereign_compat.py::test_207_amount_minor_column_stays_outside_hash`
 > (auxiliary column changed in place → chain still valid).
 
-> **ERRATUM-K0.2 (2026-09-19):** `event_type` is a field in the canonical line,
-> but its allowed values were never enumerated here — they lived only in code,
-> while the envelope carries all of them. Any receiver that interprets
-> `event_type` semantically must know the set. Producer-side taxonomy (SESTER's
-> `Ledger.EVENT_TYPES`, the single code source of truth, kept in sync with the
-> SQLite schema comment by `test_208`):
+> **ERRATUM-K0.2 (2026-09-19; corrected same-day):** `event_type` is a field in
+> the canonical line, but its allowed values were never enumerated here — they
+> lived only in code, while the envelope carries all of them. Any receiver that
+> interprets `event_type` semantically must know the set. Producer-side
+> taxonomy (SESTER's `Ledger.EVENT_TYPES` + `EVENT_TYPE_FAMILIES`, the single
+> code source of truth, kept in sync with the SQLite schema comment and
+> *enforced at the write boundary* by `test_208`):
 > `usage_event` · `charge_receipt` · `refund` · `permission_decision` ·
 > `escalation_parked` · `escalation_approved` · `escalation_denied` ·
-> `settlement`.
+> `escalation_consumed` · `protocol_intent` · `settlement`, plus the dynamic
+> prefix family `facilitator_{verify|settle|metering|refund}`.
+>
+> **Correction note (honesty, same day):** the first version of this erratum
+> enumerated only eight values and missed `escalation_consumed`,
+> `protocol_intent` and the `facilitator_*` family — i.e. an incomplete
+> "producers MUST NOT emit values outside the declared set" clause would itself
+> have made legitimate production events non-conforming. This is exactly the
+> silent-divergence class the erratum was written to close. The set is now
+> **fail-closed at `Ledger.append` / `PgLedger.append`**: an unknown
+> `event_type` raises instead of being written, so any future gap breaks the
+> producer's own test suite rather than a downstream verifier. Exhaustiveness is
+> proven by the suite, not by inspection.
+>
 > Cross-project contracts: only `permission_decision` has a feed-level meaning
 > (§6 — the watch feed carries it alone). **Spend netting:** `charge_receipt`
 > contributes **+amount** and `refund` **−amount** to any running total; a
 > receiver re-computing spend from the envelope must apply the same sign
 > convention or the two sides diverge. Producers MUST NOT emit values outside
-> their declared set; receivers that do not interpret `event_type` should treat
-> it as opaque (§7 rule 3, additive only).
+> the declared set/families (enforced); receivers that do not interpret
+> `event_type` should treat it as opaque (§7 rule 3, additive only).
 
 ## 2) Proof chain (secretless tier)
 

@@ -58,11 +58,16 @@ async def _call(m, path="/telemetry", headers=None, method=b"GET"):
 @pytest.fixture()
 def m(tmp_path, monkeypatch):
     """Env-izole filo-rayı: tmp-DB, tmp-politika (çalışma-saati-uyumu testte sabit)."""
+    # Politikanın hour_between penceresi (07:00–23:00) gerçek-zamana bağlıdır;
+    # test gece yarısı koşunca sessizce RED düşmesin diye sabit bir
+    # iş-saatleri anı enjekte ediyoruz (FleetPolicyMeter(now=...)).
+    import datetime as _dt
     led = Ledger(tmp_path / "fleet.sqlite3", secret=fleet.SECRET)
     meter = fleet.FleetPolicyMeter(
         fleet.inner_router, led,
         price=fleet.PRICE, daily_quota=fleet.DAILY_QUOTA,
         secret=fleet.SECRET, pay_to="f1:treasury",
+        now=_dt.datetime(2026, 9, 19, 12, 0),
     )
     yield meter, led
     led.close()
@@ -118,3 +123,22 @@ def test_fleet_chain_intact_after_traffic(m):
         h = _mac_header("f1-n2", f"c{i}")
         asyncio.run(_call(meter, headers=[(b"x-payment", h.encode())]))
     assert led.verify_chain() is True
+
+
+def test_fleet_policy_gate_uses_injected_now(m):
+    """Regresyon (2026-09-19): politika gate'i GERÇEK-ZAMANA bağımlıydı —
+    hour_between [07:00,23:00] penceresi yüzünden test takımı gece yarısı
+    sessizce RED düşürüyordu (iş-saatleri-yeşil / gece-kırmızı). Artık 'now'
+    enjekte ediliyor; bu test iki yönü de kilitler."""
+    import datetime as _dt
+    meter, led = m
+    # pencere DIŞI (23:30) → allow kuralı eşleşmez → RED
+    meter._now = _dt.datetime(2026, 9, 19, 23, 30)
+    h_night = _mac_header("f1-tw", "tw-night")
+    r_night = asyncio.run(_call(meter, headers=[(b"x-payment", h_night.encode())]))
+    assert r_night["status"] == 402
+    # pencere İÇİ (12:00) → GREEN (fixture default'u ile aynı)
+    meter._now = _dt.datetime(2026, 9, 19, 12, 0)
+    h_day = _mac_header("f1-tw2", "tw-day")
+    r_day = asyncio.run(_call(meter, headers=[(b"x-payment", h_day.encode())]))
+    assert r_day["status"] == 200

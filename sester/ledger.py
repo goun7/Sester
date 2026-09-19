@@ -25,8 +25,11 @@ CREATE TABLE IF NOT EXISTS events (
     seq        INTEGER PRIMARY KEY AUTOINCREMENT,
     ts         REAL NOT NULL,
     event_type TEXT NOT NULL,          -- ERRATUM-K0.2: taksonomi = ledger.EVENT_TYPES
-    -- usage_event | charge_receipt | refund | permission_decision
-    -- escalation_parked | escalation_approved | escalation_denied | settlement
+    -- usage_event | charge_receipt | refund | permission_decision | policy_denied
+    -- settlement | protocol_intent | webhook_delivery | escalation_parked |
+    -- escalation_approved | escalation_denied | escalation_consumed |
+    -- facilitator_{verify,settle,metering,refund,batch} — bilinmeyen tip
+    -- append()'te RED (fail-closed)
     agent_id   TEXT NOT NULL,
     host       TEXT NOT NULL DEFAULT '',
     amount     REAL NOT NULL DEFAULT 0,
@@ -57,16 +60,43 @@ MINOR = 1_000_000  # USDC 6-dec — v0.4: tam-sayı sayaç-kolonu (middleware bu
 # events tablosuna yazılabilen tek küme; zarf (bundle) bu tipleri taşır ve
 # bağımsız doğrulayıcılar event_type'ı anlamsal olarak yorumluyorsa bu kümeyi
 # bilmek zorundadır. SCHEMA yorumu ile BİREBİTİR (test_208 ile senkron-kilit).
+#
+# DÜZELTME (2026-09-19): ilk enumerasyon EKSİKTİ — escalation_consumed,
+# protocol_intent, policy_denied, webhook_delivery ve facilitator_* ailesi
+# (batch dahil) atlanmıştı. append() artık bilinmeyen tipi REDDEDiyor
+# (fail-closed); bu listede bir eksiklik varsa kendi test takımımız kırılır —
+# tükenmezlik sözle değil suite ile kanıtlanır (test_208 + tüm suite).
 EVENT_TYPES = frozenset({
     "usage_event",           # ölçüm: çağrı-başına ücretlendirme
     "charge_receipt",        # harcama (+) — spent_today'e pozitif girer
     "refund",                # iade (−) — spent_today'den negatif düşer
     "permission_decision",   # K0 §6 watch-feed yalnızca bu tipi taşır
+    "policy_denied",         # red kararı (fleet-lane üretim şablonu)
     "escalation_parked",     # insan-onay: bilet açıldı (istek 402'de park)
-    "escalation_approved",   # onaylandı (tek-seferlik tüketim)
+    "escalation_approved",   # onaylandı
     "escalation_denied",     # reddedildi
+    "escalation_consumed",   # onay-biletinin tek-seferlik tüketimi (demo_api)
+    "protocol_intent",       # adapter sözleşmesi: ChargeIntent → zarf (adapters)
     "settlement",            # on-chain batch ayağı (sester/settlement.py)
+    "webhook_delivery",      # çağıran disiplini: başarısız tesimat ledger'a düşer
 })
+
+# Dinamik ön-ek aileleri: "{ön-ek}{kind}" biçiminde üretilir; kind kümesi kapalı.
+# Bağımsız doğrulayıcı ön-eke bakarak aileyi tanır, kind'ı ise kümeden doğrular.
+EVENT_TYPE_FAMILIES: dict[str, frozenset[str]] = {
+    "facilitator_": frozenset(
+        {"verify", "settle", "metering", "refund", "batch"}),
+}
+
+
+def is_known_event_type(event_type: str) -> bool:
+    """ERRATUM-K0.2 üyelik-testi — statik küme veya kapalı kind'lı aile."""
+    if event_type in EVENT_TYPES:
+        return True
+    for prefix, kinds in EVENT_TYPE_FAMILIES.items():
+        if event_type.startswith(prefix):
+            return event_type[len(prefix):] in kinds
+    return False
 
 
 def canonical_line(ts: float, event_type: str, agent_id: str, host: str,
@@ -111,6 +141,16 @@ class Ledger:
     def append(self, event_type: str, agent_id: str, host: str = "",
                amount: float = 0.0, payload: dict[str, Any] | None = None,
                amount_minor: int | None = None) -> dict[str, Any]:
+        # ERRATUM-K0.2 (fail-closed): bilinmeyen event_type YAZILMAMALI —
+        # taksonomi dışı değer bağımsız doğrulayıcıları sessiz ayrıştırır.
+        # Eğer bu satır bir production yolunu kırıyorsa, taksonomi eksiktir:
+        # EVENT_TYPES'ı güncelle, K0 §1'i güncelle, test_208'i koş.
+        if not is_known_event_type(event_type):
+            raise ValueError(
+                f"bilinmeyen event_type: {event_type!r} — ERRATUM-K0.2 "
+                "taksonomisi dışı (Ledger.EVENT_TYPES / EVENT_TYPE_FAMILIES); "
+                "yeni tip eklemek önce taksonomi + K0 §1 güncellemini gerektirir"
+            )
         payload_s = json.dumps(payload or {}, sort_keys=True, separators=(",", ":"))
         if amount_minor is None:
             # geri-uyum: major-unit'ten türet (0.0 → 0; major-kayan nokta uçları

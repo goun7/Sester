@@ -27,7 +27,8 @@ import threading
 import time
 from typing import Any
 
-from .ledger import GENESIS, MINOR, canonical_line, seal
+from .ledger import (GENESIS, MINOR, canonical_line, is_known_event_type,
+                     seal)
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS events (
@@ -113,6 +114,12 @@ class PgLedger:
                amount: float = 0.0,
                payload: dict[str, Any] | None = None,
                amount_minor: int | None = None) -> dict[str, Any]:
+        # ERRATUM-K0.2 (fail-closed): SQLite-Ledger ile aynı taksonomi-kapısı.
+        if not is_known_event_type(event_type):
+            raise ValueError(
+                f"bilinmeyen event_type: {event_type!r} — ERRATUM-K0.2 "
+                "taksonomisi dışı (ledger.EVENT_TYPES / EVENT_TYPE_FAMILIES)"
+            )
         payload_s = json.dumps(payload or {}, sort_keys=True, separators=(",", ":"))
         if amount_minor is None:
             amount_minor = int(round(float(amount) * MINOR))  # geri-uyum türetim

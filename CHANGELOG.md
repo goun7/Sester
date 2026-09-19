@@ -32,13 +32,27 @@ Format: [Keep a Changelog](https://keepachangelog.com/) · SemVer.
 - **K0 erratum (shared spec), §1 taxonomy:** `event_type` was a documented
   field with an *undocumented* value set — the envelope carries all of its
   values, so any receiver interpreting it semantically diverged silently.
-  Enumerated the producer-side taxonomy (`Ledger.EVENT_TYPES`, now the single
-  code source of truth kept in sync with the SQLite schema comment) and the
-  spend-netting sign convention (`charge_receipt` +, `refund` −). Locked by
-  `test_208_event_type_taxonomy_is_locked` on three directions: schema-sync,
-  escalation-family coverage, netting arithmetic.
+  Enumerated the producer-side taxonomy (`Ledger.EVENT_TYPES` +
+  `EVENT_TYPE_FAMILIES`, now the single code source of truth kept in sync with
+  the SQLite schema comment) and the spend-netting sign convention
+  (`charge_receipt` +, `refund` −). Locked by
+  `test_208_event_type_taxonomy_is_locked`. **The "MUST NOT" clause is now
+  fail-closed at the write boundary** — `Ledger.append` / `PgLedger.append`
+  raise on unknown `event_type`, which is how the initial 8-value enumeration
+  was proven incomplete the same day: the suite broke and surfaced
+  `escalation_consumed`, `protocol_intent`, `policy_denied`, `webhook_delivery`
+  and the `facilitator_{verify|settle|metering|refund|batch}` family.
+  Exhaustiveness is proven by the suite, not by inspection.
 
 ### Fixed
+- **Time-dependent test fragility (silent night-time failures):** the
+  fleet-lane dogfood policy gates its allow rule on `hour_between
+  ["07:00","23:00"]`, so `test_fleet_lane.py`'s happy-path, replay and quota
+  tests were green during business hours and RED after 23:00 — a
+  local-green/CI-red trap of exactly the class the cross-project audit has
+  been chasing. `FleetPolicyMeter` now accepts an injectable `now` and the
+  fixture pins a business-hours instant; `test_fleet_policy_gate_uses_injected_now`
+  locks both directions (out-of-window → 402, in-window → 200).
 - **Inline-import cleanup (technical-debt sweep):** stdlib imports that sat
   inside functions moved to module level — `hmac` in `PgLedger.verify_chain`
   (it was re-imported once per chain row), `time` in `schemes.py`, `os` in
