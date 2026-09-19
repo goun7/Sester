@@ -27,6 +27,17 @@ TS|EVENT_TYPE|AGENT_ID|HOST|AMOUNT|PAYLOAD|PREV
 - `PAYLOAD` — compact JSON, **sorted keys**, no spaces (`separators=(",",":")`)
 - `PREV` — previous proof in hex; first event uses `GENESIS = 64 × "0"`
 
+> **ERRATUM-K0.1 (2026-09-19):** the canonical `AMOUNT` is the **major** unit
+> at fixed 6 decimals. An implementation MAY keep an auxiliary integer
+> minor-unit column (e.g. SESTER's `amount_minor` for exact integer counting);
+> such a column **MUST NOT** enter the canonical preimage — it is a local
+> convenience, not part of the cross-project chain. Independent verifiers that
+> read a producer's storage *directly* (rather than the envelope — e.g.
+> Tamga's `sovereign_verify` opening the SQLite file) must derive hashes from
+> the 6-decimal major amount only, or the two sides diverge silently. Pinned by
+> `tests/test_sovereign_compat.py::test_207_amount_minor_column_stays_outside_hash`
+> (auxiliary column changed in place → chain still valid).
+
 ## 2) Proof chain (secretless tier)
 
 `proof_i = SHA256(canonical_line_i)` — the **public** chain. Projects may keep an

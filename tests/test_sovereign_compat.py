@@ -159,3 +159,23 @@ def test_206_real_sovereign_wrapper_red_on_tamper(tmp_path):
     r = json.loads(p.stdout[p.stdout.index("{"):])["results"][0]
     assert r["product"] == "sester"
     assert r["ok"] is False and r["verdict"] == "RED"
+
+
+def test_207_amount_minor_column_stays_outside_hash(tmp_path):
+    """K0 erratum (2026-09-19): ``amount_minor`` yardımcı-kolonu canonical
+    preimage'e GIRMEZ. Doğrudan değiştirilince verify_chain hâlâ SAĞLAM
+    olmalı — çünkü sarmalayıcı SQLite'i doğrudan okur ve bağımsız bir
+    doğrulayıcı hash'leri türetirken bu kuralı bilmek zorundadır. Yanlış
+    kolonu hedefleyen bir kurcalama testi sessiz yeşile dönmesin diye bu
+    yön de kilitli (negatif-kontrol; preimage-içi amount kazıma test_204
+    ile RED'dir)."""
+    db = tmp_path / "sv.sqlite3"
+    _scenario(db)
+    assert Ledger(str(db)).verify_chain() is True
+    c = sqlite3.connect(str(db))
+    try:
+        c.execute("UPDATE events SET amount_minor = 123456 WHERE seq = 2")
+        c.commit()
+    finally:
+        c.close()
+    assert Ledger(str(db)).verify_chain() is True

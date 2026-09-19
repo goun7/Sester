@@ -21,6 +21,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/) · SemVer.
   the adapter scope. Batch settlement is confirmed on-direction with
   `sester/settlement.py`. Volume figures could **not** be re-verified this
   cycle (search APIs down) and stay as 09-12 claims.
+- **K0 erratum (shared spec):** clarified in `docs/K0_SHARED_ENVELOPE_SPEC.md`
+  §1 that the canonical `AMOUNT` is the 6-decimal **major** unit and that an
+  auxiliary minor-unit column (e.g. `amount_minor`) MUST NOT enter the
+  canonical preimage. The rule was enforced in code but lived only in module
+  docstrings — a third-party verifier reading the SQLite store directly (as
+  `sovereign_verify` does) would diverge silently. Pinned by a
+  negative-control test (`test_207…`): editing `amount_minor` in place keeps
+  the chain valid, whereas amount tampering breaks it.
 
 ### Fixed
 - **Inline-import cleanup (technical-debt sweep):** stdlib imports that sat
