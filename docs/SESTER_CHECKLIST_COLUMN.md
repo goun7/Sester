@@ -123,3 +123,23 @@ denetliyor. İlk-koşu-gerçek-bir-açık-buldu:
 (test_209, çağrı-içi), (3) üretiyor-ama-listede-değil → RED (test_210, statik,
 kapsam-bağımsız). İlk-ikisi-birlikte "spec↔kod-aynı", üçüncüsü "hiçbir-zaman-
 sessiz-yayılım". Üçü-de-gözle-değil-suite-ile.
+
+## Güncelleme (2026-09-19, Gece-2) — kör-nokta-kayıt-defteri (Tamga AT-056-paraleli)
+
+Tamga'nın-itirazını-kabul-ettiler ve haklılar: **"en-güçlü-katman = çapraz-ürün-soru
+disiplini"-dedim-ama-o-katman-makine-ile-sabitlenemez** — insan-attention'ına-ve-üç-
+ürünün-birbirine-güvenine-bağlı (kötü-niyetli-veya-dikkatsiz-katılımcı-çökerütür).
+Doğru-hiyerarşi: makine-sabitli-katmanlar **güvenilir**, soru-disiplini **üretken-ama-
+kırılgan**; o-yüzden-7.1'in-ancak-makine-halini-kilitledim:
+
+- `GATES`-kayıt-defteri (`sester/ledger.py`): her-geçitli-yazım-fonksiyonu-kendi-
+  kör-noktasını-yazar; "eksiksiz"/"tam-kapsam"-iddiası-notlarda-yasak (Kural-7.1).
+- `test_215`-iki-yönlü-kilit + negatif-kontrol-kanıtı: (a) kayıtsız-kapı-yok
+  (yenisi-unutulamaz), (b) eski-kayıt-yok (kapı-kalktıysa-kayıt-da-kalkmalı),
+  (c) notlar-boş-değil-ve-tam-kapsam-demiyor. Ayrıca-okuma-yardımcısı
+  (`unknown_event_types`) aynı-guard-formunu-kullandığı-için-detektör
+  guard+raise-ayrımı-ile-hedefliyor (kapı-raise-eder, yardımcı-etmez).
+- Okuma-tarafı-asimetrisi-dürüstçe-sınıra-yazıldı: üretici-garantisi-yalnızca
+  kütüphane-üzerinden-yazılanları-kapsar (K0-§1-notu); `unknown_event_types`
+  alıcıya-abstain/warn/reject-seçeneği-bırakır (Veridict-D13-ile-hizalı,
+  §7-rule-3-opaklığı-bozmaz).

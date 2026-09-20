@@ -153,6 +153,27 @@ def unknown_event_types(events) -> set[str]:
     return {e["event_type"] for e in events if not is_known_event_type(e["event_type"])}
 
 
+# Kural-7.1 makine-kilidi (Tamga AT-056-paraleli, LEDGER-SPEC-§7): her-kapı
+# kendi-kör-noktasını-yazmak-zorunda; "artık-tam-kapsam"-iddiası-yasaktır.
+# test_215-iki-yönlü-kilitler: (a) is_known_event_type-çağıran-her-yazım-fonksiyonu
+# kayıtlı-olmalı (yeni-kapı-eklenirse-unutulamaz), (b) kayıtlı-her-girdi-hâlâ
+# geçitli-olmalı (eski-kayıt-temizlenmeli), (c) notlar-boş-olamaz-ve
+# "eksiksiz"/"tam-kapsam"-içeremez (Kural-7.1'in-kendisi).
+GATES: dict[str, str] = {
+    "sester/ledger.py:Ledger.append":
+        "deyim-adı-sabıtı: yeni-bir-yazım-fonksiyonu-eklenirse-bu-kapı-onu "
+        "görmez (test_213-INSERT-bölgesi-ile-kapsanır)",
+    "sester/ledger.py:Ledger.insert_event":
+        "kod-kapsamı-sabıtı: operatörün-doğrudan-SQL/COPY'sini-göremez; hash "
+        "zinciri-opak-olduğu-için-o-sıra-yeşil-doğrulanır (alıcı-tarafı: "
+        "unknown_event_types)",
+    "sester/pg_ledger.py:PgLedger.append":
+        "Ledger.append-ile-aynı-kör-nokta (backend-aynı-şekil)",
+    "sester/pg_ledger.py:PgLedger.insert_event":
+        "Ledger.insert_event-ile-aynı-kör-nokta (backend-aynı-şekil)",
+}
+
+
 def canonical_line(ts: float, event_type: str, agent_id: str, host: str,
                    amount: float, payload: str, prev_hash: str) -> str:
     """K0-uyumlu canonical ön-görüntü — backend-bağımsız (SQLite/PG aynı zincir)."""

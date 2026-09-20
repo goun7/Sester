@@ -444,3 +444,52 @@ def test_214_read_side_taxonomy_assertion():
 
     # karar-alıcıya: sert-reject-yardımcıdan-değil-alıcıdan-gelecek (K0-uyumlu)
     assert callable(unknown_event_types)
+
+
+def test_215_gates_registry_kural_7_1():
+    """Kural-7.1-makine-kilidi (Tamga AT-056-paraleli): itirazlarını-kabul-
+    ederek-yazıldı — **soru-disiplini-makine-ile-sabitlenemez** (insan-attention'ına
+    ve-üç-ürünün-birbirine-güvenine-bağlı), o-yüzden-7.1'in-ancak-makine-halini
+    kilitler: her-kapı-kör-noktasını-yazmalı, "tam-kapsam"-iddiası-yasak-olmalı.
+    İki-yönlü: (a) kayıtsız-kapı-yok (yenisi-unutulamaz), (b) eski-kayıt-yok
+    (kapı-kalktıysa-kayıt-da-kalkmalı), (c) notlar-boş-değil-ve-eksiksiz-demiyor."""
+    from sester.ledger import GATES
+
+    files = {"sester/ledger.py": Path("sester/ledger.py"),
+             "sester/pg_ledger.py": Path("sester/pg_ledger.py")}
+    found: set[str] = set()
+    for mod, py in files.items():
+        tree = ast.parse(py.read_text(encoding="utf-8"))
+        cls_stack: list[str] = []
+        fn_stack: list[str] = []
+
+        def _walk(n):
+            if isinstance(n, ast.ClassDef):
+                cls_stack.append(n.name)
+            if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                fn_stack.append(n.name)
+                src = ast.unparse(n)
+                # kapı = fail-closed (raise-eder); unknown_event_types-gibi
+                # alıcı-yardımcıları-aynı-guard-formunu-kullanır-ama-raise-etmez
+                if "if not is_known_event_type" in src and "raise" in src:
+                    found.add(f"{mod}:{'.'.join(cls_stack)}.{n.name}")
+            for c in ast.iter_child_nodes(n):
+                _walk(c)
+            if isinstance(n, ast.ClassDef):
+                cls_stack.pop()
+            if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                fn_stack.pop()
+
+        _walk(tree)
+
+    # (a) her-geçitli-yazım-fonksiyonu-kayıtlı
+    unlisted = found - set(GATES)
+    # (b) her-kayıt-hâlâ-geçitli (eski-kayıt-olmasın)
+    stale = set(GATES) - found
+    assert not unlisted, f"geçitli-ama-kör-noktası-yazılmamış-kapı: {sorted(unlisted)}"
+    assert not stale, f"kayıtlı-ama-artık-kapı-değil (eski-kayıt): {sorted(stale)}"
+    # (c) Kural-7.1: kör-nokta-notu-boş-olamaz-ve-"eksiksiz"-iddiası-taşıyamaz
+    for key, note in GATES.items():
+        assert note.strip(), f"{key}: kör-nokta-notu-boş"
+        assert "eksiksiz" not in note and "tam-kapsam" not in note, (
+            f"{key}: Kural-7.1-ihlali — not-tam-kapsam-iddiası-taşıyor: {note!r}")
