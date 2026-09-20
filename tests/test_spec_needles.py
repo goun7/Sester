@@ -453,7 +453,7 @@ def test_215_gates_registry_kural_7_1():
     kilitler: her-kapı-kör-noktasını-yazmalı, "tam-kapsam"-iddiası-yasak-olmalı.
     İki-yönlü: (a) kayıtsız-kapı-yok (yenisi-unutulamaz), (b) eski-kayıt-yok
     (kapı-kalktıysa-kayıt-da-kalkmalı), (c) notlar-boş-değil-ve-eksiksiz-demiyor."""
-    from sester.ledger import GATES
+    from sester.ledger import GATES, NON_GATES
 
     files = {"sester/ledger.py": Path("sester/ledger.py"),
              "sester/pg_ledger.py": Path("sester/pg_ledger.py")}
@@ -508,3 +508,43 @@ def test_215_gates_registry_kural_7_1():
     bad_stale = set(bad_registry) - found
     assert "sester/ledger.py:Ledger.unknown_event_types" in bad_stale, (
         "yardımcı-GATES'e-yanlış-kaydedilince (b)-denetimi-yakalamalıydı")
+    # (e) üçüncü-seçenek-yasak (Tamga-AT-056'nın-ilkemimin-somut-hali): bir-events
+    # yazım-bölgesi-"'kapı-değil"-diyebilir-ama-SESSİZCE-geçemez — ya-GATES'te
+    # ya-NON_GATES'te-açıkça-beyan-edilmeli. Bu-olmadan-aşırı-tarafın-anlamı
+    # kalmazdı: test_213-INSERT-bölgesini-bulur-ama-sınıflandırma-zorunlu-değildi.
+    write_regions: set[str] = set()
+    for mod, py in files.items():
+        tree = ast.parse(py.read_text(encoding="utf-8"))
+        cls_stack2: list[str] = []
+        fn_stack2: list[str] = []
+
+        def _walk2(n):
+            if isinstance(n, ast.ClassDef):
+                cls_stack2.append(n.name)
+            if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                fn_stack2.append(n.name)
+                if "INSERT INTO events" in ast.unparse(n):
+                    write_regions.add(f"{mod}:{'.'.join(cls_stack2)}.{n.name}")
+            for c in ast.iter_child_nodes(n):
+                _walk2(c)
+            if isinstance(n, ast.ClassDef):
+                cls_stack2.pop()
+            if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                fn_stack2.pop()
+
+        _walk2(tree)
+    classified = set(GATES) | set(NON_GATES)
+    undeclared = write_regions - classified
+    assert not undeclared, (
+        f"events-yazım-bölgesi-ama-sınıflandırılmamış (üçüncü-seçenek-yasak): "
+        f"{sorted(undeclared)} — ya-GATES'e-ya-da-NON_GATES'e-beyan-edilmeli")
+    # NON_GATES-girişleri-de-taze-olmalı (kapı-dışı-yol-kalktıysa-kayıt-kalkmalı)
+    # ve-kayıtlı-karar-nedeni-ile-boş-olmamalı-tam-kapsam-iddiası-taşımayacak
+    assert not (set(NON_GATES) - write_regions), (
+        f"NON_GATES'te-ama-artık-events-yazmıyor (eski-kayıt): "
+        f"{sorted(set(NON_GATES) - write_regions)}")
+    for key, note in NON_GATES.items():
+        assert note.strip(), f"{key}: kapı-değil-kararı-nedeni-boş"
+        hit = [w for w in forbidden if w in note]
+        assert not hit, (
+            f"{key}: NON_GATES-notu-tam-kapsam-iddiası-taşıyor ({hit}): {note!r}")

@@ -173,6 +173,15 @@ GATES: dict[str, str] = {
         "Ledger.insert_event-ile-aynı-kör-nokta (backend-aynı-şekil)",
 }
 
+# Üçüncü-seçenek-yasak (Tamga-AT-056'nın-mantıksal-sonucu — "aşırı-taraf"ın
+# anlamı: bir-yazım-bölgesi-"'kapı-değil"-deme-hakkına-sahip-bile-olsa-SESSİZCE
+# geçemez; ya-GATES'te-ya-da-burada-açıkça-beyan-edilmeli). events-tablosuna-yazan
+# her-bölge-için-kayıtlı-karar: ya-geçitli-kapı (GATES) ya-da-burada-açıkça-beyan
+# edilen-kapı-değil-kararı (neden-ile). Şu-anda-boş — events-yazan-bölgenin-tümü
+# geçitli; yeni-bir-kapı-dışı-yol (toplu-COPY-gibi)-eklenirse-beyansız-geçemez,
+# buraya-nedeni-ile-yazılmak-zorunda (test_215-(e)-hücresi-denetler).
+NON_GATES: dict[str, str] = {}
+
 
 def canonical_line(ts: float, event_type: str, agent_id: str, host: str,
                    amount: float, payload: str, prev_hash: str) -> str:
