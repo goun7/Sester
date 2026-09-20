@@ -166,3 +166,48 @@ edilmemiş** (sürüm-yayınlanmış-ama-tag'lenmemiş). Kural-7.1'in-makine-hal
 yakalamadı çünkü-guard-yalnızca-versiyon-SAYISINI-senkronlar (pyproject=0.7.1),
 **tag-varlığını-değil**. Açık-kör-nokta-notu: release-tag-denetimi-guard'a-dahil-
 değil; elle-ölçüldü.
+
+## Güncelleme (2026-09-20) — Veridict-sütunu-bağımsız-ölçüldü (PENDING → doldu)
+
+Bekleyen-listedeki "Veridict-checklist-sütunu-untested" maddesi **bağımsız-olarak-
+ölçüldü** — Veridict'in-kodu-bu-makinede (`/home/gokun/projects/05_acik_kaynak/
+Veridict`), o-yüzden sözüne-değil-koduna-baktım (Tamga-AT-056'yı-koştuğum-aynı-
+disiplin).
+
+**Önemli-yöntem-notu:** çalışma-ağacında **commit-edilmemiş-D19-çalışması** vardı
+(policy-provenance-reconciliation — yeni-bir-erratum-sınıfı); o-ağaçta-koşunca
+**6-test-RED** verdi (dogfood, signature-interop, federation, fuzz-e2e,
+cert-mutation-parity + 1). **Kırık-kod-değil-yarı-iş-D19:** yeni `verify_certificate`
+policy-kaynağını-denetlemeye-başladı, eski-test-fixture'ları buna-uyumsuz.
+**Çalışma-ağacına-dokunmadım** (kullanıcı-kuralı); bunun-yerine **temiz-HEAD'i
+geçici-dizine-çıkarıp** orada-ölçtüm: **360 passed, 19 skipped, 0 failed** —
+commit-edilmiş-hal-tamamen-yeşil.
+
+**Ölçüm-tablosu (temiz-HEAD, gerçek-kod):**
+
+| Kural-ailesi | Ölçüm | Sonuç |
+|---|---|---|
+| seq 0-based-contiguous | `Ledger.append` seq=0,1; spec-§2.3-açıkça-0-based | **aligned** (Tamga-L-3.1-in-1-based-kuralı-burada-uygulanmaz — farklı-tasarım-kararı, hata-değil) |
+| prev-zincir + genesis | `e0.prev_hash == "0"×64`; `e1.prev_hash == e0.entry_hash` | **aligned** |
+| hash-yeniden-hesapla | `verify_chain()` → (True,"ok") | **aligned** |
+| kurcalama-RED | payload-edit → her-iki-hash-RED ("payload hash mismatch and entry hash mismatch at seq 0") | **aligned** (fail-loud, iki-katmanlı) |
+| anchor binding | `bound_fields`-5-alan + `anchor_digest`-sha256(canon)-birebir | **aligned** |
+| D13-taksonomi | çekirdek-tipler-emit-ediliyor; `extension.*`-namespace-kabul (open-world-by-design) | **aligned** (Sester'ın-kapalı-taksonomisinden-farklı-bilinçli-tasarım) |
+| D17-türetilmiş-alan | risk_level/score-verdict'ten-türetilmiş-olarak-denetleniyor (test-yeşil) | **aligned** |
+| D14-W1b-doctrine | W1b-support'un-REFUTED'i-geçersiz-kıldığı-13-test-yeşil | **aligned** |
+
+**Dürüst-sınırlar (bu-ölçümün-kendi-kör-noktası):**
+
+- **Yalnızca-HEAD-ölçüldü.** Çalışma-ağacındaki-D19-yarı-işi-ölçülmedi — o
+  Veridict'in-iş-in-progress-hali ve-bitmemiş-haliyle-kırmızı-olması-beklenir.
+  Bu-yüzden-ölçüm "commit-edilmiş-veridict-standard'ı" içindir, "şu-anda-
+  yazılmakta-olan" için-değil.
+- **Sadece-kod-ölçüldü, spec-paritesi-değil.** Her-kuralın-spec'te-yazılı-olup-
+  olmadığını-satır-satır-eşleştirmedim (D13/D14/D17-erratum'larını-okudum-ama
+  tam-needle-eşlemesi-yapmadım) — bu, Tamga'nın-`spec_code_scan.py`-tarayıcısının
+  yaptığı-iştir; ben-elle-yaptım-için " makine-ile-üretildi"-iddiasında-
+  bulunamam. Bu-not-açıkça-yazılı-çünkü-checklist'in-kendi-kuralı-her-iddiayı-
+  ölçümsüz-bırakmamayı-gerektirir.
+- **Veridict'in-öz-doğrulaması-değil.** Bu-benim-bağımsız-ölçümüm; Veridict'in
+  kendi-iddialarını-onaylaması-ayrı-bir-adım. Eğer-Veridict-itiraz-edirse
+  ölçümüm-düzeltilir (Tamga-E1(c)-dersi: yanlış-pozitif-gerçek-olabilir).
