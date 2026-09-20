@@ -112,7 +112,9 @@ korundu (doğrulandı).
 3. **Sadece-şu-anki-dallar tarandı** — `git log --all` mevcut dalları kapsar;
    silinmiş-ref'ler veya force-push ile-üzerine-yazılmış geçmiş görünmez.
    `reflog`/`fsck --lost-found` bu sınırı kapatır-ama-yıkıcı-olabileceği-için
-   yapılmadı.
+   yapılmadı. **(2026-09-20-güncelleme: güvenli-okuma-ile-kapatıldı —
+   `git fsck --unreachable` ile-üç-reponun-tüm-unreachable-commit'leri
+   çıkarıldı: Sester 8, Tamga 7, Veridict 0; **0 secret-içeren**.)**
 4. **Issue/PR-body taraması yalnızca Sester için yapıldı** (GitHub-API'siz
    Tamga/Veridict issue'ları taranamadı — API-rate-limit). Yerel commit'lerde
    temiz-olmaları issue'larda da temiz olduklarını göstermez.
@@ -191,5 +193,5 @@ dizine-çıkarıp-ölçtüm, çalışma-ağacına dokunmadım.
 - [x] Kural-9 normatif-metni + needle-kilitleri (`3fbcbc1`)
 - [x] Üç repo HEAD == origin doğrulandı
 - [x] Sester tam-suite: 258 passed / 25 skipped / 0 failed; guard rc=0
-- [ ] GitHub-Advanced-Security secret-scanning API ile-çapraz-kontrol (sınır-1)
-- [ ] CI-run log'larında secret-echo taraması (sınır-2)
+- [x] GitHub-Advanced-Security secret-scanning API ile-çapraz-kontrol (sınır-1) — **3/3 repo: 0 alert**
+- [x] CI-run log'larında secret-echo taraması (sınır-2) — 3 repo × son-6-run (~1.3–1.6 MB/log), hem-12-desenli-regex **hem** `password=/token=/secret=`/`Bearer` yan-taraması: **0 isabet**
