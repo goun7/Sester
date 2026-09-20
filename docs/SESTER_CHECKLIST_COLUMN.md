@@ -94,3 +94,32 @@ K0.3 bir yükümlülük (ihlali hata).
   sessiz-geçiş-yok).
 - Elle-ölçüm, otomatik-tarayıcıdan **daha-hassas-hata-eğilimli** — tekrar-
   üretilebilirlik için `tools/`-tarayıcı yazılması bir sonraki-adım olabilir.
+
+## Güncelleme (2026-09-19, Gece) — statik-emitter-taraması (test_210/211)
+
+Tamga'nın `emitter_verify.py` (AT-049)-karşılığını **AST-ile** yazdım:
+`test_210_all_emitters_are_listed` — her `ledger.append`/`_proof` çağrısının
+ilk-argümanını çıkarıp fixpoint-ile-çözüyor (sabit, ternary, tuple-unpack,
+`.lower()` ve **çağrı-yeri-parametre-bağları**) ve bilinen-bir-değer-olmasını
+denetliyor. İlk-koşu-gerçek-bir-açık-buldu:
+
+- **Yeni-aile: `tenderix_`** (`scripts/s6_joint_run.py`) — escrow-durum-
+  makinesi `escrow_{authorized,settled,disputed,refunded}` + `dispute_opened`.
+  **Gerçek-olaylar** (gerçek-Ledger + `produce_bundle`/`verify_bundle`-ile-
+  doğrulanan), ama taksonomide-listede-değildi — tıpkı-Tamga'nın-`run`/
+  `migrate-net`'i-gibi. **Kritik-nokta:** hiçbir-test-o-script'i-koşmuyordu,
+  yani çalışma-zamanı-fail-closed-asla-yakalayamayacaktı — statik-tarama-
+  olmasa-sessizce-kalacaktı. Aile-`EVENT_TYPE_FAMILIES`'e-kayıt-edildi ve
+  `test_211`-script'i-koşar-hale-getirdi (rc=0, 20-iç-kontrol) — **kapsam-
+  boşluğunun-kendisi-kilit-oldu**.
+- **Tarayıcının-kendi-hataları-negatif-kontrol-ile-yakalandı** ( dürüstlük):
+  alıcı-süzgeci-yalnız-bare-`ledger`/`led`-tanıyıp-`self.ledger`'ı-atlıyordu
+  (üretimin-çoğu!) — "geçti"-sonucu-zayıfmış; ve needle-yalnız-ilk-eşleşmeye-
+  bakıyordu (`_64_TRANSITIONS`-sözlüğü-gerçek-çağrıdan-önce-geldiği-için-
+  yanlış-RED). İkisi-de-düzeltildi.
+
+**Kapanan-döngü:** artık üç-katmanlı-emitter-koruması — (1) spec-iğne-kilidi
+(YÖN-B, test_208'nin-needle'ları), (2) listeli-ama-üreticisi-yok → RED
+(test_209, çağrı-içi), (3) üretiyor-ama-listede-değil → RED (test_210, statik,
+kapsam-bağımsız). İlk-ikisi-birlikte "spec↔kod-aynı", üçüncüsü "hiçbir-zaman-
+sessiz-yayılım". Üçü-de-gözle-değil-suite-ile.

@@ -28,8 +28,10 @@ CREATE TABLE IF NOT EXISTS events (
     -- charge_receipt | refund | permission_decision | policy_denied | settlement
     -- protocol_intent | webhook_delivery | escalation_parked |
     -- escalation_approved | escalation_denied | escalation_consumed |
-    -- facilitator_{verify,settle,metering,refund,batch} — bilinmeyen tip
-    -- append()'te RED (fail-closed); her-değerin üreticisi test_209 ile-sabit
+    -- facilitator_{verify,settle,metering,refund,batch} |
+    -- tenderix_{escrow_authorized,escrow_settled,escrow_disputed,escrow_refunded,
+    -- dispute_opened} — bilinmeyen tip append()'te RED (fail-closed);
+    -- her-değerin üreticisi test_209, her-emitter-listede test_210 ile-sabit
     agent_id   TEXT NOT NULL,
     host       TEXT NOT NULL DEFAULT '',
     amount     REAL NOT NULL DEFAULT 0,
@@ -112,9 +114,19 @@ CALLER_CONTRACT_EVENT_TYPES = frozenset({"webhook_delivery"})
 
 # Dinamik ön-ek aileleri: "{ön-ek}{kind}" biçiminde üretilir; kind kümesi kapalı.
 # Bağımsız doğrulayıcı ön-eke bakarak aileyi tanır, kind'ı ise kümeden doğrular.
+#
+# tenderix_: S6 ortak-koşum ailesi (scripts/s6_joint_run.py) — 64-escrow
+# durum-makinesi geçişleri K0-zarfına karşı-taraf-olayı olarak basılır. Olaylar
+# gerçektir (gerçek Ledger + produce_bundle + verify_bundle ile doğrulanır),
+# dolayısıyla zarfın-taşıyabildiği değerler arasındadır. Bu-aile test_210'ün
+# statik-taraması-ile-keşfedildi: hiçbir-test-s6'ı-koşmasa-bile artık
+# kod-taraması-yakalıyor (kapsam-boşluğu-kapanışı).
 EVENT_TYPE_FAMILIES: dict[str, frozenset[str]] = {
     "facilitator_": frozenset(
         {"verify", "settle", "metering", "refund", "batch"}),
+    "tenderix_": frozenset(
+        {"escrow_authorized", "escrow_settled", "escrow_disputed",
+         "escrow_refunded", "dispute_opened"}),
 }
 
 

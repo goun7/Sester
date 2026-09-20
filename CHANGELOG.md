@@ -62,6 +62,25 @@ Format: [Keep a Changelog](https://keepachangelog.com/) · SemVer.
   comment/param occurrence is rejected, a multi-line append is accepted. This
   closes the exact trap Tamga flagged (`out(op="run")` function parameter / our
   `lines.append(f"sester_facilitator_chain_valid …")` metrics label).
+- **Static emitter scan — new family found (Tamga `emitter_verify` mirror):**
+  `test_210_all_emitters_are_listed` walks the AST of every `ledger.append` /
+  `_proof` call in `sester/`+`examples/`+`scripts/`, resolves the first argument
+  (constants; f-strings via a fixpoint constant resolver covering ternaries,
+  tuple-unpacks, `.lower()`/`.upper()` and *call-site parameter bindings*) and
+  asserts every emitted value is known. It immediately found a real gap:
+  `scripts/s6_joint_run.py` emits the **`tenderix_` family** —
+  `escrow_{authorized,settled,disputed,refunded}` from the escrow state machine
+  plus `dispute_opened` — real events written to a real ledger and verified
+  through `produce_bundle`/`verify_bundle`, but listed nowhere. **No test
+  exercised that script**, so the runtime fail-closed could never have caught
+  it — exactly the coverage gap the static scan exists to close (the mirror of
+  Tamga's `run`/`migrate-net`). Registered `tenderix_` in `EVENT_TYPE_FAMILIES`;
+  added `test_211` to run the script (rc=0, 20 internal checks), converting the
+  coverage gap itself into a lock.
+  Two scanner bugs surfaced via negative control and were fixed: the receiver
+  filter matched only bare `ledger`/`led`, silently skipping `self.ledger` (most
+  of production); and the needle matcher checked only the *first* occurrence,
+  so a dict-literal before the real call false-REDDED (`_64_TRANSITIONS`).
 
 ### Fixed
 - **ERRATUM-K0.3 (code-only rule closed):** replay protection — the producer
