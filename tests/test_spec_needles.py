@@ -488,8 +488,23 @@ def test_215_gates_registry_kural_7_1():
     stale = set(GATES) - found
     assert not unlisted, f"geçitli-ama-kör-noktası-yazılmamış-kapı: {sorted(unlisted)}"
     assert not stale, f"kayıtlı-ama-artık-kapı-değil (eski-kayıt): {sorted(stale)}"
-    # (c) Kural-7.1: kör-nokta-notu-boş-olamaz-ve-"eksiksiz"-iddiası-taşıyamaz
+    # (c) Kural-7.1: kör-nokta-notu-boş-olamaz-ve-tam-kapsam-iddiası-taşıyamaz.
+    # Yasak-liste-eşanlamlılarla-kaçışı-kapatır (Tamga-AT-056'nın-bir-adım-
+    # ilerisi: "eksiksiz"-in-Türkçe-eşanlamlıları-"tüm-yollar"/"bütün-yollar"
+    # ile-listeden-kaçmasın-diye)
+    forbidden = ("eksiksiz", "tam-kapsam", "tüm-yollar", "bütün-yollar",
+                 "tüm-yol", "bütün-yol")
     for key, note in GATES.items():
         assert note.strip(), f"{key}: kör-nokta-notu-boş"
-        assert "eksiksiz" not in note and "tam-kapsam" not in note, (
-            f"{key}: Kural-7.1-ihlali — not-tam-kapsam-iddiası-taşıyor: {note!r}")
+        hit = [w for w in forbidden if w in note]
+        assert not hit, (
+            f"{key}: Kural-7.1-ihlali — not-tam-kapsam-iddiası-taşıyor "
+            f"({hit}): {note!r}")
+    # (d) negatif-kontrol (Tamga-AT-056-(d)-hücresi): alıcı-yardımcısı-yanlışlıkla
+    # GATES'e-kaydedilirse (b)-denetimi-RED-vermeli — kapı/yardımcı-ayrımı
+    # makine-ile-sabitlenir, varsayım-değil (yardımcı-guard-içerir-ama-raise-etmez)
+    bad_registry = dict(GATES, **{
+        "sester/ledger.py:Ledger.unknown_event_types": "kapı-değil-yardımcı"})
+    bad_stale = set(bad_registry) - found
+    assert "sester/ledger.py:Ledger.unknown_event_types" in bad_stale, (
+        "yardımcı-GATES'e-yanlış-kaydedilince (b)-denetimi-yakalamalıydı")
