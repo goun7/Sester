@@ -127,3 +127,45 @@ def test_64_public_api_surface_locked():
     }
     # BRIDGE_VERSION-imzalı (alıcılar bilinmeyen-sürümü-reddeder, K0-§7-rule-2)
     assert isinstance(br.BRIDGE_VERSION, int) and br.BRIDGE_VERSION >= 1
+
+
+def test_65_bridges_are_secret_free(led):
+    """Secret'sız-kanıt-felsefesi (Tamga-RFC-006-ayna): köprü-zarfları-HMAC/
+    şifre/token-İÇERMEMELİ — 'secret keys contaminate the evidence'. Bu-test
+    bir-gün-köprüye-secret-alanı-eklenirse-RED-düşer. İki-ürünün-felsefesi-
+    çelişmiyor-kanıtı: Sester'ın-facilitator-secret'i-HTTP-auth-için (fail-closed),
+    K1/K2-kanıt-zarfları-secret'sız-doğrulanır (alıcı-yalnız-sha256)."""
+    import re
+    from sester.bridges import (tamga_anchor, tamga_anchor_json,
+                                veridict_claims_json)
+    b = produce_bundle(led, agent_id="a1")
+
+    # K1: anchor-zarfında-secret-benzeri-alan-olmamalı
+    a = tamga_anchor(b, agent_label="lbl")
+    secretish = re.findall(r"secret|password|token|mac|sig|key|priv", " ".join(a), re.I)
+    assert not secretish, f"K1-zarfında-secret-alanı-sızdı: {secretish}"
+    # JSONL-üretimi-de-dahil (generated-çıkarılmış-hali-secret'sız)
+    assert not re.findall(r"secret|password|token|mac|sig|key|priv",
+                          tamga_anchor_json(b), re.I)
+    # K2: claims-zarfında-da-yok
+    assert not re.findall(r"secret|password|token|mac|sig|key|priv",
+                          veridict_claims_json(b), re.I)
+
+    # doğrulama-secret-gerektirmez: verify_tamga_anchor-pür-sha256
+    ok, _ = __import__("sester.bridges", fromlist=["verify_tamga_anchor"]) \
+        .verify_tamga_anchor(a)
+    assert ok
+
+
+def test_66_anchor_json_is_deterministic_replayable(led):
+    """Alıcı-tarafı-tekrar-üretilebilirlik: aynı-bundle → aynı-JSONL-satırı
+    (generated-duvar-saati-bilinçli-çıkarılmış). Bu-olmasa-alıcı-replay-
+    edemez-diye-offline-verifiability-bozulurdu."""
+    from sester.bridges import tamga_anchor_json
+    b = produce_bundle(led, agent_id="a2")
+    assert tamga_anchor_json(b) == tamga_anchor_json(b)
+    # timezone/saat-enjeksiyonundan-bağımsız (time.time-dışarıda-tutulur)
+    import time as _t
+    with __import__("unittest.mock", fromlist=["patch"]).patch(
+            "sester.bridges.time.time", return_value=12345.0):
+        assert tamga_anchor_json(b) == tamga_anchor_json(b)
