@@ -14,3 +14,22 @@ nohup.out
 docs/internal/
 examples/fleet_lane/.env
 examples/fleet_lane/*.sqlite3*
+
+# Güvenlik-hijyeni (2026-09-20 tri-product denetimi): credential/anahtar
+# yolları genel-desen olarak kapsansın ki gelecekte yanlışlıkla commit
+# edilmesinler. Şu an takip-edilen böyle bir dosya YOK (0) — bu kural
+# regression'u önlemek içindir, mevcut bir sızıntıyı düzeltmiyor.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa
+id_ed25519
+.netrc
+.pypirc
+.npmrc
+secrets/
+.evidence/
