@@ -231,6 +231,48 @@ strictly larger than the feed.
 >    hashed type opaque). Receiver-side helpers surface those rows; the
 >    abstain/warn/reject choice stays with the receiver (Veridict D13 family).
 >
+> **NORMATIVE-RECEIVER-HELPER-ASSESSMENT (2026-09-20, §7 rule 9 — the fifth-round
+> confession's own spec text; mirror of Tamga `tests/conformance/spec/
+> LEDGER-SPEC.md` §6/§7 rule, closed mesh-round 5):**
+>
+> 9. **Unknown-type assessment is a producer obligation and a receiver
+>    option — never a receiver obligation.** The closed-set guarantee in rule 7
+>    covers **only rows written THROUGH THIS LIBRARY**: an operator writing a
+>    validly-hash-chained row directly to the store (`pg_restore`/`COPY`/raw SQL,
+>    or a counterpart's equivalent direct write) bypasses every producer gate,
+>    and because §7 rule 3 keeps the hashed type opaque to the receiver, that row
+>    still verifies green. Therefore:
+>    - **Producer side is mandatory:** every write region MUST either gate on a
+>      known type or be declared NON_GATES with its reason (rule 7). This is the
+>      obligation that makes "rows through this library have a known type" true.
+>    - **Receiver side is opt-in:** a receiver MAY call a helper
+>      (`unknown_event_types`) that returns the unknown-type set among the rows it
+>      read, and then **chooses** abstain / warn / reject itself. The hard reject
+>      lives in the receiver, **not** in the library helper — for the same reason
+>      rule 3 keeps the op opaque: a shared helper that hard-rejected would
+>      silently make one product's policy every product's policy, breaking the
+>      no-merge guardrail from the receiver side.
+>    - **Third-option-forbidden on the read path too:** a receiver that reads
+>      unknown-type rows is not permitted to pass them silently. It MUST either
+>      call the helper and act on the result, or document that it declines to
+>      assess — the unclassified passage that rule 7 forbids on the write path is
+>      forbidden here as well, just placed in the receiver's own spec (which is
+>      why this rule is normative per-product, not only in the shared envelope).
+>
+>    *Why this is normative in each product's own spec and not only here:*
+> Tamga closed the mirror of Sester's fifth-round confession (operator writes
+> `tenderix-fake` directly → producer gates never see it → receiver reads green,
+> `unknown_ops` at `tamga_runner.py:205`, AT-055 commit `d7496bf`) and wrote its
+> §6/§7 text as "producer-side mandatory, receiver-side opt-in". The asymmetry
+> was derived independently by all three products (`unknown_event_types` /
+> `unknown_ops` / Veridict D13-abstain) — and a rule whose failure crosses the
+> product boundary cannot live in only one product's spec, or the blind spot
+> reopens for whichever product omits it. Sester's enforcement: producer gates
+> (`test_213` + GATES/NON_GATES registries, `test_215` cells (a)–(e)) and the
+> receiver helper at `sester/ledger.py:unknown_event_types`, whose docstring
+> states its own blind spot — the same "note your own blind spot" discipline
+> rule 7 requires of gates.
+
 > **Independent convergence as evidence:** the producer-mandatory /
 > receiver-opt-in asymmetry was derived separately by all three products
 > (`unknown_ops` / `unknown_event_types` / D13-abstain) without coordination —

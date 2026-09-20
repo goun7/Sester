@@ -38,14 +38,47 @@ NEEDLES = [
     ("S-4.1", "anchor_id = SHA256", "anchor-bağlaması formülü"),
     ("S-4.1b", "merkle_root", "merkle-kökü binding"),
     ("S-4.2", "hard reject", "bilinmeyen *_version → red"),
+    # Kural-9 (beşinci-tur itirafının normatif-metni; Tamga AT-055 /
+    # LEDGER-SPEC §6-§7 aynası, mesh-5 kapanışı): üretici-zorunlu /
+    # alıcı-opt-in asimetrisi spec'te kalmazsa, doğrudan-yazılan-satır
+    # kör-noktası her-üründe-yeniden-açılır.
+    ("S-5.1", "unknown_event_types", "alıcı-yardımcısı spec'te-adlandırılmış"),
+    ("S-5.2", "producer obligation and a receiver option",
+     "asimetri-normatif-ifadesi (Tamga üretici-zorunlu/alıcı-opt-in aynası)"),
+    ("S-5.3", "rows written THROUGH THIS LIBRARY",
+     "garanti-kapsamı-sınırı (operatör-doğrudan-yazımı-dışlar)"),
+    ("S-5.4", "hard reject lives in the receiver",
+     "sert-reject alıcıda-yardımcıda-değil kuralı"),
+    ("S-5.5", "abstain / warn / reject",
+     "üç-seçenekli-alıcı-kararı (Veridict-D13 ile-aynı)"),
 ]
 
 
 @pytest.mark.parametrize("rid, needle, why", NEEDLES, ids=[n[0] for n in NEEDLES])
 def test_k0_normative_needles_present(rid, needle, why):
-    """YÖN-B: spec needle mevcut — düşerse RED (code-only-kural-nüksetme)."""
-    text = SPEC.read_text(encoding="utf-8")
+    """YÖN-B: spec needle mevcut — düşerse RED (code-only-kural-nüksetme).
+
+    Needle'lar satır-sarılma-toleranslıdır: spec-metni önce tek-satıra
+    indirgenir (satır-sonları boşluğa) ve markdown-vurgu-işaretleri
+    (**, `) soyulur, sonra aranır — böylece 80-sütun-sarma veya
+    **vurgu** bir kuralı "kaybettirmez". Bir needle buradan ÇIKARILAMAZ:
+    çıkarılırsa bu test RED düşer ve "code-only erratum" sınıfı geri-dönmüş
+    olur."""
+    text = _needle_text(SPEC.read_text(encoding="utf-8"))
+    needle = " ".join(needle.split())
     assert needle in text, f"{rid} needle eksik ({why}): {needle!r}"
+
+
+def _needle_text(raw: str) -> str:
+    """Spec-metnini needle-arama-için-normalize-et: markdown-vurgu + liste
+    quote-character (`>`) soyulur, SONRA whitespace-collapse-tek-satıra
+    indirilir. Sıralama-önemli: önce-soyup-sonra-collapse-etmezsek satır-sonu
+    ile-birlikte gelen `>` işareti iki-boşluğa-dönüşür ve needle düşer.
+    Needle'lar kuralın-kelimelerini-arar, biçimlendirmesini-değil; böylece
+    spec yeniden-sarılırsa-vurgu-eklenirse needle düşmez."""
+    import re as _re
+    stripped = _re.sub(r"[`*>]", "", raw)
+    return " ".join(stripped.split())
 
 
 def test_spec_and_code_agree_on_taxonomy():
