@@ -32,7 +32,15 @@ from .middleware import SesterMeter
 from .panel import APPROVALS_PAGE, render_panel
 from .policy import DenyAll, Policy, PolicyCorruptError
 
-SECRET = "sester-demo-secret-v0"
+SECRET = os.environ.get("SESTER_DEMO_SECRET", "sester-demo-secret-v0")
+if SECRET == "sester-demo-secret-v0":
+    # Demo-sabit-secret (Dockerfile: "do not point real money rails at this
+    # image"). Üretimde SESTER_DEMO_SECRET env'i-set-edin; burası uyarı-ama
+    # fail-değil — demo-ışığı-tutmak-için-sabit-kalmalı (bkz. fail-closed
+    # facilitator-secret: sester/facilitator_svc/service.py).
+    import sys as _sys
+    print("UYARI: demo-sabit-secret kullanılıyor (üretim-değil; "
+          "SESTER_DEMO_SECRET env'i set-edin)", file=_sys.stderr)
 PRICE = 0.05
 DAILY_QUOTA = 0.20  # demo-kotası bilinçli düşük: 5. çağrıda kota-aşımı görülür
 POLICY_PATH = Path("examples/f1_policy.json")
