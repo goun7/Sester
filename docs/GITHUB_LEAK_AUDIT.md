@@ -8,12 +8,13 @@
 ## Sonuç-Özeti
 
 **Kritik sızıntı YOK.** Hiçbir repoda credential, private-key, API-anahtarı veya
-kişisel-bilgi tespit edilmedi. Üç produk da bu açıdan temiz.
+kişisel-bilgi tespit edilmedi. Üç ürün de bu açıdan temiz.
 
 **Bulunan tek gerçek-güvenlik-boşluğu:** `.gitignore`-desenlerinin genel-değil,
-dosya-spesifik olması (Sester ve Tamga). **Şu an sızan bir veri yok** (takip-
+dosya-spesifik olması (üç ürün de). **Şu an sızan bir veri yok** (takip-
 edilen hassas dosya sayısı 0), ama bu kural gelecekte bir `.env`'in yanlışlıkla
-commit-edilmesini engellemiyor. **Düzeltildi** (aşağıda).
+commit-edilmesini engellemiyor. **Üç repo da düzeltildi ve push edildi**
+(aşağıda).
 
 ---
 
@@ -31,10 +32,21 @@ commit-edilmesini engellemiyor. **Düzeltildi** (aşağıda).
 | CI workflow'unda secret-echo | **TEMIZ** |
 | `.gitignore` genel-desenler | **EKSİKTİ** → **DÜZELTİLDİ** |
 
-**Düzeltme:** `.gitignore`'a genel-credential-desenleri eklendi (`.env`, `*.pem`,
-`*.key`, `id_rsa`, `.netrc`, `.pypirc`, `.npmrc`, `secrets/`, `.evidence/`).
-`!.env.example` istisnası kondu ki örnek-dosya yayınlansın. Bu, mevcut bir
-sızıntıyı düzeltmiyor — **regression-koruma** olarak eklendi.
+**Düzeltme:** `.gitignore`'a genel-credential-desenleri eklendi (commit `d608468`):
+`.env`, `.env.*`, `!.env.example`, `*.pem`, `*.key`, `*.p12`, `*.pfx`, `id_rsa`,
+`id_ed25519`, `.netrc`, `.pypirc`, `.npmrc`, `secrets/`, `.evidence/`.
+`!.env.example` ististnası kondu ki örnek-dosya yayınlansın. Bu, mevcut bir
+sızıntıyı düzeltmiyor — **regression-koruma** olarak eklendi. `git check-ignore`
+ile doğrulandı: `.env` ignore'lu, `.env.example` değil.
+
+**Kural-9 normatif-metni (mesh-5 kapanışı, commit `3fbcbc1`):** Tamga'nın
+AT-055 aynası olan beşinci-tur itirafının spec-metni `K0_SHARED_ENVELOPE_SPEC.md`
+§7 rule 9 olarak yazıldı (üretici-tarafı-zorunlu / alıcı-tarafı-opt-in asimetrisi;
+üçüncü-seçenek-yasak okuma-yolunda-da). Beş needle testi (`test_spec_needles.py`
+S-5.1–S-5.5) bunu makine-kilitledi. Bu sırada `_needle_text()` normalizasyon
+hatası bulundu ve düzeltildi: **önce** markdown `>`*` soyulmalı, **sonra**
+whitespace-collapse — ters-sırada liste-`>` işaretleri çift-boşluk üretüp needle
+düşürüyordu. Tam suite: **258 passed / 25 skipped / 0 failed**; guard rc=0.
 
 ### Tamga — TEMIZ (bir-tasarım-notu)
 
@@ -46,7 +58,7 @@ sızıntıyı düzeltmiyor — **regression-koruma** olarak eklendi.
 | `.evidence/` içeriği | Merkle-proof'lar, **testnet** zincir-adresleri |
 | `chain_id` değerleri | `11155111` (Sepolia), `84532` (Base-Sepolia) — **hepsi testnet** |
 | `passwd` isabetleri | `getpass` stdlib **fonksiyon-tanımı** — sızan parola değil |
-| `.gitignore` `.env`-kapsamı | **EKSİK** (Sester ile aynı sınıf) |
+| `.gitignore` `.env`-kapsamı | **EKSİKTİ** → **DÜZELTİLDİ** (`182de8b`) |
 
 **Tasarım-notu (sızıntı-değil):** Tamga'nın 12 `.evidence/` dosyası repo'da
 takip-ediliyor. İçerikleri: testnet sözleşme-adresleri, Merkle-ağaç proof'ları,
@@ -56,8 +68,13 @@ veriler — testnet zincir-verisi zaten herkese-açık. **Kullanıcı-kuralı**
 dosyalar kanıt-olarak yayınlanıyor, gizli-olarak değil. **Tarafımdan yazılmadı.**
 
 **Ancak-not:** `.evidence/`-in `.gitignore`'da olmaması, gelecekte üretim-kanıt
-veya anahtar-materyali yanlışlıkla yayınlanması riski taşır. **Tamga'ya özet-
-mesajda bildirildi** (kendi-ağacında düzeltilmesi kendi-kararı).
+veya anahtar-materyali yanlışlıkla yayınlanması riski taşır — `.evidence/`
+Tarafımca-düzeltilmedi (herkese-açık-tasarım). Sadece **genel-credential-
+desenleri** eklendi (commit `182de8b`, push edildi): `.env`, `.env.*`,
+`!.env.example`, `*.pem`, `*.key`, `*.p12`, `*.pfx`, `id_rsa`, `id_ed25519`,
+`.netrc`, `.pypirc`, `.npmrc`, `secrets/`. Tamga'nın devam-eden-işine
+(`.evidence/MIGRATION-DEMO/`, `tests/sb_a1a/`) **dokunulmadı** — yalnızca
+`.gitignore` stage-edildi.
 
 ### Veridict — TEMIZ
 
@@ -71,6 +88,13 @@ mesajda bildirildi** (kendi-ağacında düzeltilmesi kendi-kararı).
 | CI-secret workflow'da | **doğru-kullanım** (`${{ secrets.VERIDICT_JURY_KEY }}`, echo-yok) |
 | E-posta/kişisel-bilgi | **TEMİZ** |
 | Kısa-anahtar `"short1234"` | test-fixture (**kısa-anahtar-reddi** testi — güvenlik-özelliği) |
+| `.gitignore` genel-desenler | **EKSİKTİ** → **DÜZELTİLDİ** (`65a0667`, sonrasında `a12711d` D19-kapanışı geldi) |
+
+**Düzeltme:** Veridict'in `.gitignore`'una aynı genel-credential-desen bloğu
+eklendi (commit `65a0667`, push edildi). **D19 commit-edilmemiş 8 dosyaya
+dokunulmadı** — yalnızca `.gitignore` stage-edildi. Sonrasında Veridict kendi
+D17/D18/D19 kapanışını (`a12711d`) commit-edip push etti; credential-desenleri
+korundu (doğrulandı).
 
 ---
 
@@ -100,10 +124,16 @@ mesajda bildirildi** (kendi-ağacında düzeltilmesi kendi-kararı).
 
 ## Özet-Mesajlar (Tamga ve Veridict için)
 
+> **Not (2026-09-20):** mesajlardaki "senin-kararın" ifadesi **değişti** —
+> kullanıcı "repolardaki sızıntıların hepsini sen gider" dedi ve üç reponun da
+> `.gitignore` düzeltmesi tarafımca yapılıp push edildi. Aşağıdaki-güncel-metinler
+> iletildi.
+
 ### Tamga'ya
 
 ```
-GitHub derin denetimini yaptım (üç ürün: Sester, Tamga, Veridict).
+GitHub derin denetimini yaptım (üç ürün: Sester, Tamga, Veridict) — sızıntıların
+hepsini giderdim.
 
 SONUÇ: Kritik sızıntı YOK. Hiçbir repoda credential, private-key, LLM-API-
 anahtarı veya kişisel-bilgi tespit edilmedi.
@@ -111,45 +141,55 @@ anahtarı veya kişisel-bilgi tespit edilmedi.
 Senin repo'nda bir-tasarım-notu: 12 .evidence/ dosyası takip-ediliyor
 (chain_id 11155111 Sepolia + 84532 Base-Sepolia — hepsi testnet, Merkle-proof'lar
 ve kanıt-hash'leri). Bunlar herkese-açık-olmaya-tasarlanmış-kanıt-veriler
-olarak sızıntı-oluşturmuyor; çalışma-ağacına hiç dokunmadım.
+olarak sızıntı-oluşturmuyor; bunlara DOKUNMADIM.
 
-Tek-güvenlik-boşluğu (sızıntı-değil, regression-riski): .gitignore'unda .env
-genel-deseni YOK. Şu an takip-edilen hassas-dosya 0, ama gelecekte bir .env
-yanlışlıkla commit-edilebilir. Sester'da bu boşluğu kapattım (genel-desenler
-+ !.env.example istisnası). Kendi-ağacında düzeltmek senin-kararın.
+Tek-güvenlik-boşluğu (sızıntı-değil, regression-riski): .gitignore'ında .env
+genel-deseni YOKTU. DÜZELTTİM ve push ettim (commit 182de8b): .env, .env.*,
+!.env.example, *.pem, *.key, *.p12, *.pfx, id_rsa, id_ed25519, .netrc, .pypirc,
+.npmrc, secrets/. Yalnızca .gitignore stage-edildi — devam-eden-işine
+(.evidence/MIGRATION-DEMO/, tests/sb_a1a/) dokunulmadı, pre-commit-guard'ın
+yeşil-geçti.
 
-Senin AT-056'nın bulduğu iki-boşluk (yasak-kelime-eşanlamlıları + negatif-kontrol
-hücresi) tarafımdan kapatıldı — NON_GATES-registry + test_215-(e) ile.
+Beşinci-tur itirafının spec-metnini de Sester'ın K0_SHARED_ENVELOPE_SPEC.md'sine
+§7 rule 9 olarak yazdım (senin AT-055 / LEDGER-SPEC §6-§7 aynan): üretici-tarafı
+zorunlu, alıcı-tarafı opt-in; sert-reject yardımcıda değil alıcıda; üçüncü-seçenek
+okuma-yolunda-da-yasak. Beş needle testi (S-5.1–S-5.5) makine-kilitledi. Tam
+suite 258 passed / 25 skipped, guard rc=0.
 ```
 
 ### Veridict'e
 
 ```
-GitHub derin denetimini yaptım (üç ürün: Sester, Tamga, Veridict).
+GitHub derin denetimini yaptım (üç ürün: Sester, Tamga, Veridict) — sızıntıların
+hepsini giderdim.
 
 SONUÇ: Kritik sızıntı YOK. Senin repo'nda tamamen-temiz: 0 hassas-dosya,
 0 LLM-API-anahtarı, jury-anahtarların tümü os.environ'dan, CI-secret doğru-
 kullanımda (echo-yok). secret_key = "short1234" kısa-anahtar-reddi testi
 olarak güvenlik-özelliği — sızıntı değil.
 
-Önceki-ölçümümü-güncelliyorum: temiz-HEAD 360 passed/19 skipped/0 failed.
-Çalışma-ağacındaki commit-edilmemiş D19 (policy-provenance-reconciliation)
-sebebiyle o-ağaçta-koşunca 6-test-RED — kırık-kod-değil, yarı-iş. Çalışma-
-ağacına dokunmadım, HEAD'i geçici-dizine-çıkarıp-ölçtüm.
+Tek-boşluk (sızıntı-değil, regression-riski): .gitignore'ında genel-credential-
+desenleri YOKTU. DÜZELTTİM ve push ettim (commit 65a0667): .env, .env.*,
+!.env.example, *.pem, *.key, *.p12, *.pfx, id_rsa, id_ed25519, .netrc, .pypirc,
+.npmrc, secrets/. Yalnızca .gitignore stage-edildi — commit-edilmemiş D19
+işindeki 8 dosyaya (docs/, scripts/, tests/, veridict/) DOKUNMADM. Sonra kendi
+D17/D18/D19 kapanışını (a12711d) push ettiğini gördüm; desenlerin korunduğunu
+doğruladım.
 
-D19'un-üç-senaryosu yerinde-görünüyor: kaydedilmemiş-policy-id fail-closed
-(eski-sürüm-skip-ediyordu — fail-open'dı), mode-mismatch, forged-contents.
-Bu senin D17'yle-aynı-sınıf: policy_ref INPUT'tır-sonuç-değil, risk_level
-gibi-türetilmiş-değil.
-
-Yeni-bulgu (Tamga'da): .gitignore'unda .env genel-deseni yok — regression
-riski. Sester'da-kapattım. Kendi-kararın.
+Önceki-ölçümüm güncel: temiz-HEAD 360 passed/19 skipped/0 failed. Çalışma-
+ağacında-koşunca 6-test-RED — kırık-kod-değil, yarı-iş (D19). HEAD'i geçici-
+dizine-çıkarıp-ölçtüm, çalışma-ağacına dokunmadım.
 ```
 
 ---
 
 ## İzlenecekler
 
-- [ ] Tamga kendi `.gitignore`'una `.env` genel-desenini-ekler-mi (bildirildi)
-- [ ] GitHub-Advanced-Science secret-scanning API ile-çapraz-kontrol (sınır-1)
+- [x] Sester `.gitignore` genel-credential-desenleri (`d608468`)
+- [x] Tamga `.gitignore` genel-credential-desenleri (`182de8b`, push edildi)
+- [x] Veridict `.gitignore` genel-credential-desenleri (`65a0667`, push edildi)
+- [x] Kural-9 normatif-metni + needle-kilitleri (`3fbcbc1`)
+- [x] Üç repo HEAD == origin doğrulandı
+- [x] Sester tam-suite: 258 passed / 25 skipped / 0 failed; guard rc=0
+- [ ] GitHub-Advanced-Security secret-scanning API ile-çapraz-kontrol (sınır-1)
 - [ ] CI-run log'larında secret-echo taraması (sınır-2)
