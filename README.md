@@ -91,6 +91,22 @@ chain-integrity badge.
 | Evidence webhooks | HMAC-signed delivery of charge/settlement events with receiver-side verification, retry+backoff, ledger failure-log | dev |
 | Evidence export | External-verifier bundles — anyone can audit with `sha256` alone, no Sester installed | v0.3+ |
 
+## Policy template bank
+
+Copy a template, edit the limits, run. Every template is machine-locked by
+`tests/test_policy_bank.py`: it must pass the DSL validator and carry at least
+one allow rule plus one guardrail (deny/escalate).
+
+| Template | Pattern | Key rules |
+|---|---|---|
+| [`examples/f1_policy.json`](examples/f1_policy.json) | human-escalation for large spends | `require-human-for-large` (escalate), `allow-demo-endpoints`, `deny-unknown-hosts` |
+| [`examples/fleet_lane/policy.json`](examples/fleet_lane/policy.json) | business-hours fleet lane | `allow-telemetry` (`host_in` + `hour_between` 07:00–23:00), `deny-unknown-hosts` |
+| [`examples/budget_guard_policy.json`](examples/budget_guard_policy.json) | tiered budget guard | two `amount_gt` thresholds — deny >10, escalate >1 — then host allowlist, then deny |
+
+DSL conditions: `host_in` (empty list = catch-all), `hour_between`
+(`["HH:MM","HH:MM"]`, wraps midnight), `amount_gt`. First match wins; no match
+→ **deny** (fail-closed, `test_bank_template_validates`).
+
 ## Sister-product bridges (OSS adapter v0.1)
 
 Sester does not merge with its sisters — it bridges them. `sester.bridges`

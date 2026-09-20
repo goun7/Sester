@@ -1,0 +1,40 @@
+{
+  "wallet_policy": {
+    "id": "wpol-2026-09-budget-guard",
+    "owner": "did:agent:kok:demo-treasury",
+    "wallet": "evm:0xDEMO000000000000000000000000000000000000",
+    "defaults": {
+      "currency": "USDC-sim",
+      "per_request_max": 1.00,
+      "daily_max": 100.00,
+      "timezone": "Europe/Istanbul"
+    },
+    "comment": "Budget-guard pattern: iki amount_gt-esigi (deny 10+, escalate 1+) + host-allowlist + fail-closed. Ilk-eslesen kazanir, o yuzden siralama onemli: kucuk-tutar bilinen-hostlarda allow-olurken, yuksek-tutar once-deny-kuralina-takilir. Bilinmeyen-host default-deny.",
+    "rules": [
+      {
+        "id": "deny-large",
+        "when": { "amount_gt": 10.00 },
+        "then": "deny"
+      },
+      {
+        "id": "escalate-mid",
+        "when": { "amount_gt": 1.00 },
+        "then": "escalate"
+      },
+      {
+        "id": "allow-small-known",
+        "when": { "host_in": ["/telemetry", "/history", "/weather"] },
+        "then": "allow"
+      },
+      {
+        "id": "deny-unknown-hosts",
+        "when": { "host_in": [] },
+        "then": "deny"
+      }
+    ],
+    "audit": {
+      "ledger": "tamga://budget-guard/agent-payments",
+      "on_violation": "block+log"
+    }
+  }
+}
