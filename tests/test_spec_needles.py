@@ -383,3 +383,39 @@ def test_212_insert_event_gate(tmp_path):
     n = led.conn.execute("SELECT COUNT(*) FROM events").fetchone()[0]
     assert n == 1, f"RED-satırı-yazılmamış-olmalıydı, {n} satır var"
     led.close()
+
+
+def test_213_every_events_insert_is_gated():
+    """Tamga'nın-sınır-sorusunun-asıl-cevabı: statik-tarayıcı-kaçınılmaz-olarak
+    ad-sabitlemeli (her-yazım-deyimini-tanımak-imkansız), ama-garanti-ad-lere-değil
+    **events-tablosuna-yazan-her-bölgenin-geçitli-olduğuna** dayanmalı. Bu-test
+    öyle-kilitler: `INSERT INTO events` içeren-her-string, `is_known_event_type`
+    çağıran-bir-fonksiyonun-içinde-olmalı. Üçüncü-bir-yazım-fonksiyonu-bir-gün
+    eklenirse-ve-geçitsiz-olursa burada-RED-verir — deyim-adı-taramaya-gerek-yok."""
+    gated_funcs: dict[str, set[str]] = {}  # modül → geçitli-fonksiyon-adları
+    insert_sites: list[tuple[str, str]] = []  # (modül, kapsayan-fonksiyon)
+    files = [(Path("sester/ledger.py")), Path("sester/pg_ledger.py")]
+    for py in files:
+        tree = ast.parse(py.read_text(encoding="utf-8"))
+        stack: list[str] = []
+
+        def _walk(n):
+            if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                stack.append(n.name)
+                src = ast.unparse(n)
+                if "is_known_event_type" in src:
+                    gated_funcs.setdefault(py.name, set()).add(n.name)
+            if isinstance(n, ast.Constant) and isinstance(n.value, str) \
+                    and "INSERT INTO events" in n.value:
+                insert_sites.append((py.name, stack[-1] if stack else "<module>"))
+            for c in ast.iter_child_nodes(n):
+                _walk(c)
+            if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                stack.pop()
+
+        _walk(tree)
+    ungated = [(m, f) for m, f in insert_sites
+               if f not in gated_funcs.get(m, set())]
+    assert not ungated, (
+        f"events-tablosuna-yazan-ama-taksonomi-geçidi-olmayan-bölge: {ungated} — "
+        "her-yazım-girişi-is_known_event_type'tan-gecmeli (ERRATUM-K0.2)")
