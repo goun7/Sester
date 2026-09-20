@@ -39,7 +39,7 @@ aynı kanıt-zinciri. **Ne yapmayız:** custodial-cüzdan (63 tezine ters), kend
 | Marj | >%85 | SaaS + RPC-değişken maliyet |
 | Benchmark | Coinbase facilitator ~$999/ay @1M settlement ⚠️; ACP ~%4 ⚠️ | dürüst kıyas: $999 düz-ücret yüksek-sepetli hacimde daha ucuz ama **yalnız ray** — politika+metering+kanıt dahil değil; 63'ün %0,5'i katman-değerini fiyatlar. ACP %4 = üst-bound referansı |
 | Başabaş | ~2 müşteri | unicorn-hat: ilk-yıl gelir-baskısı yok |
-| Hacim-taban-tetikleyici | gerçek-hacim ~$28K/gün (Mar 2026), ~%50 oyunlaştırılmış | pilot zamanına kadar gerçek-hacim QoQ büyümezse → "politika-katmanı-her-ray" pivotu (x402-tek-ray bağımlılığı düşer) |
+| Hacim-taban-tetikleyici | gerçek-hacim ~$28K/gün (Mar 2026), ~%50 oyunlaştırılmış ⚠️ **teyit-edilemedi** | pilot zamanına kadar gerçek-hacim QoQ büyümezse → "politika-katmanı-her-ray" pivotu (x402-tek-ray bağımlılığı düşer). ⚠️-not: bu-rakam-2026-09-12-öncesi-pazar-gözleminden-geldi, mühendislik-ölçümü-değil; bu-ADR'de-tutulur-çünkü-pivot-kararı-buna-bağlı, ama-**doğrulanmış-gerçek-hacım-olarak-okunmamalı** (test-ile-kanıtlanamaz, kaynak-2026-09-12) |
 
 ## 3) Fiyat paketleri
 

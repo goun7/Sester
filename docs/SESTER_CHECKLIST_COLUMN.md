@@ -143,3 +143,26 @@ kırılgan**; o-yüzden-7.1'in-ancak-makine-halini-kilitledim:
   kütüphane-üzerinden-yazılanları-kapsar (K0-§1-notu); `unknown_event_types`
   alıcıya-abstain/warn/reject-seçeneği-bırakır (Veridict-D13-ile-hizalı,
   §7-rule-3-opaklığı-bozmaz).
+
+## Güncelleme (2026-09-20) — sürüm-denetimi-ölçüldü (release-tags/badges)
+
+Bekleyen-listedeki "release-tags/badges-doğrulacak" maddesi **ölçülerek-kapatıldı**
+(her-sonuç-kanıt-ile):
+
+| İddia | Ölçüm | Sonuç |
+|---|---|---|
+| PyPI-badge-gerçek-mi | `pypi.org/pypi/sester/json` → HTTP-200, `0.7.1`-yayında | **DOĞRU** (gerçek-paket, dekorasyon-değil) |
+| CI-badge-gerçek-mi | GitHub-API `ci.yml/runs` → run-19, head `a2c77ca`, conclusion **success** | **DOĞRU** (CI-yeşil) |
+| v0.7.1-tag-var-mı | `git tag` + `git ls-remote --tags origin` → **yok** (son v0.7.0) | **EKSİK — yerelde-düzeltildi** |
+
+**Bulgu (gerçek-boşluk):** PyPI'da-0.7.1-yayınlanmış-ve-CI-o-commit'te-yeşil-olmasına
+rağmen **v0.7.1-tag'i-hem-yerelde-hem-uzakta-yoktu** — yayınlanmış-sürümün-git-
+tarihçesinde-iz'i-yoktu. Düzeltme: `git tag -a v0.7.1 a2c77ca` (CI-success-
+commit'ine, PyPI-ile-aynı-şaft). **Push-henüz-yapılmadı** — kullanıcıya-soruldu
+(herkese-açık-eylem).
+
+**Ders:** aynı-erratum-sınıfının-başka-bir-yüzü — **uygulanmış-ama-kayıt-
+edilmemiş** (sürüm-yayınlanmış-ama-tag'lenmemiş). Kural-7.1'in-makine-hali-bunu
+yakalamadı çünkü-guard-yalnızca-versiyon-SAYISINI-senkronlar (pyproject=0.7.1),
+**tag-varlığını-değil**. Açık-kör-nokta-notu: release-tag-denetimi-guard'a-dahil-
+değil; elle-ölçüldü.
