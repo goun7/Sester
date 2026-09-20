@@ -118,6 +118,9 @@ korundu (doğrulandı).
 4. **Issue/PR-body taraması yalnızca Sester için yapıldı** (GitHub-API'siz
    Tamga/Veridict issue'ları taranamadı — API-rate-limit). Yerel commit'lerde
    temiz-olmaları issue'larda da temiz olduklarını göstermez.
+   **(2026-09-20-güncelleme: `gh`-authenticated-ile-kapatıldı — Tamga 12.9 KB,
+   Veridict 41 KB, Sester 1.6 KB issue-body **+ yorum-body**'leri tarandı:
+   **0 secret**.)**
 5. **x402 ödeme-kanalı anahtarları** (`facilitator`-private-key'ler) üretimde
    env'den-okunuyor-mu-yoksa-hardcoded-mi — bu denetim **üretim-dağıtımını**
    değil, repo'yu taradı. Dağıtım-audit'i ayrı-bir-iştir.
@@ -193,5 +196,8 @@ dizine-çıkarıp-ölçtüm, çalışma-ağacına dokunmadım.
 - [x] Kural-9 normatif-metni + needle-kilitleri (`3fbcbc1`)
 - [x] Üç repo HEAD == origin doğrulandı
 - [x] Sester tam-suite: 258 passed / 25 skipped / 0 failed; guard rc=0
-- [x] GitHub-Advanced-Security secret-scanning API ile-çapraz-kontrol (sınır-1) — **3/3 repo: 0 alert**
-- [x] CI-run log'larında secret-echo taraması (sınır-2) — 3 repo × son-6-run (~1.3–1.6 MB/log), hem-12-desenli-regex **hem** `password=/token=/secret=`/`Bearer` yan-taraması: **0 isabet**
+- [x] ~~GitHub-Advanced-Security secret-scanning API~~ (sınır-1) — **3/3 repo: 0 alert**
+- [x] ~~CI-run log'larında secret-echo~~ (sınır-2) — 3 repo × son-6-run, regex + yan-tarama: **0 isabet**
+- [x] ~~Silinmiş/üzerine-yazılmış geçmiş~~ (sınır-3) — `git fsck --unreachable` (güvenli-okuma): 8+7+0 commit, **0 secret**
+- [x] ~~Tamga/Veridict issue-body taraması~~ (sınır-4) — `gh`-ile-issue+yorum-body: **0 secret**
+- [ ] Fork'lardan sızıntı (sınır-2'nin-parçası) — **bizim-kontrolümüzde-değil** (Sester'ın 2 fork'u; fork-sahibinin kendi-geçmişinde)
