@@ -1,10 +1,18 @@
-# K0 · Shared Evidence-Envelope Spec — draft v0.1 (2026-09-12)
+# K0 · Shared Evidence-Envelope Spec — v0.2 (2026-09-20)
+
+> **Sürüm-tarihi:** v0.1-2026-09-12 (draft) → **v0.2-2026-09-20**: ERRATUM-K0.3
+> (§7-rule-6, replay-koruması-normatif) + tri-product-amendment (§7-rule-7/8,
+> GATES/NON_GATES-registry + soru-disiplini) + §7-rule-9 (alıcı-yardımcısı-
+> değerlendirmesi: üretici-zorunlu/alıcı-opt-in). Artık-draft-değil: üç-ürün-de
+> onayladı, mesh-§5-koşulları-karşılandı, needle-testleri-ile-makine-kilitli.
 
 > One-page contract that lets **independent** projects (SESTER · Tamga Protocol ·
 > Veridict) anchor and audit each other's evidence **without merging**.
 > Reference implementation: `sester/evidence.py` (+ `sester/bridges.py`),
 > external verifier: `scripts/dogrula.py` (stdlib-only, no sester import).
-> Status: DRAFT — adoption by each project is a separate decision
+> Status: v0.2 RATIFIED (2026-09-20) — three-product-approved; adoption by each
+> project was a separate decision and all three adopted (Sester K0-needles
+> machine-locked; Tamga LEDGER-SPEC §6/§7 mirror; Veridict D13-abstain family).
 > (K0 row, §3 of the repo's unification review record). Every artifact carries a
 > version field; readers MUST reject unknown versions.
 >

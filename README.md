@@ -150,7 +150,8 @@ wallet means one shared quota. Register your own via `register_scheme` /
 .venv/bin/python -m pytest tests/ -q    # full suite: policy, ledger, middleware, EVM schemes,
                                         # evidence, facilitator, protocol adapters, escalation,
                                         # JWS, signed policy, UCP, settlement, minor units,
-                                        # payee registry, S6 joint acceptance — 200+ test legs
+                                        # payee registry, S6 joint acceptance — 260+ passing tests
+                                        # (25 env-gated skips: PG/sibling-repos/external tools)
 python scripts/s1_dogfood.py            # S1 acceptance scenario → KABUL (accepted)
 python scripts/dogrula.py adoption/s1-kanit-bundle.json   # receiver side — no Sester needed
 ```
