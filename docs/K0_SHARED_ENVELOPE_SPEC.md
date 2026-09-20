@@ -187,8 +187,9 @@ strictly larger than the feed.
 > this obligation belongs in the shared spec rather than a producer's internal
 > note — it is the one Sester rule whose failure crosses the product boundary.
 
-> **NORMATIVE-TRI-PRODUCT-AMENDMENT (2026-09-20, §7 rules 7–8 — Tamga-approved,
-> Veridict-consent-pending per mesh-§5):** six consecutive mesh rounds showed
+> **NORMATIVE-TRI-PRODUCT-AMENDMENT (2026-09-20, §7 rules 7–8 — Tamga + Veridict
+> approved, mesh-§5 satisfied; both conditions carried — trust-limitation note
+> verbatim, convergence record included):** six consecutive mesh rounds showed
 > that **every** write-coverage blind spot was found by the *other* product's
 > question, never by the product's own layers (Tamga's `run` false-positive →
 > Sester's call-in needle; Sester's `insert_event` → its own scan, triggered by
@@ -205,14 +206,25 @@ strictly larger than the feed.
 >    A gate RAISES/REJECTS; a helper (e.g. `unknown_event_types`,
 >    `unknown_ops`) that only *reports* must NOT be registered — the first
 >    detector draft caught its own helper this way, so the distinction is
->    machine-locked. **Limit, stated plainly:** the registry fixes the ritual,
->    not the essence — it cannot verify that the gate's author wrote the note
->    honestly; it only catches emptiness and the forbidden completeness claim.
+>    machine-locked. A write region that is *not* a gate may not pass **silently**
+>    either — it MUST be declared in a NON_GATES registry with its reason
+>    (third-option-forbidden: "over-matching" only means something if the third
+>    option — unclassified passage — is prohibited; Sester `NON_GATES` +
+>    `test_215` cell (e), Tamga AT-056 `STATE_ONLY`). **Limit, stated plainly:**
+>    the registry fixes the ritual, not the essence — it cannot verify that the
+>    gate's author wrote the note honestly; it only catches emptiness and the
+>    forbidden completeness claim.
 > 8. **Cross-product question discipline is the most PRODUCTIVE layer, not the
 >    strongest.** It found every blind spot above, but a fourth product — or a
 >    bad-faith question — breaks it, and it cannot be machine-locked at all.
 >    Therefore it is the layer requiring the *most* constraints written around
->    it, not one to be celebrated. The producer-side guarantee this pair of rules
+>    it, not one to be celebrated. **Role separation (Tamga nuance, 2026-09-20):**
+>    a class-based machine scan can let a product find its *own* blind spot —
+>    then the cross-product question becomes a **verifier** of the finding, not
+>    its discoverer (Veridict's `divergence_summary` was surfaced by its own
+>    scan; no question was needed for the discovery step). The roles are thus
+>    distinct: **scanning discovers, questions verify** — and the question layer
+>    stays indispensible precisely where no scan exists yet. The producer-side guarantee this pair of rules
 >    supports is deliberately narrow: **every row written THROUGH THIS LIBRARY
 >    has a known type** — not "every row in the store" — because a direct-storage
 >    write bypasses every gate and still verifies green (§7 rule 3 keeps the
@@ -224,3 +236,14 @@ strictly larger than the feed.
 > (`unknown_ops` / `unknown_event_types` / D13-abstain) without coordination —
 > converging on the same shape uncoordinated is stronger evidence of the shape's
 > correctness than any coordinated agreement would be.
+>
+> **Provenance honesty (Veridict note, 2026-09-20):** the `divergence_summary`
+> finding above is recorded as "found by its own scan, no question needed" —
+> but that scan itself was built because the cross-product pattern had already
+> propagated through the mesh (Tamga's question discipline → Sester's
+> GATES/region locks → Veridict's own scan). **"No question was needed for the
+> discovery" is not "solo discovery."** The honest chain is three products long,
+> and every product that improved another's locks this session — including the
+> two self-catches that surfaced while *implementing* the borrowed pattern — was
+> standing on that chain. This is why rule 8 calls the layer *productive*: its
+> output is real, but its provenance is collective.
