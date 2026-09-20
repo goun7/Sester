@@ -392,26 +392,45 @@ def test_213_every_events_insert_is_gated():
     öyle-kilitler: `INSERT INTO events` içeren-her-string, `is_known_event_type`
     çağıran-bir-fonksiyonun-içinde-olmalı. Üçüncü-bir-yazım-fonksiyonu-bir-gün
     eklenirse-ve-geçitsiz-olursa burada-RED-verir — deyim-adı-taramaya-gerek-yok."""
-    gated_funcs: dict[str, set[str]] = {}  # modül → geçitli-fonksiyon-adları
-    insert_sites: list[tuple[str, str]] = []  # (modül, kapsayan-fonksiyon)
-    files = [(Path("sester/ledger.py")), Path("sester/pg_ledger.py")]
+    gated_funcs: dict[str, set[str]] = {}  # modül → geçitli-kalıf-adları
+    insert_sites: list[tuple[str, str]] = []  # (modül, kapsayan-kalıf)
+    # dosya-kapsamı-sabit-değil — keşfedilen-dosya-kümesi (ilkenin-kendisi:
+    # yeni-bir-modül-INSERT-yazarsa-sessizce-geçemesin; önceki-turun-kör-noktası
+    # buydu: liste-iki-dosyaya-sabitken-üçüncü-bir-modül-görünmüyordu)
+    files = sorted(
+        (p for p in Path("sester").rglob("*.py")
+         if "__pycache__" not in p.parts),
+        key=str
+    )
+    files += sorted(
+        (p for p in Path("scripts").glob("*.py")),
+        key=str
+    )
     for py in files:
         tree = ast.parse(py.read_text(encoding="utf-8"))
-        stack: list[str] = []
+        cls_stack: list[str] = []
+        fn_stack: list[str] = []
 
         def _walk(n):
+            if isinstance(n, ast.ClassDef):
+                cls_stack.append(n.name)
             if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                stack.append(n.name)
+                fn_stack.append(n.name)
+                qualified = ".".join(cls_stack + [n.name])
                 src = ast.unparse(n)
                 if "is_known_event_type" in src:
-                    gated_funcs.setdefault(py.name, set()).add(n.name)
+                    gated_funcs.setdefault(str(py), set()).add(qualified)
             if isinstance(n, ast.Constant) and isinstance(n.value, str) \
                     and "INSERT INTO events" in n.value:
-                insert_sites.append((py.name, stack[-1] if stack else "<module>"))
+                insert_sites.append((str(py),
+                                     ".".join(cls_stack + fn_stack[-1:])
+                                     if fn_stack else "<module>"))
             for c in ast.iter_child_nodes(n):
                 _walk(c)
+            if isinstance(n, ast.ClassDef):
+                cls_stack.pop()
             if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                stack.pop()
+                fn_stack.pop()
 
         _walk(tree)
     ungated = [(m, f) for m, f in insert_sites
@@ -455,11 +474,12 @@ def test_215_gates_registry_kural_7_1():
     (kapı-kalktıysa-kayıt-da-kalkmalı), (c) notlar-boş-değil-ve-eksiksiz-demiyor."""
     from sester.ledger import GATES, NON_GATES
 
-    files = {"sester/ledger.py": Path("sester/ledger.py"),
-             "sester/pg_ledger.py": Path("sester/pg_ledger.py")}
     found: set[str] = set()
-    for mod, py in files.items():
-        tree = ast.parse(py.read_text(encoding="utf-8"))
+    files = sorted(str(p) for p in Path("sester").rglob("*.py")
+                   if "__pycache__" not in p.parts)
+    files += sorted(str(p) for p in Path("scripts").glob("*.py"))
+    for mod, py in ((f, f) for f in files):
+        tree = ast.parse(Path(py).read_text(encoding="utf-8"))
         cls_stack: list[str] = []
         fn_stack: list[str] = []
 
@@ -513,8 +533,8 @@ def test_215_gates_registry_kural_7_1():
     # ya-NON_GATES'te-açıkça-beyan-edilmeli. Bu-olmadan-aşırı-tarafın-anlamı
     # kalmazdı: test_213-INSERT-bölgesini-bulur-ama-sınıflandırma-zorunlu-değildi.
     write_regions: set[str] = set()
-    for mod, py in files.items():
-        tree = ast.parse(py.read_text(encoding="utf-8"))
+    for mod, py in ((f, f) for f in files):  # aynı-keşfedilen-dosya-kümesi
+        tree = ast.parse(Path(py).read_text(encoding="utf-8"))
         cls_stack2: list[str] = []
         fn_stack2: list[str] = []
 
