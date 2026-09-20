@@ -43,7 +43,9 @@ def sign_exact_sester(secret_key: str, agent: str, nonce: str, amount: str,
     """Ajan-tarafı: EIP-191 imzalayıp X-PAYMENT header-değerini üret."""
     if not HAVE_ETH:
         raise PaymentError("eth-account kurulu değil (pip install eth-account)")
-    msg = f"{agent}|{nonce}|{amount}|{resource}".encode()
+    # agent küçük-harfle normalleştir: verify() mesajı lowercase kurar
+    # (checksum'lı agent ile imzalanırsa doğrulama asrama geçmesin — v0.7.1)
+    msg = f"{str(agent).lower()}|{nonce}|{amount}|{resource}".encode()
     signed = Account.sign_message(encode_defunct(msg), private_key=secret_key)
     recovered = Account.recover_message(encode_defunct(msg),
                                         signature=signed.signature)
