@@ -11,4 +11,4 @@ kablo-alanları (pugio0, pugio_bundle_version, pugio_evidence_bundle,
 source:sikke) v2'ye kadar alıcı-uyumu için korunur.
 """
 
-__version__ = "0.7.0"
+__version__ = "0.7.1"
