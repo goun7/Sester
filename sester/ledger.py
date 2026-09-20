@@ -354,7 +354,16 @@ class Ledger:
 
     def insert_event(self, ev: dict[str, Any]) -> None:
         """Mevcut bir olayı hash'leriyle aynen yazar (migrasyon/restore).
-        Yeniden-mühürlemez — zincir olduğu gibi taşınır (verify_chain geçmeli)."""
+        Yeniden-mühürlemez — zincir olduğu gibi taşınır (verify_chain geçmeli).
+        ERRATUM-K0.2-kapısı: append'ten-farklı-bir-yazım-deyimi-olsa-da taksonomi
+        burada-da-zorunlu — kapalı-küme-iddiası her-yazım-girişinde-geçerli
+        (test_210'in-sorduğu-sınır: sabit-fonksiyon-adı-listesine-bağlı-tarayıcı
+        bu-yolu-ıskalamazdı)."""
+        if not is_known_event_type(ev["event_type"]):
+            raise ValueError(
+                f"bilinmeyen event_type: {ev['event_type']!r} — ERRATUM-K0.2 "
+                "taksonomisi dışı (insert_event: hash'ler-ayen-taşınır-ama-tip "
+                "yine-de-kapalı-kümede-olmalı)")
         with self._lock:
             self.conn.execute(
                 "INSERT INTO events (seq, ts, event_type, agent_id, host,"

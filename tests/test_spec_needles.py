@@ -275,6 +275,10 @@ def _emitter_calls(tree):
                     out.append(("append", n.args[0], stack[-1] if stack else ""))
             elif isinstance(f, ast.Name) and f.id == "_proof":
                 out.append(("proof", n.args[0], stack[-1] if stack else ""))
+            elif isinstance(f, ast.Attribute) and f.attr == "insert_event":
+                # verbatim-kopya-deyimi (migrasyon/restore): argüman satır-sözlüğü,
+                # literal-çözülemez — runtime-kapısı-kapsar (test_212)
+                out.append(("verbatim", n.args[0], stack[-1] if stack else ""))
         for c in ast.iter_child_nodes(n):
             _walk(c)
         if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)):
@@ -309,6 +313,11 @@ def test_210_all_emitters_are_listed():
                         problems.append(f"{py}: _proof çözülemez-dinamik-argüman")
                     elif not v <= family_kinds:
                         problems.append(f"{py}: _proof bilinmeyen-kind: {sorted(v)}")
+                    continue
+                if kind == "verbatim":
+                    # insert_event: verbatim-kopya — literal-çözülemez, runtime
+                    # kapısı-kapsar (test_212 ile-kanıtlı); tarayıcı-bu-deyimi
+                    # bilerek-tanıyıp-sessizce-ıskalamasın-diye-burada-işaretlenir
                     continue
                 # append
                 if isinstance(arg, ast.Starred):
@@ -353,3 +362,24 @@ def test_211_s6_joint_run_is_covered():
     finally:
         sys.path.remove(str(scripts_dir))
         sys.modules.pop("s6_joint_run", None)
+
+
+def test_212_insert_event_gate(tmp_path):
+    """İkinci-yazım-deyiminin-kapısı — Tamga'nın-sınır-sorusuna-cevap:
+    `insert_event` (migrasyon/restore) `append`'i-atlayan-ayrı-bir-yol-olduğu
+    için hem-statik-tarayıcı-hem-de-append-only-runtime-kapısı-onu-ıskalardı.
+    Artık-taksonomi-burada-da-zorunlu; kapalı-küme-iddiası-her-yazım-girişinde."""
+    from sester.ledger import GENESIS, Ledger
+
+    led = Ledger(str(tmp_path / "ie.sqlite3"), secret="ie")
+    good = {"seq": 1, "ts": 1.0, "event_type": "charge_receipt", "agent_id": "a",
+            "host": "h", "amount": 0.05, "payload": "{}", "prev_hash": GENESIS,
+            "hash": "x" * 64, "amount_minor": 50000}
+    led.insert_event(good)  # geçerli-tip — hash'leriyle-ayen-yazılır
+    bad = dict(good, seq=2, event_type="bilinmeyen_tip")
+    with pytest.raises(ValueError, match="bilinmeyen event_type"):
+        led.insert_event(bad)
+    # RED-satırı-hiç-yazılmamış (fail-closed — kirli-yarı-durum-yok)
+    n = led.conn.execute("SELECT COUNT(*) FROM events").fetchone()[0]
+    assert n == 1, f"RED-satırı-yazılmamış-olmalıydı, {n} satır var"
+    led.close()

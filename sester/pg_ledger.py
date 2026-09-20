@@ -282,7 +282,12 @@ class PgLedger:
     # ------------------------------------------------ migrasyon (hash-koruyan)
 
     def insert_event(self, ev: dict[str, Any]) -> None:
-        """Mevcut bir olayı hash'leriyle aynen yazar (migrasyon/restore)."""
+        """Mevcut bir olayı hash'leriyle aynen yazar (migrasyon/restore).
+        ERRATUM-K0.2-kapısı — SQLite-Ledger ile-aynı (her-yazım-girişi)."""
+        if not is_known_event_type(ev["event_type"]):
+            raise ValueError(
+                f"bilinmeyen event_type: {ev['event_type']!r} — ERRATUM-K0.2 "
+                "taksonomisi dışı (insert_event)")
         with self._lock:
             with self.conn().cursor() as cur:
                 cur.execute(
