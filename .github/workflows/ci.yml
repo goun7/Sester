@@ -4,6 +4,12 @@ on:
   push:
     branches: [main]
   pull_request:
+  # F1-dogfood: her-6-saatte-bir-ve-elle-tetiklenebilir. S1 kabul-senaryosu
+  # (scripts/s1_dogfood.py) regresse-olursa 6-saat-içinde-yüzeye-çıkartır;
+  # push'ta-da-koşar (aşağıdaki-dogfood-job'u).
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
 
 jobs:
   test:
@@ -86,3 +92,26 @@ jobs:
           # Alıcılar pür-stdlib: kardeş-repoların kendi selftestleri de koşar
           python siblings/tamga/tamga_pugio_receiver.py --selftest
           python siblings/veridict/scripts/pugio_watch_receiver.py --selftest
+
+  dogfood:
+    name: F1 dogfood (S1 acceptance)
+    runs-on: ubuntu-latest
+    # F1-dogfood (2026-09-20): scripts/s1_dogfood.py — CI-runnable kabul-
+    # testi (S1.a–S1.e; exit-0=KABUL). Push'ta-ve-schedule'da-koşar;
+    # regresse-olursa RED düşer. CI-bağımlılığı-yok (saf-python, sqlite).
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: pip install -e .[dev]
+      - name: S1 dogfood acceptance (quota + hour-window + deny + evidence)
+        run: python scripts/s1_dogfood.py
+      - name: Upload evidence bundle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: s1-kanit-bundle-${{ github.run_id }}
+          path: adoption/s1-kanit-bundle.json
+          if-no-files-found: ignore
