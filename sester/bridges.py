@@ -25,6 +25,18 @@ import json
 import time
 from typing import Any
 
+# OSS-adaptör v0.1 public-API yüzeyi (2026-09-20): alıcı-tarafı-bağımsızlığı
+# korunur — bu-fonksiyonlar stdlib-dışı-bağımlılık-içermez, bu-yüzden
+# `pip install sester` (extras'sız) bile köprü-üretimi-yeter.
+__all__ = [
+    "BRIDGE_VERSION",
+    "tamga_anchor",
+    "tamga_anchor_json",
+    "verify_tamga_anchor",
+    "veridict_claims",
+    "veridict_claims_json",
+]
+
 BRIDGE_VERSION = 1
 
 

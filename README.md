@@ -91,6 +91,29 @@ chain-integrity badge.
 | Evidence webhooks | HMAC-signed delivery of charge/settlement events with receiver-side verification, retry+backoff, ledger failure-log | dev |
 | Evidence export | External-verifier bundles — anyone can audit with `sha256` alone, no Sester installed | v0.3+ |
 
+## Sister-product bridges (OSS adapter v0.1)
+
+Sester does not merge with its sisters — it bridges them. `sester.bridges`
+emits **receiver-independent** evidence envelopes; the counterpart verifies
+**without importing Sester** (stdlib-only, the `dogrula.py` discipline):
+
+| Bridge | Direction | Function | Receiver needs |
+|---|---|---|---|
+| **K1 · Tamga** | Sester → Tamga ledger | `tamga_anchor()` / `tamga_anchor_json()` | nothing but the anchor JSON |
+| **K2 · Veridict** | Sester → Veridict jury | `veridict_claims()` / `veridict_claims_json()` | nothing but the claims JSON |
+
+```python
+from sester.bridges import tamga_anchor_json, veridict_claims_json, BRIDGE_VERSION
+
+anchor = tamga_anchor_json(bundle)        # deterministic JSONL envelope
+claims = veridict_claims_json(bundle)     # claim_id = sha256(task|summary|v)[:16]
+```
+
+Both bridges work on **public fields only** — non-custodial and
+secretless-verifiability are preserved. `BRIDGE_VERSION` pins the wire
+contract; receivers reject unknown versions (K0 §7 rule 2). Cross-repo CI
+(`Cross-repo bridges` job) verifies both ends on every push.
+
 ## Protocol adapters
 
 | Protocol | Header | Envelope | Signature |

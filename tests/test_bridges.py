@@ -107,3 +107,23 @@ def test_63_claims_json_roundtrip(led):
     parsed = json.loads(veridict_claims_json(b))
     assert parsed["bridge_version"] == BRIDGE_VERSION
     assert len(parsed["claims"]) == 3
+
+
+def test_64_public_api_surface_locked():
+    """OSS-adaptör v0.1: __all__ public-yüzeyini-sabitler — bir-fonksiyon
+    __all__'dan-çıkarılırsa (örn. 'artık-önerilmiyor'-şeklinde-silinirse) bu
+    test-RED-düşer. Ayrıca tüm-public-fonksiyonlar stdlib-dışı-bağımlılık-
+    içermemeli (alıcı `pip install sester`-extras'sız-üretebilmeli)."""
+    import sester.bridges as br
+
+    # __all__'daki-her-isim-gerçekten-ihrac-edilebilir-olmalı
+    for name in br.__all__:
+        assert hasattr(br, name), f"__all__-üyesi {name!r} modülde-yok"
+    # public-API-şekli-sabit: sürüm + 5-fonksiyon + 2-json-variant
+    assert br.__all__[0] == "BRIDGE_VERSION"
+    assert set(br.__all__[1:]) == {
+        "tamga_anchor", "tamga_anchor_json", "verify_tamga_anchor",
+        "veridict_claims", "veridict_claims_json",
+    }
+    # BRIDGE_VERSION-imzalı (alıcılar bilinmeyen-sürümü-reddeder, K0-§7-rule-2)
+    assert isinstance(br.BRIDGE_VERSION, int) and br.BRIDGE_VERSION >= 1
