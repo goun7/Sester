@@ -419,3 +419,28 @@ def test_213_every_events_insert_is_gated():
     assert not ungated, (
         f"events-tablosuna-yazan-ama-taksonomi-geçidi-olmayan-bölge: {ungated} — "
         "her-yazım-girişi-is_known_event_type'tan-gecmeli (ERRATUM-K0.2)")
+
+
+def test_214_read_side_taxonomy_assertion():
+    """Üretici-garantisi-alıcı-garantisi-değildir — Tamga'nın-beşinci-tur COPY/
+    pg_restore-sorusunun-dürüst-cevabı: bölge-kapısı (test_213) bir-kaynak-kodu
+    kapsülüdür, bir-operatörün-doğrudan-COPY/SQL-ile-yazdığı-sırayı-göremez; ve
+    hash-zinciri-event_type'ı-opaq-okuduğu-için-o-sıra-hâlâ-yeşil-doğrulanır.
+    Bu-yardımcı asimetriyi-alıcı-tarafında-kapatır (Veridict-D13-abstain-tasarımı
+    gibi): bilinmeyen-tipleri-döndürür, karar-abstain/warn/reject-alıcıya-kalır
+    (K0-§7-opaklık-kuralı-bozulmaz)."""
+    from sester.ledger import (EVENT_TYPES, Ledger, unknown_event_types)
+
+    # bilinen-tüm-tipler-yayında → boş-küme
+    evs = [{"event_type": t} for t in sorted(EVENT_TYPES)]
+    assert unknown_event_types(evs) == set()
+
+    # aile-üyeleri-de-bilinir (statik-küme-dışı)
+    assert unknown_event_types([{"event_type": "facilitator_verify"}]) == set()
+
+    # bölge-kapısını-atlayan-hayali-sıra (operatör-COPY) → alıcı-bunu-görür
+    evs.append({"event_type": "operatör_yazdı_bunu"})
+    assert unknown_event_types(evs) == {"operatör_yazdı_bunu"}
+
+    # karar-alıcıya: sert-reject-yardımcıdan-değil-alıcıdan-gelecek (K0-uyumlu)
+    assert callable(unknown_event_types)

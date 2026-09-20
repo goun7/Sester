@@ -140,6 +140,19 @@ def is_known_event_type(event_type: str) -> bool:
     return False
 
 
+def unknown_event_types(events) -> set[str]:
+    """Okuma-tarafı-taksonomi-asserti (alıcılar-için-opsiyonel, K0-§7-uyumlu).
+
+    Kapalı-küme-üretici-garantisi (her-yazım-bölgesi-geçitli, test_213) yalnızca
+    **bu-kütüphane-üzerinden-yazılan-satırlar**-için-geçerlidir; bir-operatörün
+    doğrudan-pg_restore/COPY/SQL-ile-yazdığı-satırlar-bunu-atlar (ve-hash-zinciri
+    opaq olduğu için hâlâ-yeşil-doğrulanır). Bu-yardımcı bir-alıcının-okuduğu
+    olaylarda-bilinmeyen-tip-varsa-onu-döndürür — alıcı K0-§7-opaklık-kuralına
+    göre-abstain/warn/reject-kararını-kendisi-verir (Veridict-D13-abstain-tasarımı
+    ile-aynı). Sert-reject-burada-değil-alıcıdadır — K0-uyumlu-kalıp."""
+    return {e["event_type"] for e in events if not is_known_event_type(e["event_type"])}
+
+
 def canonical_line(ts: float, event_type: str, agent_id: str, host: str,
                    amount: float, payload: str, prev_hash: str) -> str:
     """K0-uyumlu canonical ön-görüntü — backend-bağımsız (SQLite/PG aynı zincir)."""

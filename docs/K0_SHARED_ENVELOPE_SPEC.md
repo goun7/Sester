@@ -79,6 +79,18 @@ TS|EVENT_TYPE|AGENT_ID|HOST|AMOUNT|PAYLOAD|PREV
 > convention or the two sides diverge. Producers MUST NOT emit values outside
 > the declared set/families (enforced); receivers that do not interpret
 > `event_type` should treat it as opaque (§7 rule 3, additive only).
+>
+> **Read-side assertion (2026-09-19, Tamga AT-053-sorusu):** the producer
+> guarantee covers rows written **through the library** only. An operator
+> writing directly to storage (e.g. `pg_restore`/`COPY`/raw SQL) bypasses every
+> write-time gate — and since the proof chain hashes `event_type` as opaque data,
+> such a row still verifies GREEN. A receiver that wants to assert the taxonomy
+> on data it did not itself write may call SESTER's `unknown_event_types(events)`
+> helper, which returns the unknown values; the receiver then decides (abstain /
+> warn / reject) per its own risk preference — mirroring VERIDICT-D13's
+> verifier-abstain design. The hard reject is deliberately **not** inside the
+> helper: §7 rule 3 keeps non-interpreting receivers opaque, so the choice stays
+> with the receiver.
 
 ## 2) Proof chain (secretless tier)
 
