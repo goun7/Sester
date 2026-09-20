@@ -158,8 +158,9 @@ Bekleyen-listedeki "release-tags/badges-doğrulacak" maddesi **ölçülerek-kapa
 **Bulgu (gerçek-boşluk):** PyPI'da-0.7.1-yayınlanmış-ve-CI-o-commit'te-yeşil-olmasına
 rağmen **v0.7.1-tag'i-hem-yerelde-hem-uzakta-yoktu** — yayınlanmış-sürümün-git-
 tarihçesinde-iz'i-yoktu. Düzeltme: `git tag -a v0.7.1 a2c77ca` (CI-success-
-commit'ine, PyPI-ile-aynı-şaft). **Push-henüz-yapılmadı** — kullanıcıya-soruldu
-(herkese-açık-eylem).
+commit'ine, PyPI-ile-aynı-şaft). **Push-yapıldı** (kullanıcı-onayı-ile): `git push
+origin v0.7.1` → yeni-tag, uzak-doğrulama `v0.7.1^{}` → `a2c77ca` (PyPI/CI/şaft
+üçlü-senkron).
 
 **Ders:** aynı-erratum-sınıfının-başka-bir-yüzü — **uygulanmış-ama-kayıt-
 edilmemiş** (sürüm-yayınlanmış-ama-tag'lenmemiş). Kural-7.1'in-makine-hali-bunu
