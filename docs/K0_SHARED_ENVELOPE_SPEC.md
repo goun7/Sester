@@ -186,3 +186,41 @@ strictly larger than the feed.
 > write a duplicate receipt and hit the *receivers* at read time. That is why
 > this obligation belongs in the shared spec rather than a producer's internal
 > note — it is the one Sester rule whose failure crosses the product boundary.
+
+> **NORMATIVE-TRI-PRODUCT-AMENDMENT (2026-09-20, §7 rules 7–8 — Tamga-approved,
+> Veridict-consent-pending per mesh-§5):** six consecutive mesh rounds showed
+> that **every** write-coverage blind spot was found by the *other* product's
+> question, never by the product's own layers (Tamga's `run` false-positive →
+> Sester's call-in needle; Sester's `insert_event` → its own scan, triggered by
+> Tamga's question; Tamga's `_log`/`cmd_import` → Sester's finding; the §7-rule-3
+> opaque-`op` mirror → Sester's confession measured on Tamga's verifier; two
+> AT-056 self-catches → Sester's `test_215` pattern). Blind spots correlate with
+> the developer, so the layers below are complementary, not substitutes:
+>
+> 7. **Machine fixes the ritual, the human audits the essence.** Every gated
+>    write function MUST register itself in a machine-checked GATES registry
+>    (Sester `test_215`; Tamga AT-056) together with a note stating its own blind
+>    spot. The registry MUST reject (a) an unregistered gate, (b) a stale entry
+>    whose gate no longer rejects, (c) an empty or "complete-coverage" note.
+>    A gate RAISES/REJECTS; a helper (e.g. `unknown_event_types`,
+>    `unknown_ops`) that only *reports* must NOT be registered — the first
+>    detector draft caught its own helper this way, so the distinction is
+>    machine-locked. **Limit, stated plainly:** the registry fixes the ritual,
+>    not the essence — it cannot verify that the gate's author wrote the note
+>    honestly; it only catches emptiness and the forbidden completeness claim.
+> 8. **Cross-product question discipline is the most PRODUCTIVE layer, not the
+>    strongest.** It found every blind spot above, but a fourth product — or a
+>    bad-faith question — breaks it, and it cannot be machine-locked at all.
+>    Therefore it is the layer requiring the *most* constraints written around
+>    it, not one to be celebrated. The producer-side guarantee this pair of rules
+>    supports is deliberately narrow: **every row written THROUGH THIS LIBRARY
+>    has a known type** — not "every row in the store" — because a direct-storage
+>    write bypasses every gate and still verifies green (§7 rule 3 keeps the
+>    hashed type opaque). Receiver-side helpers surface those rows; the
+>    abstain/warn/reject choice stays with the receiver (Veridict D13 family).
+>
+> **Independent convergence as evidence:** the producer-mandatory /
+> receiver-opt-in asymmetry was derived separately by all three products
+> (`unknown_ops` / `unknown_event_types` / D13-abstain) without coordination —
+> converging on the same shape uncoordinated is stronger evidence of the shape's
+> correctness than any coordinated agreement would be.
