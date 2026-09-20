@@ -188,7 +188,40 @@ dizine-çıkarıp-ölçtüm, çalışma-ağacına dokunmadım.
 
 ---
 
-## İzlenecekler
+## x402 Üretim-Dağıtım Audit'i (yöntem-sınır-5'in-kapanması)
+
+**Bulgular:**
+
+1. **Üretim-dağıtımı YOK** — Docker image açıkça **demo** olarak-etiketli:
+   `# Demo credentials are generated for THIS container only; do not point real
+   money rails at this image — it is the evaluation surface, not production`
+   (`Dockerfile`), `CMD uvicorn sester.demo_api:app`. `s6_joint_run.py`'deki
+   `SECRET = "s6-joint-secret"` bir **test-script'i**. O yüzden üretim-anahtar
+   sızması imkânsız — hedef yok. **Bu denetim için temiz.**
+
+2. **Ancak bir üretim-zaafiyeti var (fail-open-sınıfı):** `create_app` ve
+   `FacilitatorService`'in varsayılanı `secret: str = "facilitator-secret"`
+   (hardcoded). Üretim-başlatma `uvicorn sester.facilitator_svc.app:create_app
+   --factory` **argümansız** çağırırsa:
+   - auth-key = `SHA256("facilitator-key:facilitator-secret")` → **tamamen
+     tahmin-edilebilir**; biri `X-Facilitator-Key`'i hesaplayıp **refund dahil
+     uzaktan-yönetebilir** (`app.py:60-62` `_guard`).
+   - Ayrıca `contract="0x"+"0c"*20` ve `from_address="0x"+"0c"*20`-gibi
+     test-varsayılanları — gerçek-sözleşme/cüzdan olmadan settle yanlış-zincire.
+
+   **Risk-değerlendirmesi:** şu-an için demo-only olduğu için istismar-edilemez,
+   ama bu tam olarak "prototip-onayı"ndan-önce-kapatılması-gereken-sınıf: bir
+   kurulum betiği `--factory`'i argümansız alırsa sessizce-güvensiz-çalışır.
+
+3. **Demo-konteyner'in- kendi-içindekiler-iyi-yapılmış:** `SESTER_UCP_SECRET` /
+   `SESTER_AP2_SECRET` env-override'lı (`demo_api.py:131-132`) — model-doğru;
+   yalnızca varsayılanları zayıf ("sester-demo-ucp"), demo-etiketi-nedeniyle
+   kabul-edilebilir.
+
+**Düzeltme (uygulandı):** `create_app`/`FacilitatorService` artık **fail-closed** —
+üretim-modu `SESTER_FACILITATOR_SECRET` env'inden-zorunlu-okur; eksikse-açılışta
+hata-verir (sessizce zayıf-anahtarla-çalışmaz). Demo-ışık-tutma bozulmadı
+(aşağıda).
 
 - [x] Sester `.gitignore` genel-credential-desenleri (`d608468`)
 - [x] Tamga `.gitignore` genel-credential-desenleri (`182de8b`, push edildi)

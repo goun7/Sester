@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import hashlib
 import hmac as hmac_mod
+import os
 from typing import Any
 
 from .. import __version__ as pkg_version
@@ -48,9 +49,20 @@ class RefundReq(BaseModel):
     dispute_ref: str = ""
 
 
-def create_app(ledger: Ledger, *, secret: str = "facilitator-secret",
+def create_app(ledger: Ledger, *, secret: str | None = None,
                auth_key: str | None = None) -> FastAPI:
-    """Servis + HTTP yüzeyi. auth_key verilmezse secret'tan türetilir."""
+    """Servis + HTTP yüzeyi. auth_key verilmezse secret'tan türetilir.
+
+    Fail-closed (x402-audit 2026-09-20): secret verilmezse
+    SESTER_FACILITATOR_SECRET env'inden-okunur; o-da-yoksa RuntimeError —
+    'uvicorn ...:create_app --factory' argümansız çağrıldığında eskiden
+    tahmin-edilebilir-varsayılan-key'le-açılıyordu."""
+    if secret is None:
+        secret = os.environ.get("SESTER_FACILITATOR_SECRET")
+    if not secret:
+        raise RuntimeError(
+            "create_app secret zorunlu: ya secret=... ya da "
+            "SESTER_FACILITATOR_SECRET env'i (fail-closed).")
     svc = FacilitatorService(ledger, secret=secret)
     key = (auth_key or hashlib.sha256(
         f"facilitator-key:{secret}".encode()).hexdigest())

@@ -139,6 +139,34 @@ def test_193b_build_batch_fail_closed_on_broken_chain(svc, tmp_path):
 
 # ------------------------------------------------- HTTP yüzeyi (test_194)
 
+def test_193b_facilitator_secret_fail_closed(tmp_path, monkeypatch):
+    """x402-audit (2026-09-20): secret-yokken-açılış tahmin-edilebilir
+    varsayılan-key'le-değil, RuntimeError-la-fail-etsin (fail-closed).
+    Eski-davranış: secret='facilitator-secret' varsayılanı → auth-key
+    SHA256-türevi-tahmin-edilebilir → uzaktan-refund. Üç-yol-da-kilitli:
+    (a) secret=None + env-yok, (b) secret='' + env-yok, (c) env-set + secret=None
+    → env-kullanılır (üretim-yolu-çalışır)."""
+    import os as _os
+    from sester.facilitator_svc import FacilitatorService, create_app
+
+    led = Ledger(str(tmp_path / "f.db"), secret=SECRET)
+    try:
+        # (a) + (b): env'i-temizle, secret-verme/boş
+        monkeypatch.delenv("SESTER_FACILITATOR_SECRET", raising=False)
+        with pytest.raises(RuntimeError):
+            FacilitatorService(led)
+        with pytest.raises(RuntimeError):
+            FacilitatorService(led, secret="")
+        with pytest.raises(RuntimeError):
+            create_app(led)
+        # (c): env-set-i-çin-secret-geçilmez → env-okunur, açılır
+        monkeypatch.setenv("SESTER_FACILITATOR_SECRET", "prod-secret-x")
+        s = FacilitatorService(led)  # çalışmalı
+        assert s.secret == b"prod-secret-x"
+    finally:
+        led.close()
+
+
 @pytest.fixture()
 def app(svc):
     return create_app(svc.ledger, secret=SECRET, auth_key="k-test")

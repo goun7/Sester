@@ -16,6 +16,7 @@ facilitator'ın "doğru" tanımı, satıcı-tarafı middleware'ınkiyle tek-kayn
 from __future__ import annotations
 
 import json
+import os
 from dataclasses import dataclass
 from typing import Any
 
@@ -65,12 +66,23 @@ class _VerifyLedger:
 class FacilitatorService:
     """x402 verify/settle + satıcı-metering + batch — tek-süreç MVP."""
 
-    def __init__(self, ledger: Ledger, *, secret: str = "facilitator-secret",
+    def __init__(self, ledger: Ledger, *, secret: str | None = None,
                  free_transactions: int = FREE_TRANSACTIONS,
                  percent_fee: float = PERCENT_FEE,
                  flat_fee_minor: int = FLAT_FEE_MINOR,
                  chain_id: int = 8453, contract: str = "0x" + "0c" * 20,
                  from_address: str = "0x" + "f4" * 20) -> None:
+        # Fail-closed (x402-audit 2026-09-20): secret verilmezse
+        # SESTER_FACILITATOR_SECRET env'inden-zorunlu-okunur; o-da-yoksa
+        # açılışta-hata — eski-varsayılan "facilitator-secret" tahmin-edilebilir
+        # olduğundan auth-key'i SHA256-türevi yoluyla-kırılabilir-yapıyordu.
+        if secret is None:
+            secret = os.environ.get("SESTER_FACILITATOR_SECRET")
+        if not secret:
+            raise RuntimeError(
+                "Facilitator secret zorunlu: ya secret=... geçilmeli ya da "
+                "SESTER_FACILITATOR_SECRET env'i-set-edilmeli (fail-closed; "
+                "eski 'facilitator-secret' varsayanı-tahmin-edilebilir).")
         self.ledger = ledger
         self.secret = secret.encode()
         self.free_transactions = int(free_transactions)
