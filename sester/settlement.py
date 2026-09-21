@@ -240,6 +240,16 @@ def build_settlement_batch(ledger: Any, agent_id: str, *, chain_id: int,
         elif ev["event_type"] == "refund":
             total -= int(minor)
 
+    # Ekonomik-kapı (AT-062-aynası, ödeme-katmanı): negatif-batch = değer-
+    # çıkarma-yolu. append'in-yazma-kapısı-zaten-rede-eder-AMA-batch-bağımsız-
+    # doğrulayıcıların-önünde-ledger'ı-okur (operatör-doğrudan-SQL-yazımı
+    # append'i-atlayabilir); burada-son-kontrol-olmadan-negatif-total-on-chain
+    # calldata'ya-gider.
+    if total < 0:
+        raise SettlementError(
+            f"negatif settlement-toplamı {total} minor — değer-çıkarma-yolu "
+            "(aşırı-iade veya-bozulmuş-charge); batch-rede-edilir")
+
     root = merkle_root_keccak([bytes.fromhex(h) for h in leaves])
     calldata = build_settle_calldata(
         agent=payee, total_minor=total, currency=currency,

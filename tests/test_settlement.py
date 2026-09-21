@@ -172,3 +172,41 @@ def test_181_minor_dual_read_in_batch(tmp_path):
     batch = build_settlement_batch(led, ADDR, chain_id=1,
                                    contract=CONTRACT, from_address=FROM)
     assert batch.total_minor == 50_000
+
+
+def test_185_batch_rejects_net_negative(tmp_path):
+    """AT-062-ekonomik-ayna (ödeme-katmanı): net-negatif-batch = değer-
+    çıkarma-yolu. refund'lar charge'lardan-fazlaysa-agent'ten-para-çekiliyor
+    demektir — bu on-chain calldata'ya-gidemez. build_settlement_batch
+    append'in-yazma-kapısından-bağımsız-olarak-burada-da-rede-etmeli
+    (operatör-doğrudan-SQL-yazımı-append'i-atlayabilir)."""
+    led = Ledger(tmp_path / "neg.sqlite3", secret="neg")
+    # 1 charge (50 minor) + 3 refund (50'şer) → net -100 minor
+    led.append("charge_receipt", ADDR, "/x", 0.50, amount_minor=50,
+               payload={"nonce": "c1"})
+    for i in range(3):
+        led.append("refund", ADDR, "/x", 0.50, amount_minor=50,
+                   payload={"nonce": f"r{i}"})
+    try:
+        with pytest.raises(SettlementError, match="negatif settlement-toplamı"):
+            build_settlement_batch(led, ADDR, chain_id=84532, contract=CONTRACT,
+                                   from_address=FROM)
+    finally:
+        led.close()
+
+
+def test_186_batch_accepts_net_positive_after_refunds(tmp_path):
+    """Negatif-kontrolün-yanlış-red-vermediğini-kanıtlar: refund'lar-varken
+    net-pozitif-batch-normal-üretilmeli (refund-bir-iade-aracıdır,-yasak-
+    değildir; yalnızca-net-eksiyasak)."""
+    led = Ledger(tmp_path / "pos.sqlite3", secret="pos")
+    led.append("charge_receipt", ADDR, "/x", 1.00, amount_minor=100,
+               payload={"nonce": "c1"})
+    led.append("refund", ADDR, "/x", 0.25, amount_minor=25,
+               payload={"nonce": "r1"})
+    try:
+        batch = build_settlement_batch(led, ADDR, chain_id=84532,
+                                       contract=CONTRACT, from_address=FROM)
+        assert batch.total_minor == 75  # 100 - 25
+    finally:
+        led.close()
