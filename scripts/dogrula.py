@@ -82,15 +82,36 @@ def main(argv: list[str]) -> int:
 
     bundle = json.loads(open(args[0], encoding="utf-8").read())
     events = bundle["events"]
+    # Ekonomik-tip-kapısı-ÖNCE (Tamga AT-062): canonical-hesabı `:.6f` ile
+    # string-amount'ta-crash-verir; tip-temizliği-olmadan-zincir-doğrulama
+    # anlamsız-olacağı-için-bu-kontrol-önce-gelir (fail-early-değil-fail-
+    # açık-reason-ile).
+    bad_amounts = []
+    for ev in events:
+        if ev["event_type"] != "charge_receipt":
+            continue
+        am = ev["amount"]
+        if isinstance(am, bool) or not isinstance(am, (int, float)):
+            bad_amounts.append((ev["seq"], f"sayı-değil: {am!r}"))
+        elif am < 0:
+            bad_amounts.append((ev["seq"], f"negatif: {am}"))
+
     prev = GENESIS
     proofs: list[str] = []
     for ev in events:
+        # bool/string-amount'u-burada-crash-etmeden-formatla (tip-uyarısı
+        # yukarıda-zaten-basıldı-ve-exit-koduna-yansıdı; zincir-doğrulaması
+        # bağımsız-gerçeklik-kontrolü-olarak-devam-eder)
+        am = ev["amount"]
+        am_s = (f"{float(am):.6f}"
+                if isinstance(am, (int, float)) and not isinstance(am, bool)
+                else str(am))
         if ev["prev_proof"] != prev:
             print(f"✗ zincir-kopması @seq={ev['seq']}")
             return 1
         canonical = "|".join([
             f"{ev['ts']:.6f}", ev["event_type"], ev["agent_id"], ev["host"],
-            f"{ev['amount']:.6f}", ev["payload"], prev,
+            am_s, ev["payload"], prev,
         ])
         h = hashlib.sha256(canonical.encode()).hexdigest()
         if h != ev["proof"]:
@@ -116,14 +137,33 @@ def main(argv: list[str]) -> int:
             return 1
         print(msg)
 
+    # Ekonomik-okuma-kapısı (Tamga AT-062-aynası): negatif charge_receipt =
+    # değer-çıkarma-yolu. spent_today (quota-kararı) charge_receipt'i (+) sayar;
+    # operatör-negatif-yazarsa kota-sıfırlanır → limit-aşımı. refund zaten
+    # negatif-etkili-AMA-onun-işareti-tipte-amount'da-değil; o-yüzden-kısıt
+    # yalnızca charge_receipt'e. bool-tuzağı-da-kapsanır: float(True)==1.0,
+    # JSON-bool'u-sayı-giydirir — isinstance-float/int-ve-bool-reddi.
+    # (tip-taraması-yukarıda-önce-yapıldı; burada-sadece-karar)
+    if bad_amounts:
+        detail = "; ".join(f"@{s} {why}" for s, why in bad_amounts[:3])
+        msg = (f"⚠ uygunsuz-charge_receipt-amount: {detail} — kota-bypass-"
+               "yolu (Tamga AT-062-ekonomik-sınıf)")
+        if strict:
+            print(f"✗ RED (strict): {msg}")
+            return 1
+        print(msg)
+
     agents = sorted({e["agent_id"] for e in events})
     receipts = sum(1 for e in events if e["event_type"] == "charge_receipt")
-    total = sum(e["amount"] for e in events if e["event_type"] == "charge_receipt")
+    total = sum(e["amount"] for e in events
+                if e["event_type"] == "charge_receipt"
+                and isinstance(e["amount"], (int, float))
+                and not isinstance(e["amount"], bool))
     print(f"✓ SAĞLAM: {len(events)} olay · {receipts} ücretli-işlem · toplam {total:.2f}")
     print(f"  ajanlar: {', '.join(agents)}")
     print(f"  head: {prev}")
     print(f"  merkle-kök: {bundle['merkle_root']}")
-    return 3 if unknown else 0
+    return 3 if (unknown or bad_amounts) else 0
 
 
 if __name__ == "__main__":

@@ -173,3 +173,88 @@ def test_k0_schema_extraction_is_stable():
     assert "pugio_bundle_version" in top
     assert "merkle_root" in top
     assert "prev_proof" in ev
+
+
+# ---------------- ekonomik-okuma-kapısı (Tamga AT-062 aynası) ---------------
+
+def _bundle_with_amount(tmp_path: Path, *, ev_type: str, amount) -> Path:
+    """Belirli-tip+amount'ta-tek-event-bundle üretir (amount-olarak-bool/str-
+    gibi-tuhaflıklar-da-verilebilir — dogrula'nın-tip-kontrolünü-sınar)."""
+    led = Ledger(tmp_path / "ea.sqlite3", secret="ea")
+    led.append("charge_receipt", "a1", "/w", 0.05, payload={"nonce": "n1"})
+    b = produce_bundle(led)
+    led.close()
+    evs = b["events"]
+    evs[-1]["event_type"] = ev_type
+    evs[-1]["amount"] = amount
+    prev = evs[-2]["proof"] if len(evs) > 1 else GENESIS_REF
+    evs[-1]["prev_proof"] = prev
+    # bool/string-amount: JSON'a-olduğu-gibi-konur; canonical formülünde de
+    # olduğu-gibi-kullanılır (str(True)=='True', str('on')=='on'). dogrula
+    # tip-kapısını-zincirden-ÖNCE-çalıştırdığı-için-uyarı-yine-tetiklenir,
+    # proof-u-hiç-uyuşmazsa-bile-önce-tip-uyarısı-basılır-VE-exit-3-döner.
+    am_raw = amount
+    am_fmt = (f"{float(amount):.6f}"
+              if isinstance(amount, (int, float)) and not isinstance(amount, bool)
+              else str(amount))
+    canon = "|".join([
+        f"{evs[-1]['ts']:.6f}", evs[-1]["event_type"],
+        evs[-1]["agent_id"], evs[-1]["host"],
+        am_fmt, evs[-1]["payload"], prev])
+    evs[-1]["proof"] = hashlib.sha256(canon.encode()).hexdigest()
+    b["head"] = evs[-1]["proof"]
+    b["merkle_root"] = _merkle([e["proof"] for e in evs])
+    p = tmp_path / "ea.json"
+    p.write_text(json.dumps(b), encoding="utf-8")
+    return p
+
+
+@pytest.mark.parametrize("bad", [-0.01, -100.0])
+def test_negative_receipt_amount_warns(tmp_path, bad):
+    """Negatif-charge_receipt=değer-çıkarma (kota-bypass). Zincir-GREEN-olsa-
+    bile-WARN-exit-3 (sessiz-geçiş-yok); total-hesabı-da-güvenli-tutar."""
+    rc, out = _run(_bundle_with_amount(tmp_path, ev_type="charge_receipt",
+                                       amount=bad))
+    assert rc == 3, f"expected warn-exit-3, got {rc}: {out}"
+    assert "uygunsuz-charge_receipt-amount" in out
+
+
+@pytest.mark.parametrize("bad", [True, "on"])
+def test_fake_type_receipt_amount_rejected(tmp_path, bad):
+    """bool/string-amount=sayı-giydirme-tuzağı (float(True)==1.0). dogrula
+    tip-taramasını-ÖNCE-yapar — aksi-halde-`:.6f`-canonical'ında-crash;
+    bu-nedenle-bu-vakalar-zincir-doğrulamasından-önce-RED-düşer (exit-1)."""
+    rc, out = _run(_bundle_with_amount(tmp_path, ev_type="charge_receipt",
+                                       amount=bad))
+    assert rc in (1, 3), f"expected rejection, got {rc}: {out}"
+    assert "uygunsuz-charge_receipt-amount" in out
+
+
+def test_fake_receipt_amount_strict_is_red(tmp_path):
+    """--strict: ekonomik-ihlal → RED (alıcının-reject-seçimi)."""
+    rc, out = _run(_bundle_with_amount(tmp_path, ev_type="charge_receipt",
+                                       amount=-5.0), "--strict")
+    assert rc == 1
+    assert "RED" in out
+
+
+def test_negative_refund_is_fine(tmp_path):
+    """refund negatif-ETKİLİ-AMA-işaret-tipte (amount≥0-hala-geçerli):
+    dogrula yalnızca charge_receipt'i-sınırlar — refund'lar kota-bypass
+    yapamaz (zaten iade-davranışı, kısıtlama-yanlış-olurdu)."""
+    rc, out = _run(_bundle_with_amount(tmp_path, ev_type="refund", amount=0.0))
+    assert rc == 0, out
+    assert "uygunsuz" not in out
+
+
+def test_ledger_append_rejects_negative_receipt(tmp_path):
+    """Yazma-kapısı-da-uygulamalı (defence-in-depth): append negatif-charge
+    veya-bool-amount'u-rede-der — sadece-okumaya-bırakmaz."""
+    led = Ledger(tmp_path / "wr.sqlite3", secret="wr")
+    try:
+        with pytest.raises(ValueError, match="negatif-amount|sayı-değil"):
+            led.append("charge_receipt", "a1", "/w", -1.0)
+        with pytest.raises(ValueError, match="bool"):
+            led.append("charge_receipt", "a1", "/w", True)
+    finally:
+        led.close()

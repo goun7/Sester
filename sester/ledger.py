@@ -254,6 +254,18 @@ class Ledger:
                 "yeni tip eklemek önce taksonomi + K0 §1 güncellemini gerektirir"
             )
         payload_s = json.dumps(payload or {}, sort_keys=True, separators=(",", ":"))
+        # Ekonomik-yazma-kapısı (Tamga AT-062-aynası): bool False/True sayı
+        # GIYDİRILIR (float(True)==1.0) — isinstance-reddi; negatif-charge_receipt
+        # spent_today'yi düşürür → kota-bypass (değer-çıkarma-yolu). refund
+        # negatif-etkili-AMA-işaret-tipte-olduğu-için-sınırlama-sadece (+) tiplerde.
+        if isinstance(amount, bool) or not isinstance(amount, (int, float)):
+            raise ValueError(
+                f"amount sayı-değil: {amount!r} (bool-sayı-giydirme-tuzağı)")
+        if amount < 0 and event_type in ("charge_receipt", "settlement",
+                                        "webhook_delivery"):
+            raise ValueError(
+                f"negatif-amount {amount} {event_type} için yasak — kota-bypass "
+                "(spent_today-negatif düşer); değer-çıkarma-yolu (AT-062)")
         if amount_minor is None:
             # geri-uyum: major-unit'ten türet (0.0 → 0; major-kayan nokta uçları
             # ancak çağıran tam-sayıyı bilirse birebir — middleware v0.4'te öyle)
