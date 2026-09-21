@@ -182,6 +182,21 @@ live PSP certification is pending real-world traffic, and the CLI surface is
 minimal by design. Everything else on the roadmap through v0.5.0 is implemented
 and gated by the test suite above.
 
+## Environment variables
+
+All optional; every one defaults to a **demo/development value and warns when
+in effect** — the production secrets never live in the repository.
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `SESTER_FACILITATOR_SECRET` | *(none)* | **Fail-closed, no default** — the x402 facilitator service refuses to start without it (it derives the auth key). This is the one variable with no demo fallback. |
+| `SESTER_DEMO_SECRET` | `sester-demo-secret-v0` | Ledger seal for the demo; a startup warning is printed when the default is in effect. |
+| `SESTER_UCP_SECRET` / `SESTER_AP2_SECRET` | `sester-demo-ucp` / `sester-demo-ap2` | Per-protocol adapter secrets for the demo's four-protocol flow. |
+| `SESTER_DEMO_STRICT` | `0` | Set `1` to make the demo **fail-closed** on unsigned ACP/UCP envelopes (default tolerates them for the demo light-path). |
+| `SESTER_ESCALATION_DB` / `SESTER_DEMO_LEDGER_DB` | `sester-escalation.sqlite3` / `sester-demo.sqlite3` | DB paths — also used for test isolation (`conftest` moves these into tmp dirs). |
+| `SESTER_PG_DSN` | *(none)* | Postgres parity: when set, `PgLedger` is exercised (the PG test-legs are skipped otherwise). |
+| `SESTER_TAMGA_REPO` / `SESTER_VERIDICT_REPO` | *(none)* | Enable the cross-repo CI job that pins K1/K2 bridge compatibility against the sibling products' current `main`. |
+
 ## Docker (zero-setup demo)
 
 The demo API — 402 challenge, HMAC/EVM/UCP payment flows, live panel — ships as a
