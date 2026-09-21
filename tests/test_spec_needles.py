@@ -601,3 +601,43 @@ def test_215_gates_registry_kural_7_1():
         hit = [w for w in forbidden if w in note]
         assert not hit, (
             f"{key}: NON_GATES-notu-tam-kapsam-iddiası-taşıyor ({hit}): {note!r}")
+
+
+def test_216_k0_taxonomy_matches_code():
+    """Event-tipi-ekleme otomasyonunun-temel-kilidi (genişletme-turu).
+    K0-§1-dokümante-edilen-taksonomi ↔ `Ledger.EVENT_TYPES` paritesi —
+    iki-yönlü: (a) kodda-var-ama-belgelenmemiş-tip (gizli-taksonomi),
+    (b) belgelenmiş-ama-kodda-yok (ölü-doküman). Elle-liste-değil:
+    her-tarafı-dinamik-çıkarıp-karşılaştırır (AT-061-alan-çıkarımı-dersi).
+    CALLER_CONTRACT-tipleri-K0'da-olmayabilir (bizim-içimizdeki-sözleşme)."""
+    from sester.ledger import (CALLER_CONTRACT_EVENT_TYPES, EVENT_TYPES,
+                               EVENT_TYPE_FAMILIES)
+
+    spec = (Path(__file__).resolve().parents[1]
+            / "docs" / "K0_SHARED_ENVELOPE_SPEC.md").read_text(encoding="utf-8")
+    # K0-§1-taksonomi-bloğu: `a` · `b` · ... biçimindeki-liste
+    start = spec.find("kept in sync with the SQLite schema comment")
+    assert start > 0, "K0-§1-taksonomi-bağı-bulunamadı (spec-yapısı-değişmiş)"
+    block = spec[start:start + 600]
+    # backtick'li-tür-isimlerini-çıkar; blok-yakınındaki-test-id'lerini-ele
+    # (bu-bloğun-hemen-sonrasında `test_208`-gibi-referanslar-da-eşleşir)
+    doc_types = {t for t in re.findall(r"`([a-z][a-z0-9_]*)`", block)
+                 if not t.startswith("test_")}
+    # aile-ön-eklerini-çıkar (facilitator_{...} → facilitator_) — kod
+    # anahtarları-alt-tire-taşıdığı-için-normalleştir
+    doc_families = {f + "_" for f in re.findall(r"`([a-z]+)_\{", block)}
+    code_families = set(EVENT_TYPE_FAMILIES)
+
+    code_types = set(EVENT_TYPES) - set(CALLER_CONTRACT_EVENT_TYPES)
+    hidden = code_types - doc_types        # (a) gizli-taksonomi
+    dead = doc_types - code_types          # (b) ölü-doküman
+    assert not hidden, (
+        f"EVENT_TYPES'ta-var-AMA-K0-§1'de-belgelenmemiş (gizli-taksonomi): "
+        f"{sorted(hidden)} — K0'ya-ekle-veya-CALLER_CONTRACT'e-taşı")
+    assert not dead, (
+        f"K0-§1'de-belgelenmiş-AMA-EVENT_TYPES'ta-yok (ölü-doküman): "
+        f"{sorted(dead)} — kod-taksonomisine-ekle-veya-K0'dan-kaldır")
+    # aile-paritesi
+    missing_fam = doc_families - code_families
+    assert not missing_fam, (
+        f"K0-§1-ailesi-kodda-yok: {sorted(missing_fam)} — EVENT_TYPE_FAMILIES'e-ekle")

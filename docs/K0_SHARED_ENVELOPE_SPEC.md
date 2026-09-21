@@ -53,7 +53,8 @@ TS|EVENT_TYPE|AGENT_ID|HOST|AMOUNT|PAYLOAD|PREV
 > taxonomy (SESTER's `Ledger.EVENT_TYPES` + `EVENT_TYPE_FAMILIES`, the single
 > code source of truth, kept in sync with the SQLite schema comment and
 > *enforced at the write boundary* by `test_208`):
-> `charge_receipt` · `refund` · `permission_decision` · `escalation_parked` ·
+> `charge_receipt` · `refund` · `permission_decision` · `policy_denied` ·
+> `escalation_parked` ·
 > `escalation_approved` · `escalation_denied` · `escalation_consumed` ·
 > `protocol_intent` · `settlement`, plus the dynamic prefix family
 > `facilitator_{verify|settle|metering|refund|batch}`.
