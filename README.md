@@ -142,9 +142,19 @@ one allow rule plus one guardrail (deny/escalate).
 | [`examples/fleet_lane/policy.json`](examples/fleet_lane/policy.json) | business-hours fleet lane | `allow-telemetry` (`host_in` + `hour_between` 07:00–23:00), `deny-unknown-hosts` |
 | [`examples/budget_guard_policy.json`](examples/budget_guard_policy.json) | tiered budget guard | two `amount_gt` thresholds — deny >10, escalate >1 — then host allowlist, then deny |
 
-DSL conditions: `host_in` (empty list = catch-all), `hour_between`
-(`["HH:MM","HH:MM"]`, wraps midnight), `amount_gt`. First match wins; no match
-→ **deny** (fail-closed, `test_bank_template_validates`).
+DSL conditions (closed set — unknown keys are rejected at load time, so a
+typo like `hostt_in` fails loudly instead of silently never matching):
+
+| Condition | Matches when | Since |
+|---|---|---|
+| `host_in` | request path is in the list; **empty list = catch-all** | v0.1 |
+| `hour_between` | wall-clock is inside `["HH:MM","HH:MM"]` (wraps midnight) | v0.1 |
+| `amount_gt` | price is strictly above the threshold | v0.1 |
+| `hour_in` | wall-clock equals one of `["HH:MM", ...]` exactly — minute-sharp windows | v0.7.3 |
+| `agent_in` | caller's agent id is in the list (case-insensitive); skipped when no agent is declared | v0.7.3 |
+
+First match wins; no match → **deny** (fail-closed,
+`test_bank_template_validates`).
 
 ## Sister-product bridges (OSS adapter v0.1)
 

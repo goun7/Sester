@@ -202,3 +202,59 @@ def test_22_bad_amount_gt_raises():
     v["wallet_policy"]["rules"][1]["when"]["amount_gt"] = "cok"
     with pytest.raises(PolicyCorruptError):
         Policy.from_dict(v)
+
+
+# ---------------- v0.7.3: yeni-when-koşulları -------------------------------
+
+def _pol(rules, **defaults):
+    from sester.policy import Policy
+    base = {"per_request_max": 1.0, "daily_max": 10.0}
+    base.update(defaults)
+    return Policy.from_dict({"wallet_policy": {
+        "id": "t", "defaults": base, "rules": rules}})
+
+
+def test_230_hour_in_matches_only_exact_minute():
+    """hour_in: yalnızca-listedeki-tam-anlarda-eşleşir. Dakika-hassas —
+    '09:00' kuralı 09:00'da-eşleşir, 09:01'de-eşleşmez (sabit-zaman-pencereleri
+    için hour_between'den-daha-keskin)."""
+    import datetime as dt
+    p = _pol([{"id": "r", "when": {"hour_in": ["09:00", "14:30"]}, "then": "allow"}])
+    assert p.evaluate(0.01, "/x", now=dt.datetime(2026, 9, 20, 9, 0)).verdict == "allow"
+    assert p.evaluate(0.01, "/x", now=dt.datetime(2026, 9, 20, 14, 30)).verdict == "allow"
+    assert p.evaluate(0.01, "/x", now=dt.datetime(2026, 9, 20, 9, 1)).verdict == "deny"
+    assert p.evaluate(0.01, "/x", now=dt.datetime(2026, 9, 20, 10, 0)).verdict == "deny"
+
+
+def test_231_agent_in_scopes_rule_to_agents():
+    """agent_in: kural-yalnızca-listedeki-ajanlar-için. agent-verilmezse-kural-
+    atlanır (geri-uyum: eski-çağıranlar-agent'i-aktarmaz → aynı-davranış)."""
+    p = _pol([
+        {"id": "vip", "when": {"agent_in": ["alpha", "beta"]}, "then": "allow"},
+        {"id": "rest", "when": {"host_in": []}, "then": "deny"},
+    ])
+    assert p.evaluate(0.01, "/x", agent="alpha").verdict == "allow"
+    assert p.evaluate(0.01, "/x", agent="BETA").verdict == "allow"  # case-insensitive
+    assert p.evaluate(0.01, "/x", agent="gamma").verdict == "deny"
+    # agent-verilmez → vip-atlanır → rest-deny (geri-uyumlu-fail-closed)
+    assert p.evaluate(0.01, "/x").verdict == "deny"
+
+
+def test_232_unknown_when_key_rejected():
+    """Kapalı-küme-korunması: yazım-hatası ('hostt_in') eskiden-sessizce-
+    yoksayılırdı → kural-hiç-eşleşmez → fail-closed-deny'le-maskelenirdi.
+    Şimdi-policy-yükleme-RED-düşer (hata-erken-yakalanır)."""
+    from sester.policy import PolicyCorruptError
+    with pytest.raises(PolicyCorruptError, match="bilinmeyen-anahtar"):
+        _pol([{"id": "r", "when": {"hostt_in": ["/x"]}, "then": "allow"}])
+
+
+def test_233_hour_in_and_agent_in_validation():
+    """Şema-doğrulama: hour_in boş-liste/yanlış-biçim-rede; agent_in boş-rede."""
+    from sester.policy import PolicyCorruptError
+    with pytest.raises(PolicyCorruptError, match="hour_in"):
+        _pol([{"id": "r", "when": {"hour_in": []}, "then": "allow"}])
+    with pytest.raises(PolicyCorruptError, match="hour_in"):
+        _pol([{"id": "r", "when": {"hour_in": ["9"]}, "then": "allow"}])
+    with pytest.raises(PolicyCorruptError, match="agent_in"):
+        _pol([{"id": "r", "when": {"agent_in": []}, "then": "allow"}])

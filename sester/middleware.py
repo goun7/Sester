@@ -313,7 +313,7 @@ class SesterMeter:
         if self.policy is not None:
             from .policy import ALLOW, ESCALATE, PolicyCorruptError
             try:
-                dec = self.policy.evaluate(self.price, path)
+                dec = self.policy.evaluate(self.price, path, agent=agent)
             except PolicyCorruptError:
                 self.ledger.append("permission_decision", agent, path,
                                    payload={"decision": "deny",

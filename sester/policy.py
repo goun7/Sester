@@ -122,16 +122,43 @@ class Policy:
                 float(when["amount_gt"])
             except (TypeError, ValueError) as e:
                 raise PolicyCorruptError(f"rules[{i}].when.amount_gt sayı değil") from e
+        if "hour_in" in when:
+            # v0.7.3: tam-saat-listesi — her öğe "HH:MM"
+            hi = when["hour_in"]
+            ok = (isinstance(hi, list) and len(hi) > 0
+                  and all(isinstance(x, str) and len(x) == 5
+                          and x[:2].isdigit() and x[3:].isdigit() for x in hi))
+            if not ok:
+                raise PolicyCorruptError(f"rules[{i}].when.hour_in "
+                                         '["HH:MM", ...] boş-olmayan-liste olmalı')
+        if "agent_in" in when:
+            # v0.7.3: agent-izin-listesi — her öğe string
+            ai = when["agent_in"]
+            if not isinstance(ai, list) or not ai:
+                raise PolicyCorruptError(f"rules[{i}].when.agent_in "
+                                         "boş-olmayan-liste olmalı")
+        # bilinmeyen-when-anahtarı-yasak (kapalı-küme; drm-tuzağı-değil —
+        # yazım-hatası-korunması: "hostt_in" sessizce-yoksayılırdı)
+        known = {"host_in", "hour_between", "amount_gt", "hour_in", "agent_in"}
+        unknown = set(when.keys()) - known
+        if unknown:
+            raise PolicyCorruptError(f"rules[{i}].when bilinmeyen-anahtar: "
+                                     f"{sorted(unknown)} — kapalı-küme: {sorted(known)}")
 
     # ---------- değerlendirme ----------
 
-    def evaluate(self, amount: float, host: str, *, now: _dt.datetime | None = None) -> Decision:
+    def evaluate(self, amount: float, host: str, *,
+                 now: _dt.datetime | None = None,
+                 agent: str | None = None) -> Decision:
         """İlk-eşleşen kural kazanır; eşleşme yoksa DENY (fail-closed).
         amount üst-sınır ihlali en dar kuraldan önce kontrol edilmez —
         limit-kontrolü middleware'de sayaçla birlikte yapılır; burada kural-
-        semantiği değerlendirilir. amount_gt kuralı bunun istisnasıdır."""
+        semantiği değerlendirilir. amount_gt kuralı bunun istisnasıdır.
+        v0.7.3: agent-koşulu (agent_in) isteğe-bağlı — agent verilmezse
+        agent_in-içeren-kurallar-atlanır (geri-uyumlu)."""
         now = now or _dt.datetime.now()
         host_l = (host or "").lower()
+        agent_l = (agent or "").lower()
         for r in self.rules:
             when = r.get("when", {})
             if "host_in" in when:
@@ -139,6 +166,13 @@ class Policy:
                 # boş liste = yakala-hepsini (Policy-DSL "deny-unknown-hosts" anlamı):
                 # önceki allow-kuralları bilinen hostları zaten tüketir.
                 if allowed and host_l not in allowed:
+                    continue
+            if "agent_in" in when:
+                # agent-beyanı-zorunlu-kuralı: agent-verilmezse-atla (eşleşmez)
+                if not agent_l:
+                    continue
+                allowed_a = [str(a).lower() for a in when["agent_in"]]
+                if agent_l not in allowed_a:
                     continue
             if "hour_between" in when:
                 start_s, end_s = when["hour_between"]
@@ -150,6 +184,12 @@ class Policy:
                 else:  # gece-boyu aralık (ör. 22:00–08:00)
                     inside = cur >= s or cur < e
                 if not inside:
+                    continue
+            if "hour_in" in when:
+                # v0.7.3: tam-saat-listesi (["09:00","14:00"] → yalnızca-o-anlarda)
+                hours = [str(h).strip() for h in when["hour_in"]]
+                cur_h = f"{now.hour:02d}:{now.minute:02d}"
+                if cur_h not in hours:
                     continue
             if "amount_gt" in when:
                 if not (amount > float(when["amount_gt"])):
