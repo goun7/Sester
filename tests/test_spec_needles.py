@@ -576,7 +576,7 @@ def test_215_gates_registry_kural_7_1():
                 cls_stack2.append(n.name)
             if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 fn_stack2.append(n.name)
-                if "INSERT INTO events" in ast.unparse(n):
+                if "INSERT INTO" in ast.unparse(n):
                     write_regions.add(f"{mod}:{'.'.join(cls_stack2)}.{n.name}")
             for c in ast.iter_child_nodes(n):
                 _walk2(c)

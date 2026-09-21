@@ -180,7 +180,25 @@ GATES: dict[str, str] = {
 # edilen-kapı-değil-kararı (neden-ile). Şu-anda-boş — events-yazan-bölgenin-tümü
 # geçitli; yeni-bir-kapı-dışı-yol (toplu-COPY-gibi)-eklenirse-beyansız-geçemez,
 # buraya-nedeni-ile-yazılmak-zorunda (test_215-(e)-hücresi-denetler).
-NON_GATES: dict[str, str] = {}
+NON_GATES: dict[str, str] = {
+    # replay-koruması-tablosu — event_type taşımaz (kural-7'nin-ölçmediği-
+    # alan); events-taksonomisi-dışı-yazım-bölgesi-ama-yine-de-yazım-bölgesi
+    # olduğu-için-beyan-edilmek-zorunda (test_215-(e): üçüncü-seçenek-yasak).
+    "sester/ledger.py:Ledger.claim_nonce":
+        "seen_nonces tablosu — event yazmaz; replay-penceresi koruması "
+        "(alıcı-bu-uzlaşmayı-asla-kanıt-olarak-görmez)",
+    "sester/pg_ledger.py:PgLedger.claim_nonce":
+        "seen_nonces tablosu — event yazmaz; pg-aynı-replay-koruması",
+    "sester/pg_ledger.py:PgLedger.insert_nonce":
+        "seen_nonces tablosu — claim_nonce'nin-pg-karşılığı, yalnız-ÖNCEDEN-"
+        "claim-edilmiş-noncesu-yazar (kayıp-olmazsa-replay-penceresi-bozulur)",
+    # insan-onay-biletleri — permission_decision/policy_denied-üreticisi-
+    # DEĞİL: kendi-status-tablosunu-yazar; events'e-düşüş-park'ın-çağırdığı
+    # Ledger.append-üzerinden-geçer (orada-kapı-var)
+    "sester/escalation.py:EscalationQueue.park":
+        "escalations tablosu — bilet-status'u-yazar; events'e-bu-bölge-"
+        "üzerinden-yazılmaz, park'ın-ürettiği-olay-Ledger.append'ten-geçer",
+}
 
 
 def canonical_line(ts: float, event_type: str, agent_id: str, host: str,
