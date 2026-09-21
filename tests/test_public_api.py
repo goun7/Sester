@@ -45,3 +45,40 @@ def test_69c_each_public_name_survives_solo_import(name):
     Bir-isim-sonradan-koparsa-bu-test-RED-düşer (geri-uyum-vaadi)."""
     mod = importlib.import_module("sester")
     assert hasattr(mod, name), f"{name} public-yüzeyden-kopmuş"
+
+
+def test_69d_readme_quickstart_snippet_runs():
+    """README'deki-metering-quickstart-örneği-gerçekten-çalışır-kanıtı.
+    Belge-ile-kod-arasındaki-drift'i-makineyle-yakalar: parametre-eklendi/
+    kaldırıldı-yada-Policy-yapısı-değiştiyse-burası-RED-düşer."""
+    from sester import Ledger, Policy, SesterMeter
+
+    policy = Policy.from_dict({
+        "wallet_policy": {
+            "id": "my-api",
+            "defaults": {"per_request_max": 0.10, "daily_max": 5.00},
+            "rules": [
+                {"id": "allow-telemetry", "when": {"host_in": ["/telemetry"]},
+                 "then": "allow"},
+                {"id": "approve-large", "when": {"amount_gt": 0.05},
+                 "then": "escalate"},
+                {"id": "deny-rest", "when": {"host_in": []}, "then": "deny"},
+            ],
+        }
+    })
+    led = Ledger(":memory:", secret="quickstart")
+    meter = SesterMeter(
+        app=None,
+        ledger=led,
+        policy=policy,
+        price=0.01,
+        burst_capacity=20,
+        burst_refill_per_sec=10.0,
+    )
+    # quickstart'ın-iddia-ettiği-her-şey-gerçekten-ayakta
+    assert meter.burst_capacity == 20
+    assert meter.burst_refill_per_sec == 10.0
+    assert policy.evaluate(0.01, "/telemetry").verdict == "allow"
+    assert policy.evaluate(0.20, "/x").verdict == "escalate"
+    assert policy.evaluate(0.01, "/x").verdict == "deny"
+    led.close()

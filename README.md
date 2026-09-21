@@ -69,7 +69,45 @@ with payment → **200 + `X-Sester-Receipt`** evidence header; the 5th call →
 **402 quota exceeded**; `/panel` shows who called, how much, and a live
 chain-integrity badge.
 
-## Feature map (by version)
+## Use it in your own app (one middleware)
+
+```python
+from sester import SesterMeter, Policy, Ledger
+
+policy = Policy.from_dict({
+    "wallet_policy": {
+        "id": "my-api",
+        "defaults": {
+            "per_request_max": 0.10,       # one call cannot cost more than 10¢
+            "daily_max": 5.00,             # ...and one agent cannot pass $5/day
+        },
+        "rules": [
+            {"id": "allow-telemetry", "when": {"host_in": ["/telemetry"]}, "then": "allow"},
+            {"id": "approve-large",   "when": {"amount_gt": 0.05}, "then": "escalate"},
+            {"id": "deny-rest",       "when": {"host_in": []},     "then": "deny"},
+        ],
+    }
+})
+
+meter = SesterMeter(
+    app=your_asgi_app,
+    ledger=Ledger("usage.sqlite3", secret=SESTER_SECRET),
+    policy=policy,
+    price=0.01,                        # per-request price in major units
+    burst_capacity=20,                 # optional: token-bucket second gate
+    burst_refill_per_sec=10.0,
+)
+# any ASGI server: uvicorn your_module:meter
+```
+
+That one wrapper gives you: the 402 handshake, per-request pricing, the
+integer-minor-unit quota, first-match-wins policy evaluation with a
+fail-closed default, burst limiting independent of the daily quota, and the
+hash-chained receipt ledger that any third party can verify with `sha256`
+alone (see `docs/K0_SHARED_ENVELOPE_SPEC.md`). Escalation rules open a
+human-approval ticket instead of denying outright (`then: "escalate"`).
+
+## Feature map (by versions)
 
 | Area | What you get | Since |
 |---|---|---|
@@ -86,9 +124,10 @@ chain-integrity badge.
 | On-chain batches | Pure-stdlib keccak-256, Merkle root recomputable in EVM, ABI `settle(...)` calldata, non-custodial | v0.4 |
 | Minor-unit column | `amount_minor` with hash-preserving migration — quota decisions end-to-end integer | v0.4 |
 | Hosted facilitator | FastAPI service: verify/settle/refund + seller metering (free band + 1% + $0.005) | v0.5 |
-| Observability | `GET /metrics` — Prometheus-text counters (requests, charges, replay/quota/rate 402s, chain-valid gauge) | dev |
-| Burst limiting | Per-agent token-bucket (`burst_capacity`, `burst_refill_per_sec`) — independent of the daily quota | dev |
-| Evidence webhooks | HMAC-signed delivery of charge/settlement events with receiver-side verification, retry+backoff, ledger failure-log | dev |
+| Observability | `GET /metrics` — Prometheus-text counters (requests, charges, replay/quota/rate 402s, chain-valid gauge) | v0.6 |
+| Burst limiting | Per-agent token-bucket (`burst_capacity`, `burst_refill_per_sec`) — independent of the daily quota | v0.6 |
+| Evidence webhooks | HMAC-signed delivery of charge/settlement events with receiver-side verification, retry+backoff, ledger failure-log | v0.6 |
+| Meter package | Single public import — `from sester import SesterMeter, Policy, Ledger, ...`; `__all__` is the locked surface | v0.7.2 |
 | Evidence export | External-verifier bundles — anyone can audit with `sha256` alone, no Sester installed | v0.3+ |
 
 ## Policy template bank

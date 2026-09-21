@@ -49,6 +49,9 @@ class SesterMeter:
         secret: str = "dev-secret",
         pay_to: str = "sester:demo-seller",
         facilitator: Any | None = None,   # sester.facilitator.Facilitator (exact için)
+        burst_capacity: float | None = None,
+        burst_refill_per_sec: float | None = None,
+        policy: Any | None = None,        # v0.7.2: Policy-DSL katmanı (None → atlanır)
         exempt_prefixes: tuple[str, ...] = (
             "/panel", "/healthz", "/agents.json", "/docs", "/openapi.json",
             "/redoc", "/favicon.ico", "/metrics",
@@ -65,8 +68,14 @@ class SesterMeter:
         self.facilitator = facilitator
         self.exempt_prefixes = exempt_prefixes
         # v0.6.0 adım-2: burst-limit (token-bucket; quota'dan bağımsız ikinci-kapı)
-        self.burst_capacity = 20          # ajan-başı maksimum patlama-penceresi
-        self.burst_refill_per_sec = 10.0  # saniyede-geri-dolanan token
+        # v0.7.2: artık kurucu-parametresi (None → eski-sabit-değer geri-döner)
+        self.burst_capacity = 20 if burst_capacity is None else float(burst_capacity)
+        self.burst_refill_per_sec = (10.0 if burst_refill_per_sec is None
+                                    else float(burst_refill_per_sec))
+        # v0.7.2: Policy-DSL katmanı — None ise-davranış-eskiyle-aynı.
+        # Verildiğinde-ilk-eşleşen-kural-uygulanır (allow → normal-akış,
+        # escalate → 402 + insan-onay, deny → 402 policy_denied).
+        self.policy = policy
         self._buckets: dict[str, tuple[float, float]] = {}  # agent → (tokens, last_ts)
         self._metrics = {  # v0.6.0 adım-1: metering-metriği (0-bağımlılık sayaçlar)
             "requests_total": 0, "charges_total": 0, "replay_402_total": 0,
@@ -298,6 +307,30 @@ class SesterMeter:
                  "refill_per_sec": self.burst_refill_per_sec,
                  "retry_after": 1},
             )
+        # v0.7.2: Policy-DSL katmanı (varsa) — burst-sonrası, amount-öncesi.
+        # İlk-eşleşen-kural: allow/escalate/deny. fail-closed: bozuk-politika
+        # → deny-all (PolicyCorruptError-yakalanır).
+        if self.policy is not None:
+            from .policy import ALLOW, ESCALATE, PolicyCorruptError
+            try:
+                dec = self.policy.evaluate(self.price, path)
+            except PolicyCorruptError:
+                self.ledger.append("permission_decision", agent, path,
+                                   payload={"decision": "deny",
+                                            "rule_id": "policy_corrupt"})
+                return await self._challenge(send, scope, "policy_corrupt")
+            if dec.verdict == ESCALATE:
+                self.ledger.append("escalation_parked", agent, path, 0.0,
+                                   payload={"rule_id": dec.rule_id})
+                return await self._challenge(
+                    send, scope, f"escalation_required:{dec.rule_id}")
+            if dec.verdict != ALLOW:
+                self.ledger.append("permission_decision", agent, path,
+                                   payload={"decision": "deny",
+                                            "rule_id": dec.rule_id})
+                return await self._challenge(
+                    send, scope, f"policy_denied:{dec.rule_id}")
+
         amount_minor = parsed.get("amount_minor")
         if amount_minor is None:
             try:
