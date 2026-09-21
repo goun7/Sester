@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -114,3 +115,61 @@ def test_family_prefix_is_known(tmp_path):
     rc, out = _run(_bundle_path(tmp_path, inject_type="facilitator_verify"))
     assert rc == 0
     assert "bilinmeyen" not in out
+
+
+# ---------------- K0 §4 şema-paritesi (Tamga AT-061 aynası: alan-çıkarımı) ----
+
+SPEC = Path(__file__).resolve().parents[1] / "docs" / "K0_SHARED_ENVELOPE_SPEC.md"
+
+
+def _k0_bundle_schema() -> tuple[set, set]:
+    """K0 §4'ün-donmuş-JSON-bloğundan-alanları-ÇIKARIR (elle-liste-değil —
+    Tamga AT-061'in-ilklesi: sabit-liste-kirlenir, dokümandan-çıkarmaz).
+    (top-alanlar, event-alanlar) döner. Doküman-yapısı-değişirse-test-RED."""
+    spec = SPEC.read_text(encoding="utf-8")
+    sec = spec[spec.find("## 4) Bundle"):spec.find("## 5) Anchor")]
+    m = re.search(r'```json\n(.*?)```', sec, re.S)
+    assert m, "K0 §4-JSON-bloğu-bulunamadı (spec-yapısı-değişmiş)"
+    block = m.group(1)
+    # top-alanlar: "anahtar": değer (tırnaklı-anahtar)
+    top = set(re.findall(r'"([a-z_0-9]+)"\s*:', block))
+    # event-alanlar: {seq, ts, ...} — küme-içindekiler
+    ev = set()
+    em = re.search(r'\{([^{}]*)\}', block)
+    if em:
+        ev = set(re.findall(r'\b([a-z_0-9]+)\b', em.group(1)))
+    return top, ev
+
+
+def test_real_bundle_matches_k0_schema_by_extraction(tmp_path):
+    """Tamga AT-061-aynası: donmuş-tasarım-vs-gerçek-çıkı, ALAN-ÇIKARIMIYLA.
+    K0-§4'ten-çıkarılan-alanlar == produce_bundle'ın-gerçek-alanları. İki-yön:
+    (a) gerçek-alanların-hepsi-K0'da-belgeli (uydurma-alan-yok),
+    (b) K0'da-belgeli-alanların-hepsi-gerçekte-var (belge-arkasında-yok)."""
+    led = Ledger(tmp_path / "sp.sqlite3", secret="sp")
+    led.append("charge_receipt", "a1", "/w", 0.05, payload={"nonce": "n1"})
+    b = produce_bundle(led)
+    led.close()
+
+    k0_top, k0_ev = _k0_bundle_schema()
+    real_top = set(b.keys())
+    real_ev = set(b["events"][0].keys())
+
+    # (a) uydurma-alan-yok — gerçek-bundle-dağıtım-alan-getirmez
+    extra_top = real_top - k0_top
+    extra_ev = real_ev - k0_ev
+    assert not extra_top, f"K0-§4'te-yok-ama-bundle'da-var: {extra_top}"
+    assert not extra_ev, f"K0-§4-event'inde-yok: {extra_ev}"
+    # (b) belge-arkasında-yok — K0-her-alanı-gerçek-üretimde-var
+    assert k0_top <= real_top, f"K0'da-var-ama-bundle'da-yok: {k0_top - real_top}"
+    assert k0_ev <= real_ev, f"K0-event'inde-var: {k0_ev - real_ev}"
+
+
+def test_k0_schema_extraction_is_stable():
+    """Çıkarım-tutarlı: tekrar-çağırma-aynı-sonucu-verer (non-flaky) ve
+    boş-değil (spec-değiştiyse-boş-dönerse-bu-test-yakalar)."""
+    top, ev = _k0_bundle_schema()
+    assert top and ev, "şema-çıkarımı-boş-döndü (K0-§4-yapısı-bozulmuş)"
+    assert "pugio_bundle_version" in top
+    assert "merkle_root" in top
+    assert "prev_proof" in ev
