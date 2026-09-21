@@ -134,3 +134,23 @@ def test_106_demo_escalations_endpoint_lists_pending(q):
     assert any(r["esc_id"] == t["esc_id"] for r in pending)
     # temizle: reddet (test-artefaktı kalmasın)
     demo_api.esc_queue.decide(t["esc_id"], approve=False, by="test-cleanup")
+
+
+def test_park_rejects_negative_and_fake_amount(tmp_path):
+    """AT-062-ekonomik-ayna (escalation-yüzeyine-yayılım): onaylı-biletin
+    amount'u-park'ın-yazdığı-değerdir — negatif-park-onaylanan-harcamayı-sıfırlar
+    (kota-bypass). bool-sayı-giydirme-tuzağı-da-rede (float(True)==1.0)."""
+    from sester.escalation import EscalationQueue
+    q = EscalationQueue(tmp_path / "esc_neg.sqlite3")
+    try:
+        with pytest.raises(ValueError, match="negatif-escalation-amount"):
+            q.park("a1", "/expensive", -5.0, "r")
+        with pytest.raises(ValueError, match="sayı-değil"):
+            q.park("a1", "/expensive", True, "r")
+        with pytest.raises(ValueError, match="sayı-değil"):
+            q.park("a1", "/expensive", "free", "r")
+        # temiz-park-hâlâ-çalışıyor
+        t = q.park("a1", "/expensive", 2.0, "r")
+        assert t["amount"] == 2.0
+    finally:
+        q.close()

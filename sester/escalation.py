@@ -90,6 +90,15 @@ class EscalationQueue:
     def park(self, agent: str, resource: str, amount: float, rule_id: str,
              reason: str = "") -> dict[str, Any]:
         """İstek-bileti aç; aynı (agent, resource) pending varsa onu döndür."""
+        # Ekonomik-yazma-kapısı (AT-062-aynası): onaylı-biletin-amount'u-park'
+        # edildiği-gibi-kullanılır — negatif-amount-onaylanan-harcamayı-sıfırlar
+        # (kota-bypass). bool-sayı-giydirme-de-rede (float(True)==1.0).
+        if isinstance(amount, bool) or not isinstance(amount, (int, float)):
+            raise ValueError(f"escalation amount sayı-değil: {amount!r}")
+        if amount < 0:
+            raise ValueError(
+                f"negatif-escalation-amount {amount} — onaylı-bilet kota-"
+                "bypass-yolu (AT-062-ekonomik-sınıf)")
         now = time.time()
         with self._lock:
             self._expire()
