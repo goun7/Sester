@@ -1,7 +1,7 @@
 # SESTER — PRD v1.1
 
 > Durum: **B-KATI PROTOTİP ONAYLANDI** (2026-09-20, kullanıcı-kararı) · Tarih: 2026-09-11 · **v1.1 veri-tazeleme: 2026-09-12**
-> **Onay-kanıtı (2026-09-20):** 258 passed/25 skipped/0 failed · guard rc=0 · üç-repo HEAD==origin · cross-repo CI-job'ı-ilk-kez-etkin (run `35527689113`) · GitHub derin-sızıntı-denetimi temiz (4/5 yöntem-sınırı-kapalı). **Açık-takip:** üretim-dağıtımı-yok (Docker demo-etiketli); facilitator-varsayılan-secret fail-closed-yapılacak (bkz. `docs/GITHUB_LEAK_AUDIT.md` x402-bölümü).
+> **Onay-kanıtı (2026-09-20, tazelendi):** 287 passed/27 skipped/0 failed · guard rc=0 · üç-repo HEAD==origin · cross-repo CI-job'ı-etkin (ilk-koşu `35527689113`; +F1-dogfood-job'ı-6s-cron, run `35544648805`) · GitHub derin-sızıntı-denetimi temiz (4/5 yöntem-sınırı-kapalı). **Takip-kapananlar:** facilitator-varsayılan-secret **fail-closed-yapıldı** (`SESTER_FACILITATOR_SECRET`-yoksa-başlamaz); demo-secret env-override + uyarı; ekonomik-kapılar (negatif/bool-amount = değer-çıkarma-yolu, AT-062-aynası). **Açık-takip:** üretim-dağıtımı-yok (Docker demo-etiketli). **Karşılıklı-pin'leme:** Sester-CI + Veridict-settlement-vector'ları (K2/K3-çift-ankor).
 > Üst belgeler: ``docs/adr/0002`` · `the research memo (2026-09-12)` (tüm sayıların kanıt-tabanı) · `../../Yeni Fikirler/HAVUZ_DEGERLENDIRMESI_2026-09-11.md`
 > **Dönüşüm cümlesi:** "Ajan/API satan geliştiricilerin, kullanım başına ücreti
 > (x402) tek middleware ile kesip, ajanlara harcama limitli cüzdan ve olay
