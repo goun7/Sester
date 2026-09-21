@@ -92,6 +92,10 @@ jobs:
           # Alıcılar pür-stdlib: kardeş-repoların kendi selftestleri de koşar
           python siblings/tamga/tamga_pugio_receiver.py --selftest
           python siblings/veridict/scripts/pugio_watch_receiver.py --selftest
+          # Veridict settlement-vector conformance (karşılıklı pin'leme):
+          # sıfır-bağımlı consumer selftest — temiz→PASS, kurcalama→RED.
+          # K2/K3 köprü-kontratının alıcı-tarafında-drift'e-karşı-ikinci-ankor.
+          python siblings/veridict/scripts/verify_settlement_vector.py
 
   dogfood:
     name: F1 dogfood (S1 acceptance)
