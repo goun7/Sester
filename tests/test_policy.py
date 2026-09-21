@@ -258,3 +258,39 @@ def test_233_hour_in_and_agent_in_validation():
         _pol([{"id": "r", "when": {"hour_in": ["9"]}, "then": "allow"}])
     with pytest.raises(PolicyCorruptError, match="agent_in"):
         _pol([{"id": "r", "when": {"agent_in": []}, "then": "allow"}])
+
+
+def test_234_hour_window_honours_declared_timezone():
+    """CI-saat-dilimi-hatasının-regresyon-kilidi: politika 'Europe/Istanbul'
+    derken-evaluate eski-kodda-naive-datetime.now() kullandığı için
+    hour_between-penceresi-makine-saatine-göre-değerlendiriliyordu — UTC'de-
+    koşan-CI'da s1_dogfood-S1.a-RED-düştü (yerelde-yeşildi). Artık-bildirilen
+    timezone-uygulanır. İki-yönlü-kanıtı: Istanbul'da-öğle-anında-UTC'de-
+    sabah-olsa-bile-pencere-içi."""
+    import datetime as dt
+    from zoneinfo import ZoneInfo
+
+    p = _pol([{"id": "day", "when": {"hour_between": ["08:00", "22:00"]},
+               "then": "allow"}], timezone="Europe/Istanbul")
+    # UTC 07:30 = Istanbul 10:30 → pencere-içi (eski-kod-UTC'de-RED-verirdi)
+    utc_morning = dt.datetime(2026, 9, 20, 7, 30, tzinfo=ZoneInfo("UTC"))
+    dec = p.evaluate(0.01, "/x", now=utc_morning)
+    assert dec.verdict == "allow", (
+        f"timezone-uygulanmıyor: UTC-07:30 Istanbul'da-öğle-olmalı: {dec}")
+
+    # UTC 21:30 = Istanbul 00:30 (ertesi-gün) → pencere-dışı
+    utc_night = dt.datetime(2026, 9, 20, 21, 30, tzinfo=ZoneInfo("UTC"))
+    assert p.evaluate(0.01, "/x", now=utc_night).verdict == "deny"
+
+
+def test_235_invalid_timezone_falls_back_to_utc():
+    """Geçersiz-bölge → fail-değil-UTC-fallback (politika-yüklenemez-diyelim
+    daha-sert-ama-burada-yumuşak-doğru: bilinmeyen-ad-literal-olamaz ama
+    garanti-kilitle)."""
+    import datetime as dt
+    from zoneinfo import ZoneInfo
+    p = _pol([{"id": "x", "when": {"host_in": []}, "then": "allow"}],
+             timezone="Mars/Olympus_Mons")
+    # UTC-fallback: herhangi-bir-UTC-anında-eşleşir
+    now_utc = dt.datetime(2026, 9, 20, 12, 0, tzinfo=ZoneInfo("UTC"))
+    assert p.evaluate(0.01, "/x", now=now_utc).verdict == "allow"

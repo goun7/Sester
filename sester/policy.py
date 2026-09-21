@@ -19,6 +19,7 @@ import json
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 ALLOW = "allow"
 DENY = "deny"
@@ -42,6 +43,15 @@ class Policy:
     rules: list[dict[str, Any]] = field(default_factory=list)
     currency: str = "USDC"
     timezone: str = "Europe/Istanbul"
+
+    def __post_init__(self) -> None:
+        """v0.7.3-düzeltme: timezone'u-uygula (saat-pencereleri-buna-göre).
+        Geçersiz-bölge → UTC'ye-düş + bildir (fail-değil-ama-şüpheli; doğru-
+        çalışma-olasılığı-UTC'den-yüksek)."""
+        try:
+            self._tz = ZoneInfo(self.timezone)
+        except ZoneInfoNotFoundError:
+            self._tz = _dt.timezone.utc
 
     # ---------- yükleme / doğrulama ----------
 
@@ -156,7 +166,14 @@ class Policy:
         semantiği değerlendirilir. amount_gt kuralı bunun istisnasıdır.
         v0.7.3: agent-koşulu (agent_in) isteğe-bağlı — agent verilmezse
         agent_in-içeren-kurallar-atlanır (geri-uyumlu)."""
-        now = now or _dt.datetime.now()
+        now = now or _dt.datetime.now(self._tz)
+        # v0.7.3-düzeltme: saat-pencereleri-bildirilen-timezone'a-göre.
+        # Eski-davranış: now-naive→lokal-makine-saati; CI (UTC) ile yerel
+        # (Europe/Istanbul) arasında-pencere-dışı-RED — s1_dogfood-S1.a
+        # bu-yüzden-CI'da-bozuldu. aware-gelen-now (testlerden) politik-
+        # saat-dilimine-çevrilir-ki-hour/minute-doğru-okunsun.
+        if now.tzinfo is not None:
+            now = now.astimezone(self._tz)
         host_l = (host or "").lower()
         agent_l = (agent or "").lower()
         for r in self.rules:
