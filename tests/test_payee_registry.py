@@ -32,6 +32,8 @@ OTHER = "0x" + "ef" * 20
 
 TAMGA_RECEIVER = Path(
     os.environ.get("SESTER_TAMGA_RECEIVER", "")
+    or os.path.join(os.environ.get("SESTER_TAMGA_PATH", ""),
+                    "tamga_pugio_receiver.py")
 )
 CANONICAL_RECEIVER = (
     Path(__file__).resolve().parent.parent / "bridge_receivers" / "tamga_pugio_receiver.py"
