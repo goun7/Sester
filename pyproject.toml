@@ -8,8 +8,8 @@ version = "0.7.3"
 description = "SESTER — x402-style metering, quota, fail-closed policy and hash-chain receipts for AI-agent APIs, as one ASGI middleware."
 readme = "README.md"
 requires-python = ">=3.11"
-license = "Apache-2.0"
-license-files = ["LICENSE"]
+license = "Apache-2.0 OR AGPL-3.0"
+license-files = ["LICENSE", "LICENSES/*"]
 authors = [{ name = "SESTER contributors" }]
 keywords = ["x402", "ai-agents", "metering", "payments", "middleware", "asgi", "quota", "ap2", "acp", "ucp", "escalation", "sester"]
 classifiers = [

@@ -11,7 +11,7 @@
 [![CI](https://github.com/goun7/Sester/actions/workflows/ci.yml/badge.svg)](https://github.com/goun7/Sester/actions/workflows/ci.yml)
 [![PyPI](https://img.shields.io/pypi/v/sester?color=gold)](https://pypi.org/project/sester/)
 [![Python](https://img.shields.io/pypi/pyversions/sester)](https://pypi.org/project/sester/)
-![License](https://img.shields.io/badge/license-Apache--2.0-gold)
+![License](https://img.shields.io/badge/license-Apache--2.0--OR--AGPL--3.0-gold)
 ![Deps](https://img.shields.io/badge/forced%20deps-0-success)
 [![Discussions](https://img.shields.io/github/discussions/goun7/Sester?color=informational)](https://github.com/goun7/Sester/discussions)
 
@@ -276,7 +276,9 @@ Then run the curl flow above against `http://127.0.0.1:8402`.
 
 ## License
 
-Apache-2.0 — see [`LICENSE`](LICENSE). The frozen wire fields
+Dual-licensed **Apache-2.0 OR AGPL-3.0** — pick either per integration (see
+[`LICENSE`](LICENSE)). Apache for commercial rails that cannot touch copyleft;
+AGPL keeps network-service derivatives open. The frozen wire fields
 (`pugio0`, `pugio_bundle_version`, `source: "sikke"`) are kept for
 receiver compatibility and are documented in the repository's identity-migration record; visual and
 wire identity are separate layers.

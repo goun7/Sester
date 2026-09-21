@@ -146,7 +146,20 @@ tek-kaynak) → politika-katmanı güven-hikâyesinin kanıtı (SPEND_POLICY §5
 1. ⚖️ **Öncelik yükseltildi (2026-09-12):** Stablecoin-ödeme-aracılığı
    mevzuat-görüşü (kurumsal-pilot öncesi). 2021 TCMB kripto-ödeme yasağı
    yürürlükte — görüş "ödeme-aracılığı" tanımını netleştirecek (ARASTIRMA §7).
-2. OSS-lisans kararı: Apache-2.0 vs AGPL (çift-lisans-stratejisi ile).
+   **Öncelik-teyidi (2026-09-21, kullanıcı-kararı):** mevzuat-görüşü-pilotun
+   önündeki-gerçek-önkoşul — görüş-olmadan-sözleşmedeki-ödeme-aracılığı-maddesi
+   temiz-yazılamaz. Pilot-görüşmeleri-görüş-sonrasına-kaldı (paralel-yürütme-
+   reddedildi: yeniden-müzakere-riski).
+2. OSS-lisans kararı: **KAPANMIŞ (2026-09-21, kullanıcı-kararı)** —
+   Apache-2.0 **OR** AGPL-3.0 çift-lisans. Apache ticari-entegratörleri
+   (ödeme-rayları/banka-STACK'leri-çoğunlukla-"no-AGPL"-politikalıdır)
+   açık-tutar; AGPL katkı-ağını-korur (ağ-servisi-türevi-kaynağı-açmak-zorunda).
+   Saf-Apache-bulut-operatörünün-gizli-fork'una, saf-AGPL-tam-hedef-kitleyi-
+   dışlarlar; çift-lisans-standard-uzlaşımdır (alıcı-entegrasyon-başına-seçer,
+   proje-sürüm-başına-değil). Uygulama: [`LICENSE`](../../LICENSE) +
+   `LICENSES/Apache-2.0` + `LICENSES/AGPL-3.0` + `pyproject` SPDX
+   "Apache-2.0 OR AGPL-3.0". Katkılar-her-iki-maddede-aynı-anda-gelir →
+   ileriye-dönük-relisanslama-her-katkıda-biriyen-sorma-derdi-yok.
 3. 68-kimlik-şeması ile cüzdan-kimlik-contract'ının dondurulması (63↔68 ortak-karar).
 
 > Not (2026-09-12): "28 Ağustos 2026 ödeme-yasağı" çıkışı **yanlış-etiket** —

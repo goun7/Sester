@@ -87,6 +87,7 @@
 | **v3:** x402 Cloudflare Agents SDK + MCP entegrasyonu — 63-B benimseme-kanalı | ✅ | 2026-09-12 (TUR-2) |
 | **v3.1 (2026-09-20): x402 V2 resmî-yayın (24 Haz 2026)** — CAIP-identifiers, dynamic `payTo` routing, multi-facilitator, Extensions, wallet-based-sessions; **header-değişiklikleri: deprecate-X-\* → `PAYMENT-REQUIRED`/`PAYMENT-SIGNATURE`/`SIGN-IN-WITH-X`**; SDK geri-uyumlu-V1 | ✅ araştırma-yapıldı | 2026-09-20 (genişletme-turu) |
 | **v3.1 uyumluluk-notu:** Sester-middleware hâlâ `X-Payment`/`X-Payment-Required` (V1) kullanıyor — V2-header'a-geçiş **açık-takip** (break-değil: SDK geri-uyumlu-V1; V2-öneri IETF-hizalı-adlar, zorunlu-sunset-tarihi-yok) | ☐ açık-takip | 2026-09-20 |
+| **v3.1 karar (2026-09-21, kullanıcı):** geçiş-**BEKLE** — sunset-duyurusu-gelene-kadar. Gerekçe: V2-haziran'da-yayımlandı, SDK'lar-geri-uyumlu, sunset-yok; erken-geçiş-yalnızca-uyumluluk-borcunu-erken-ödüyor. Tetikleyici: resmî-V2-only-duyurusu-veya-V1-uyumsuzluk-raporu. O-zamana-kadar-çift-header-desteği-rejected (karmaşıklık-yükü-değer-değil) | 🕓 beklemede | 2026-09-21 |
 | İki sağlayıcının örnek akışlarının uçtan uca elle koşusu (demo API) | ✅ **B-prototip kabulü** — S2 parite (pugio0+AP2+ACP) | 2026-09-12 |
 | x402 resmî spec satır-satır: header şemaları + zincir destek listesi (LF repo, tarihli arşiv) | ☐ SDK-öncesi | — |
 | AP2 spec satır-satır: mandate türleri + receipt formatı (FIDO kanalı, tarihli arşiv) | ☐ SDK-öncesi | — |
