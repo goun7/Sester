@@ -1,4 +1,4 @@
-# SESTER — x402 ↔ AP2 ↔ ACP ↔ UCP Spec Fark Tablosu v3 (Mükemmelliyet E1)
+# SESTER — x402 ↔ AP2 ↔ ACP ↔ UCP Spec Fark Tablosu v3.1 (Mükemmelliyet E1)
 
 > Amaç: adaptör katmanının tasarım girdisi — **dört** oyuncunun farklarının tam
 > haritası. v1 (2026-09-11) iki-oyuncuydu; v2 (2026-09-12) ACP'yi ve
@@ -85,6 +85,8 @@
 | **v3:** UCP keşif + Tech-Council üyeliği (Stripe/Amazon/Meta/MSFT/Salesforce, 24 Nis 2026) | ✅ | 2026-09-12 (TUR-2) |
 | **v3:** Katman-modeli teyidi — "ACP checkout, AP2 consent" (Google Cloud blog, 10 Haz 2026) | ✅ | 2026-09-12 (TUR-2) |
 | **v3:** x402 Cloudflare Agents SDK + MCP entegrasyonu — 63-B benimseme-kanalı | ✅ | 2026-09-12 (TUR-2) |
+| **v3.1 (2026-09-20): x402 V2 resmî-yayın (24 Haz 2026)** — CAIP-identifiers, dynamic `payTo` routing, multi-facilitator, Extensions, wallet-based-sessions; **header-değişiklikleri: deprecate-X-\* → `PAYMENT-REQUIRED`/`PAYMENT-SIGNATURE`/`SIGN-IN-WITH-X`**; SDK geri-uyumlu-V1 | ✅ araştırma-yapıldı | 2026-09-20 (genişletme-turu) |
+| **v3.1 uyumluluk-notu:** Sester-middleware hâlâ `X-Payment`/`X-Payment-Required` (V1) kullanıyor — V2-header'a-geçiş **açık-takip** (break-değil: SDK geri-uyumlu-V1; V2-öneri IETF-hizalı-adlar, zorunlu-sunset-tarihi-yok) | ☐ açık-takip | 2026-09-20 |
 | İki sağlayıcının örnek akışlarının uçtan uca elle koşusu (demo API) | ✅ **B-prototip kabulü** — S2 parite (pugio0+AP2+ACP) | 2026-09-12 |
 | x402 resmî spec satır-satır: header şemaları + zincir destek listesi (LF repo, tarihli arşiv) | ☐ SDK-öncesi | — |
 | AP2 spec satır-satır: mandate türleri + receipt formatı (FIDO kanalı, tarihli arşiv) | ☐ SDK-öncesi | — |
