@@ -169,3 +169,31 @@ def test_66_anchor_json_is_deterministic_replayable(led):
     with __import__("unittest.mock", fromlist=["patch"]).patch(
             "sester.bridges.time.time", return_value=12345.0):
         assert tamga_anchor_json(b) == tamga_anchor_json(b)
+
+
+def test_67_veridict_claims_json_is_byte_deterministic(led):
+    """Karşılıklı-pin'lemenin-önkoşulu (Veridict-settlement-vector-paritesi):
+    aynı-bundle → aynı-JSON-bytes. Veridict standard-test-vector'ları byte-
+    sabit-üretim-gerektirir; eğer serialization sıralama/boşlukla-değişirse
+    vector'lar-tek-makinada-doğru-başka-makinada-farklı-çıkar. İki-bağımsız-
+    çağrı + yeniden-parse-edip-yeniden-serialize.”"""
+    b = produce_bundle(led, agent_id="a1")
+    first = veridict_claims_json(b)
+    second = veridict_claims_json(b)
+    assert first == second  # byte-sabit
+    # parse→serialize→aynı (canonical-form-sabit)
+    assert json.dumps(json.loads(first), sort_keys=True,
+                      separators=(",", ":"), ensure_ascii=False) == first
+
+
+def test_68_claim_ids_are_stable_across_recomputation(led):
+    """claim_id = sha256(task|summary|v)[:16] — bundle'yeniden-üretince-bile
+    aynı-olmalı (reproducibility). Veridict-tarafı-reconcile-beklentisi-bunu-
+    varsayar; ids-kararsızsa-reconcile-yanlış-eşleşir."""
+    b = produce_bundle(led, agent_id="a1")
+    ids_a = [c["claim_id"] for c in veridict_claims(b)["claims"]]
+    # aynı ledger'dan-yeniden-bundle-üret → head/merkle aynı → ids aynı
+    b2 = produce_bundle(led, agent_id="a1")
+    ids_b = [c["claim_id"] for c in veridict_claims(b2)["claims"]]
+    assert ids_a == ids_b
+    assert len(ids_a) == len(set(ids_a))  # çakışma-yok (16-hex-yeterli)
