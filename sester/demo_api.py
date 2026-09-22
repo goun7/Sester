@@ -126,6 +126,27 @@ def _agent_of(payment: str, resource: str = "") -> str | None:
     return None
 
 
+def _amount_of(payment: str) -> float | None:
+    """Ödeme-başlığından ödenen-tutar ( politika-kararı için — fiyat-DEĞİL).
+
+    AT-135-canlı-bulgu: policy_guard'a-fiyat-geçiriliyordu; escalation-kuralı
+    ( amount_gt: 0.20)-fiyat-0.05'te-asla-tetiklenmiyordu → esc_queue-canlı-
+    HTTP-yolundan-ulaşılamıyordu. Doğru-anlam: politika-ödenecek-tutara-
+    karar-vermeli ( alıcı-gerçekte-ne-ödedi)."""
+    try:
+        prefix = payment.strip().split(" ", 1)[0]
+    except Exception:
+        return None
+    if prefix == "pugio0":
+        fields = payment.strip()[len("pugio0 "):].split(":")
+        if len(fields) >= 3:
+            try:
+                return float(fields[2])
+            except ValueError:
+                return None
+    return None
+
+
 class SesterPolicyMeter(SesterMeter):
     """Demo sarımı: x402 kapısına Policy-DSL politikasını da bağlar (host=kaynak-yolu).
     v0.4: AP2/ACP/UCP adaptörleri de kurulu — dört-protokol canlı-akış; satıcı-
@@ -156,7 +177,8 @@ class SesterPolicyMeter(SesterMeter):
             if payment and payment.strip().split(" ", 1)[0] in ("Sester-EVM", "pugio0"):
                 path = scope.get("path", "")
                 agent = _agent_of(payment, path) or "bilinmeyen"
-                verdict, rule = policy_guard(agent, path, self.price)
+                verdict, rule = policy_guard(agent, path,
+                                             _amount_of(payment) or self.price)
                 if verdict == "escalate":
                     # insan-onay kuyruğu (architecture decision record madde-3): onaylı bilet varsa
                     # bir-kezlik tüket → ödeme akışı; yoksa park + 402 escalate
