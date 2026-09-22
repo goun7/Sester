@@ -342,6 +342,16 @@ class SesterMeter:
                                payload={"decision": "deny", "rule_id": "amount_too_low",
                                         "offered_minor": amount_minor})
             return await self._challenge(send, scope, "amount_too_low")
+        # GÜVENLİK-DÜZELTMESİ (AT-100-NEG, unpump-gateway'in-bulması):
+        # önceden-yalnızca-alt-sınır-kontrol-ediliyordu — overpayment-kabul-
+        # ediliyordu ( alıcı 0.1-fiyatına-0.5-ödeyince-200). Ekonomik-risk:
+        # alıcı-taraf-fazla-ödeme-kaybı. Artık-üst-sınır-da-reddediliyor.
+        if amount_minor > self.price_minor:
+            self.ledger.append("permission_decision", agent, path,
+                               payload={"decision": "deny", "rule_id": "amount_too_high",
+                                        "offered_minor": amount_minor,
+                                        "price_minor": self.price_minor})
+            return await self._challenge(send, scope, "amount_too_high")
 
         # x402 exact: facilitator.verify ŞART (fail-closed: unknown → ret)
         envelope = parsed.get("envelope")

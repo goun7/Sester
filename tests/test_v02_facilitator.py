@@ -123,13 +123,16 @@ def test_72_integer_quota_float_trap_closed():
     """0.10×3 float'ta 0.30000000000000004 üretir → eski float-kararı hatalı 402
     verebilirdi; minor-unit kararı 0.30 kotasını tam doldurmayı kabul eder."""
     led = _mk_ledger()
-    m = _meter(led, quota=0.30, secret="v02")  # 3 × 0.10 tam sığmalı; pay() aynı secret'la imzalıyor
+    m = _meter(led, quota=0.30, secret="v02")  # meter-fiyat 0.05; 3 × 0.05 kotası-rahat-tutar
     import hashlib
     import hmac as _hmac
 
     SECRET = "v02"
 
-    def pay(nonce, amount="0.10", path="/weather"):
+    # AT-100-NEG-güncellemesi: _meter-fiyatı-0.05'tir; ödeme-onunla-eşleşmeli
+    # (middleware-artık-overpayment'i-reddeder: 0.05-fiyatına-0.10-ödenince
+    # amount_too_high → 402). Testin-niyeti-korunur: 3 × 0.05 ≤ 0.30-kotası.
+    def pay(nonce, amount="0.05", path="/weather"):
         mac = _hmac.new(SECRET.encode(), f"f1|{nonce}|{amount}|{path}".encode(),
                         hashlib.sha256).hexdigest()
         return {"X-Payment": f"pugio0 f1:{nonce}:{amount}:{mac}"}
