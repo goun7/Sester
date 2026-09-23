@@ -127,7 +127,12 @@ class ExactSesterV2:
     @staticmethod
     def encode_amount(amount_usd: float, decimals: int = 6) -> str:
         """USDC 6-decimal: 0.05 → '50000' minor-unit."""
-        return str(int(round(amount_usd * (10 ** decimals))))
+        # AT-172/175-düzeltmesi: float()*10**decimals-IEEE-754-kaybı ( 0.0000005
+        # → '0'; 0.1234565 → 123456-yanlış). Decimal-ROUND_HALF_UP-ile-tam-
+        # kesinlik; ledger'daki-MINOR-ile-AYNI-kaynaktır ( 6dec-USDC).
+        from decimal import Decimal, ROUND_HALF_UP
+        return str(int((Decimal(str(amount_usd)) * (Decimal(10) ** decimals))
+                       .quantize(Decimal("1"), rounding=ROUND_HALF_UP)))
 
     @staticmethod
     def parse_payment_header(header: str, *, now_ts: float | None = None) -> dict[str, Any]:

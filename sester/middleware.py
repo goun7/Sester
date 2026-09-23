@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import base64
 import binascii
+from decimal import Decimal, ROUND_HALF_UP   # AT-172: para-yolu-tam-kesinlik
 import hashlib
 import hmac
 import json
@@ -59,8 +60,12 @@ class SesterMeter:
     ) -> None:
         self.app = app
         self.ledger = ledger
-        self.price_minor = int(round(float(price) * MINOR))
-        self.quota_minor = int(round(float(daily_quota) * MINOR))
+        # AT-172-BULGU-1-düzeltmesi: float()*MINOR-kesinlik-kaybı ( para-yolu).
+        # Decimal-ROUND_HALF_UP-ile-tam-6-dec-USDC-minor-dönüşümü.
+        self.price_minor = int((Decimal(str(price)) * MINOR)
+                               .quantize(Decimal("1"), rounding=ROUND_HALF_UP))
+        self.quota_minor = int((Decimal(str(daily_quota)) * MINOR)
+                               .quantize(Decimal("1"), rounding=ROUND_HALF_UP))
         self.price = self.price_minor / MINOR
         self.currency = currency
         self.secret = secret.encode()
@@ -143,8 +148,13 @@ class SesterMeter:
         from .schemes import ExactSesterV2, PaymentError
 
         try:
+            # AT-174-BULGU-2-düzeltmesi: now_ts-GEÇMİYORDU → schemes.py'deki
+            # EIP-3009-zaman-penceresi-kontrolü ( now_ts is not None)-koşuluna
+            # bağlı-tamamen-atlanıyordu; validBefore-100sn-geçmiş-zarf-geçiyordu
+            # ( AT-168-freshness'ın-x402-köprüsündeki-aynası).
             env = ExactSesterV2.parse_payment_header(
-                base64.urlsafe_b64encode(json.dumps(envelope).encode()).decode().rstrip("=")
+                base64.urlsafe_b64encode(json.dumps(envelope).encode()).decode().rstrip("="),
+                now_ts=time.time(),
             )
             addr = ExactSesterV2.verify_local(env)
         except PaymentError as e:
@@ -334,8 +344,13 @@ class SesterMeter:
         amount_minor = parsed.get("amount_minor")
         if amount_minor is None:
             try:
-                amount_minor = int(round(float(parsed["amount"]) * MINOR))
-            except ValueError:
+                # AT-172-BULGU-1-düzeltmesi: float()*MINOR-IEEE-754-kesinlik-
+                # kaybı-yaratıyordu ( 0.1234565 → 123456 vs Decimal 123457;
+                # 0.0000005 → 0 — mikroskopik-ödeme-tamamen-sıfırlanır).
+                # Decimal-ROUND_HALF_UP-ile-tam-kesinlik ( para-yolu).
+                amount_minor = int((Decimal(str(parsed["amount"])) * MINOR)
+                                   .quantize(Decimal("1"), rounding=ROUND_HALF_UP))
+            except (ValueError, TypeError, ArithmeticError):
                 return await self._challenge(send, scope, "malformed_payment: amount")
         if amount_minor < self.price_minor:
             self.ledger.append("permission_decision", agent, path,
@@ -352,6 +367,19 @@ class SesterMeter:
                                         "offered_minor": amount_minor,
                                         "price_minor": self.price_minor})
             return await self._challenge(send, scope, "amount_too_high")
+
+        # AT-174-BULGU-3-düzeltmesi: claim_nonce-FACILITATOR-VERIFY'den-SONRA-
+        # YAPILIYORDU — verify-RED'de-nonce-yakılmıyordu ( iyi) AMA-aynı-zarfı-
+        # tekrar-gönderince-YENİDEN-charge-üretiliyordu ( replay-penceresi-açık;
+        # koruma-sadece-başarıda-tutar). Şimdi-ÖNCE-yakılır: geçersiz-ödeme-nonce'u
+        # tüketir ( saldırgan-anlamsız-tekrar-yapamaz); dürüst-kullanıcı-imzası-
+        # her-zaman-geçerli-olduğundan-etkilenmez.
+        # Kalıcı replay-koruması: first-writer-wins (tablo restart'ı atlamaz)
+        if not self.ledger.claim_nonce(agent, nonce):
+            self._metrics["replay_402_total"] += 1
+            self.ledger.append("permission_decision", agent, path,
+                               payload={"decision": "deny", "rule_id": "replay"})
+            return await self._challenge(send, scope, "replay_detected")
 
         # x402 exact: facilitator.verify ŞART (fail-closed: unknown → ret)
         envelope = parsed.get("envelope")
@@ -376,13 +404,6 @@ class SesterMeter:
                 return await self._send_json(send, 402,
                                              {"error": "facilitator_unknown",
                                               "detail": "ödeme doğrulanamadı — fail-closed"})
-
-        # Kalıcı replay-koruması: first-writer-wins (tablo restart'ı atlamaz)
-        if not self.ledger.claim_nonce(agent, nonce):
-            self._metrics["replay_402_total"] += 1
-            self.ledger.append("permission_decision", agent, path,
-                               payload={"decision": "deny", "rule_id": "replay"})
-            return await self._challenge(send, scope, "replay_detected")
 
         # Kota: integer minor-unit kararı
         # v0.4: tam-sayı sayaç (kolondan); eski-arayüzlü ledger'lar için float-yol
@@ -422,9 +443,13 @@ class SesterMeter:
             # exact: handler yanıtı başladıysa settle (bir kez) → settlement olayı
             if (parsed["scheme"] == "exact" and not settle_once["done"]
                     and message["type"] == "http.response.start" and self.facilitator):
-                settle_once["done"] = True
                 sr = self.facilitator.settle(envelope)
+                # AT-174-BULGU-1-düzeltmesi: done-bayrağı-öNCE-setleniyordu —
+                # transient-on-chain-hata → settle_failed-yazılır-AMA-asla-tekrar-
+                # denenmezdi ( kapanma-anında-bekleyen-settlement-kaybı). Artık
+                # sonuç-başarılıysa-setlenir ( geçici-hata-tekrar-denenebilir).
                 if sr.status == "ok":
+                    settle_once["done"] = True
                     self.ledger.append("settlement", agent, path, amount_real,
                                        payload={"status": "settled",
                                                 "receipt_seq": rec["seq"],
