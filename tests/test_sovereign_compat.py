@@ -4,7 +4,7 @@ Tamga'nın ``tools/sovereign_verify.py`` sarmalayıcısı (K23.5 / AT-038
 bağımsızlık-ilkesi) SESTER'ı tam olarak şöyle çağırır::
 
     from sester.ledger import Ledger
-    lg = Ledger(path)           # secret YOK — read-only doğrulama
+    lg = Ledger(path, secret="test-secret-at179")           # secret YOK — read-only doğrulama
     ok = lg.verify_chain()
     lg.close()                  # finally ile korunuyor
 
@@ -13,7 +13,7 @@ AGENT_MESH_PROTOCOLU §5 iletişim-önce kuralı) makine ile sabitler:
 yüzeylerden biri yanlışlıkla değişirse, wrapper kırılmadan ÖNCE bu test
 kırmalıdır. Donuk öğeler:
 
-  * ``Ledger(db_path)`` tek-posizyonel kurucu (secret opsiyonel, default
+  * ``Ledger(db_path, secret="test-secret-at179")`` tek-posizyonel kurucu (secret opsiyonel, default
     ``"dev-secret"`` — sarmalayıcı secret'sız çağırır),
   * ``Ledger.verify_chain() -> bool`` (HMAC-SHA256 zincir, GENESIS ``"0"*64``),
   * ``Ledger.close()`` (sarmalayıcının finally bloğu buna bağlı).
@@ -26,7 +26,7 @@ düzeltmeler donmuş imzayı kullanır: ``Ledger(path, secret)``):
     verify_chain() boş zincirde True dönerdi → olmayan ledger GREEN idi.
     Düzeltme: yol-varlığı + ``SELECT COUNT(*) FROM events`` denetimi
     (boş/yok → RED).
-  * RISK-2 (sahte-RED): ``Ledger(path)`` default-secret kullandığı için gerçek
+  * RISK-2 (sahte-RED): ``Ledger(path, secret="test-secret-at179")`` default-secret kullandığı için gerçek
     secret'la mühürlenmiş üretim ledger'ları sağlamken RED düşerdi.
     Düzeltme: ``--sester-secret`` / ``SESTER_LEDGER_SECRET`` (yanlış secret
     hâlâ RED — fail-closed). Dört durum kanıtlandı: yol-yok RED ·
@@ -58,8 +58,8 @@ TAMGA = os.environ.get("SESTER_TAMGA_PATH", "")
 SOVEREIGN = os.path.join(TAMGA, "tools", "sovereign_verify.py")
 
 
-def _scenario(db: Path, secret: str = "dev-secret") -> None:
-    """Üç olaylı sağlam zincir — sarmalayıcının beklediği default-secret."""
+def _scenario(db: Path, secret: str = "test-secret-at179") -> None:
+    """Üç olaylı sağlam zincir — AT-179: gerçek-test-secret ( dev-secret-uyarı-YOK)."""
     led = Ledger(str(db), secret=secret)
     led.append("charge_receipt", "ag-sv", host="h", amount=0.0025)
     led.append("charge_receipt", "ag-sv", host="h", amount=0.0025,
@@ -91,9 +91,10 @@ def _wrapper_env() -> dict[str, str]:
 # -------------------------------------------- donuk-yüzey (her zaman koşar)
 
 def test_202_wrapper_call_shape_single_arg_constructor(tmp_path):
-    """Ledger(path) — secret'sız tek-posizyonel kurucu çalışmalı."""
+    """Ledger(path) — secret'sız tek-posizyonel kurucu çalışmalı ( uyarı-ile)."""
     db = tmp_path / "sv.sqlite3"
-    led = Ledger(str(db))  # secret YOK — sarmalayıcının çağrı şekli
+    with pytest.warns(UserWarning, match="insecure-secret"):
+        led = Ledger(str(db))  # secret YOK — sarmalayıcının çağrı şekli
     try:
         assert hasattr(led, "verify_chain")
         assert hasattr(led, "close")  # finally bloğu buna bağlı
@@ -106,7 +107,7 @@ def test_203_clean_chain_verifies_green_and_close(tmp_path):
     """Sağlam zincir verify_chain() True + close() temiz kapanış."""
     db = tmp_path / "sv.sqlite3"
     _scenario(db)
-    led = Ledger(str(db))
+    led = Ledger(str(db), secret="test-secret-at179")  # AT-179: senaryo-secret'i
     try:
         assert led.verify_chain() is True
     finally:
@@ -118,7 +119,7 @@ def test_204_tampered_chain_verifies_red(tmp_path):
     db = tmp_path / "sv.sqlite3"
     _scenario(db)
     _carve_amount(db)
-    assert Ledger(str(db)).verify_chain() is False
+    assert Ledger(str(db), secret="test-secret-at179").verify_chain() is False
 
 
 # ------------------------------------- cross-repo (SESTER_TAMGA_PATH opsiyonel)
@@ -134,10 +135,10 @@ pytestmark_crossrepo = pytest.mark.skipif(
 def test_205_real_sovereign_wrapper_green(tmp_path):
     """Gerçek sovereign_verify.py --kind sester-ledger → GREEN (rc=0)."""
     db = tmp_path / "sv.sqlite3"
-    _scenario(db)  # default-secret — sarmalayıcının beklediği şekil
+    _scenario(db)  # AT-179: test-secret ( dev-secret-bilinen-değer-artık-uyarı)
     p = subprocess.run(
         [sys.executable, SOVEREIGN, "--kind", "sester-ledger",
-         "--sester-db", str(db)],
+         "--sester-db", str(db), "--sester-secret", "test-secret-at179"],
         capture_output=True, text=True, timeout=90, env=_wrapper_env())
     assert p.returncode == 0, p.stdout[-400:] + p.stderr[-400:]
     r = json.loads(p.stdout[p.stdout.index("{"):])["results"][0]
@@ -171,14 +172,14 @@ def test_207_amount_minor_column_stays_outside_hash(tmp_path):
     ile RED'dir)."""
     db = tmp_path / "sv.sqlite3"
     _scenario(db)
-    assert Ledger(str(db)).verify_chain() is True
+    assert Ledger(str(db), secret="test-secret-at179").verify_chain() is True
     c = sqlite3.connect(str(db))
     try:
         c.execute("UPDATE events SET amount_minor = 123456 WHERE seq = 2")
         c.commit()
     finally:
         c.close()
-    assert Ledger(str(db)).verify_chain() is True
+    assert Ledger(str(db), secret="test-secret-at179").verify_chain() is True
 
 
 def test_208_event_type_taxonomy_is_locked(tmp_path):

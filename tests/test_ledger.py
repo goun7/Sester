@@ -43,7 +43,7 @@ def make_meter(tmp_path, ledger, **kw):
 # ---------- v0.2: kalıcı replay-koruması ----------
 
 def test_64_claim_nonce_first_writer_wins(tmp_path):
-    led = Ledger(tmp_path / "n.sqlite3")
+    led = Ledger(tmp_path / "n.sqlite3", secret="test-secret-at179")
     assert led.claim_nonce("a", "n1") is True
     assert led.claim_nonce("a", "n1") is False
     assert led.claim_nonce("a", "n2") is True
@@ -53,10 +53,10 @@ def test_64_claim_nonce_first_writer_wins(tmp_path):
 
 def test_65_claim_nonce_survives_reopen(tmp_path):
     path = tmp_path / "n2.sqlite3"
-    led1 = Ledger(path)
+    led1 = Ledger(path, secret="test-secret-at179")
     led1.claim_nonce("a", "kalici")
     led1.close()
-    led2 = Ledger(path)
+    led2 = Ledger(path, secret="test-secret-at179")
     assert led2.claim_nonce("a", "kalici") is False  # restart pencere sıfırlamaz
     led2.close()
 
@@ -97,7 +97,7 @@ def call(meter, path, headers=None):
 # ---------- ledger ----------
 
 def test_23_append_and_verify_chain(tmp_path):
-    led = Ledger(tmp_path / "t.sqlite3")
+    led = Ledger(tmp_path / "t.sqlite3", secret="test-secret-at179")
     for i in range(5):
         led.append("charge_receipt", f"agent-{i % 2}", "/weather", 0.05)
     assert led.verify_chain() is True
@@ -105,7 +105,7 @@ def test_23_append_and_verify_chain(tmp_path):
 
 
 def test_24_chain_detects_tampering(tmp_path):
-    led = Ledger(tmp_path / "t.sqlite3")
+    led = Ledger(tmp_path / "t.sqlite3", secret="test-secret-at179")
     for i in range(3):
         led.append("charge_receipt", "a", "/weather", 0.05)
     led.conn.execute("UPDATE events SET amount=999 WHERE seq=2")  # inkâr-saldırısı
@@ -114,7 +114,7 @@ def test_24_chain_detects_tampering(tmp_path):
 
 
 def test_25_spent_today_nets_refunds(tmp_path):
-    led = Ledger(tmp_path / "t.sqlite3")
+    led = Ledger(tmp_path / "t.sqlite3", secret="test-secret-at179")
     led.append("charge_receipt", "a", "/weather", 0.05)
     led.append("charge_receipt", "a", "/weather", 0.05)
     led.append("refund", "a", "/weather", 0.03)
@@ -123,7 +123,7 @@ def test_25_spent_today_nets_refunds(tmp_path):
 
 
 def test_26_per_agent_summary_and_recent(tmp_path):
-    led = Ledger(tmp_path / "t.sqlite3")
+    led = Ledger(tmp_path / "t.sqlite3", secret="test-secret-at179")
     led.append("charge_receipt", "a", "/weather", 0.05)
     led.append("charge_receipt", "b", "/weather", 0.10)
     s = {r["agent_id"]: r for r in led.per_agent_summary()}
@@ -133,7 +133,7 @@ def test_26_per_agent_summary_and_recent(tmp_path):
 
 
 def test_27_parallel_appends_chain_intact(tmp_path):
-    led = Ledger(tmp_path / "t.sqlite3")
+    led = Ledger(tmp_path / "t.sqlite3", secret="test-secret-at179")
 
     def worker(n):
         for i in range(10):
@@ -153,7 +153,7 @@ def test_27_parallel_appends_chain_intact(tmp_path):
 # ---------- middleware ----------
 
 def test_28_no_payment_gets_402_challenge(tmp_path):
-    led = Ledger(tmp_path / "t.sqlite3")
+    led = Ledger(tmp_path / "t.sqlite3", secret="test-secret-at179")
     m = make_meter(tmp_path, led)
     status, hdrs, body = call(m, "/weather")
     assert status == 402
@@ -164,7 +164,7 @@ def test_28_no_payment_gets_402_challenge(tmp_path):
 
 
 def test_29_valid_payment_passes_with_receipt(tmp_path):
-    led = Ledger(tmp_path / "t.sqlite3")
+    led = Ledger(tmp_path / "t.sqlite3", secret="test-secret-at179")
     m = make_meter(tmp_path, led)
     h = payment_header("f1", "n1", "0.05", "/weather")
     status, hdrs, _ = call(m, "/weather", {"X-Sester-Agent": "f1", "X-Payment": h})
@@ -176,7 +176,7 @@ def test_29_valid_payment_passes_with_receipt(tmp_path):
 
 
 def test_30_bad_signature_denied(tmp_path):
-    led = Ledger(tmp_path / "t.sqlite3")
+    led = Ledger(tmp_path / "t.sqlite3", secret="test-secret-at179")
     m = make_meter(tmp_path, led)
     bad = f"pugio0 f1:n1:0.05:{'0' * 64}"
     status, _, body = call(m, "/weather", {"X-Payment": bad})
@@ -186,7 +186,7 @@ def test_30_bad_signature_denied(tmp_path):
 
 
 def test_31_amount_too_low_denied(tmp_path):
-    led = Ledger(tmp_path / "t.sqlite3")
+    led = Ledger(tmp_path / "t.sqlite3", secret="test-secret-at179")
     m = make_meter(tmp_path, led)
     h = payment_header("f1", "n1", "0.01", "/weather")
     status, _, body = call(m, "/weather", {"X-Payment": h})
@@ -196,7 +196,7 @@ def test_31_amount_too_low_denied(tmp_path):
 
 
 def test_32_replay_denied(tmp_path):
-    led = Ledger(tmp_path / "t.sqlite3")
+    led = Ledger(tmp_path / "t.sqlite3", secret="test-secret-at179")
     m = make_meter(tmp_path, led)
     h = payment_header("f1", "ayni-nonce", "0.05", "/weather")
     s1, _, _ = call(m, "/weather", {"X-Payment": h})
@@ -207,7 +207,7 @@ def test_32_replay_denied(tmp_path):
 
 
 def test_33_quota_exceeded_at_daily_cap(tmp_path):
-    led = Ledger(tmp_path / "t.sqlite3")
+    led = Ledger(tmp_path / "t.sqlite3", secret="test-secret-at179")
     m = make_meter(tmp_path, led, daily_quota=0.10)  # 2 çağrı sığar
     ok = [call(m, "/weather", {"X-Payment": payment_header("f1", f"n{i}", "0.05", "/weather")})[0]
           for i in range(3)]
@@ -216,7 +216,7 @@ def test_33_quota_exceeded_at_daily_cap(tmp_path):
 
 
 def test_34_exempt_paths_bypass_meter(tmp_path):
-    led = Ledger(tmp_path / "t.sqlite3")
+    led = Ledger(tmp_path / "t.sqlite3", secret="test-secret-at179")
     m = make_meter(tmp_path, led)
     status, _, _ = call(m, "/panel")
     assert status == 200  # ödeme-istemi yok
@@ -224,7 +224,7 @@ def test_34_exempt_paths_bypass_meter(tmp_path):
 
 
 def test_35_malformed_payment_denied(tmp_path):
-    led = Ledger(tmp_path / "t.sqlite3")
+    led = Ledger(tmp_path / "t.sqlite3", secret="test-secret-at179")
     m = make_meter(tmp_path, led)
     status, _, body = call(m, "/weather", {"X-Payment": "pugio0 onlyonefield"})
     assert status == 402

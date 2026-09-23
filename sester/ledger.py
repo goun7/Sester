@@ -217,6 +217,20 @@ def seal(secret: bytes, canonical: str) -> str:
 
 class Ledger:
     def __init__(self, db_path: str | os.PathLike[str] = "sester.sqlite3", secret: str = "dev-secret"):
+        # AT-179-BULGU-2-düzeltmesi: 'dev-secret'-BİLİNEN-varsayıntı-saldırgana
+        # sahte-HMAC-üretme-imkanı-verir ( önceki-uyarı-YOKTU-sessiz-kabul).
+        # Artık-bilinen-değer için-gürültülü-uyarı ( gömülü-test-sabitleri-ile-
+        # geri-uyumlu); üretimde-SESTER_REQUIRE_SECURE_SECRET=1-ile-reddedilir.
+        if secret in ("dev-secret", "", None):
+            import warnings
+            warnings.warn(
+                "insecure-secret: 'dev-secret'-BİLİNEN-değer — sahte-HMAC-"
+                "üretilebilir; üretimde-gerçek-secret-geçin — AT-179",
+                stacklevel=2)
+            if os.environ.get("SESTER_REQUIRE_SECURE_SECRET"):
+                raise ValueError(
+                    "insecure-secret-fail-closed: bilinen-değer-reddedildi "
+                    "( SESTER_REQUIRE_SECURE_SECRET=1) — AT-179")
         self.db_path = str(db_path)
         self.secret = secret.encode()
         # check_same_thread=False: FastAPI/uvicorn threadpool'larından gelen append'ler
@@ -226,6 +240,17 @@ class Ledger:
         self.conn.execute("PRAGMA journal_mode=WAL")
         self.conn.execute("PRAGMA busy_timeout=5000")
         self.conn.executescript(SCHEMA)
+        # AT-179-BULGU-3-düzeltmesi: db + WAL/SHM-0644-kalıyordu ( replay-koruması
+        # seen_nonces + ödeme-geçmişi-dünya-okunabilir; tamga-0600-iken-sester-açık).
+        # WAL-modu-yan-dosyaları-da-dahil — journal_mode-SET-sonra-chmod ( WAL'ler
+        # ancak-o-zaman-oluşur).
+        for _sfx in ("", "-wal", "-shm"):
+            _p = self.db_path + _sfx
+            try:
+                if os.path.exists(_p):
+                    os.chmod(_p, 0o600)
+            except OSError:
+                pass
         # v0.4: yardımcı-kolon idempotent-ekle (mevcut DB'lerde bir kez)
         cols = {r[1] for r in self.conn.execute("PRAGMA table_info(events)")}
         if "amount_minor" not in cols:

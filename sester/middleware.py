@@ -23,6 +23,7 @@ from decimal import Decimal, ROUND_HALF_UP   # AT-172: para-yolu-tam-kesinlik
 import hashlib
 import hmac
 import json
+import os
 import time
 from typing import Any
 
@@ -47,6 +48,10 @@ class SesterMeter:
         price: float = 0.05,
         daily_quota: float = 25.0,
         currency: str = "USDC-sim",
+        # AT-179-BULGU-2-düzeltmesi: 'dev-secret'-BİLİNEN-varsayılandı — saldırgan
+        # sahte-ödeme-zarfı-HMAC'i-üretebilir-uyarı-YOKDU. Ledger'a-zaten-geçilmiş
+        # secret varsa-onu-miras-al ( tek-kaynak); aksi-halde-bilinen-değer-için
+        # gürültülü-uyarı, üretimde-SESTER_REQUIRE_SECURE_SECRET=1-ile-reddedilir.
         secret: str = "dev-secret",
         pay_to: str = "sester:demo-seller",
         facilitator: Any | None = None,   # sester.facilitator.Facilitator (exact için)
@@ -68,6 +73,30 @@ class SesterMeter:
                                .quantize(Decimal("1"), rounding=ROUND_HALF_UP))
         self.price = self.price_minor / MINOR
         self.currency = currency
+        # AT-179-BULGU-2-düzeltmesi: 'dev-secret'-BİLİNEN-varsayıntı-saldırgana
+        # sahte-HMAC-üretme-imkanı-verir ( uyarı-YOKTU-sessiz-kabul). Önce-
+        # Ledger'ın-secret'ini-miras-al ( tek-kaynak); hâlâ-bilinen-değerse-
+        # gürültülü-uyarı, üretimde-SESTER_REQUIRE_SECURE_SECRET=1-ile-reddet.
+        _led_secret = getattr(ledger, "secret", None)
+        if isinstance(_led_secret, (bytes, bytearray)):
+            _led_secret = _led_secret.decode("utf-8", "replace")
+        if not _led_secret and hasattr(ledger, "_led"):  # sarmalayıcı-deseni
+            _led_secret = getattr(getattr(ledger, "_led"), "secret", None)
+            if isinstance(_led_secret, (bytes, bytearray)):
+                _led_secret = _led_secret.decode("utf-8", "replace")
+        if _led_secret and secret == "dev-secret":
+            secret = _led_secret
+        _INSECURE = ("dev-secret", "", None)
+        if secret in _INSECURE:
+            import warnings
+            warnings.warn(
+                "insecure-secret: 'dev-secret'-BİLİNEN-değer — sahte-HMAC-"
+                "üretilebilir; üretimde-gerçek-secret-geçin — AT-179",
+                stacklevel=2)
+            if os.environ.get("SESTER_REQUIRE_SECURE_SECRET"):
+                raise ValueError(
+                    "insecure-secret-fail-closed: bilinen-değer-reddedildi "
+                    "( SESTER_REQUIRE_SECURE_SECRET=1) — AT-179")
         self.secret = secret.encode()
         self.pay_to = pay_to
         self.facilitator = facilitator
