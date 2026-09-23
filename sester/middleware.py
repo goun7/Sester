@@ -111,6 +111,11 @@ class SesterMeter:
         # escalate → 402 + insan-onay, deny → 402 policy_denied).
         self.policy = policy
         self._buckets: dict[str, tuple[float, float]] = {}  # agent → (tokens, last_ts)
+        # AT-181-BULGU-1-düzeltmesi: kota-TOCTOU — check( spent_today) ile
+        # act( append-charge) arasındaki pencerede paralel-istekler kotayı
+        # aşıyordu. Bölge-artık-atomik ( tek-kaynak-kota).
+        import asyncio as _asyncio
+        self._quota_lock = _asyncio.Lock()
         self._metrics = {  # v0.6.0 adım-1: metering-metriği (0-bağımlılık sayaçlar)
             "requests_total": 0, "charges_total": 0, "replay_402_total": 0,
             "quota_402_total": 0, "rate_402_total": 0, "malformed_402_total": 0,
@@ -167,6 +172,12 @@ class SesterMeter:
 
     def _parse_exact(self, header: str, resource: str) -> dict[str, Any]:
         """x402 v2 exact zarfı: 'x402 <b64>' veya ham b64 (şema-önekli değil)."""
+        # AT-182-BULGU-3-düzeltmesi: boyut-sınırı-YOKTU — 10MB-header-66ms/
+        # istek-şişirme-ile-hafif-DoS. 8KB-üstü-RED ( tamga-SAFE_SNAP_MAX-deseni).
+        MAX_HEADER_BYTES = 8192
+        if len(header) > MAX_HEADER_BYTES:
+            raise PaymentErr(f"exact zarfı çok büyük: {len(header)}B > "
+                             f"{MAX_HEADER_BYTES}B — AT-182")
         token = header.strip()
         raw = token[len("x402 "):] if token.startswith("x402 ") else token
         try:
@@ -436,25 +447,28 @@ class SesterMeter:
 
         # Kota: integer minor-unit kararı
         # v0.4: tam-sayı sayaç (kolondan); eski-arayüzlü ledger'lar için float-yol
-        spent_minor = (self.ledger.spent_today_minor(agent)
-                       if hasattr(self.ledger, "spent_today_minor")
-                       else int(round(self.ledger.spent_today(agent) * MINOR)))
-        if spent_minor + self.price_minor > self.quota_minor:
-            self._metrics["quota_402_total"] += 1
-            self.ledger.append("permission_decision", agent, path,
-                               payload={"decision": "deny", "rule_id": "quota_exceeded",
-                                        "spent_today_minor": spent_minor})
-            return await self._send_json(
-                send, 402,
-                {"error": "quota_exceeded", "agent": agent,
-                 "spent_today": spent_minor / MINOR, "daily_quota": self.quota_minor / MINOR,
-                 "retry_after": "yerel-geceyarısı (günlük-kota sıfırlanır)"},
-            )
+        # AT-181-BULGU-1: check+act atomik — paralel-istekler-pencerede-
+        # kota-aşmıyacak ( lock- Release-ancak-charge-yazıldıktan-sonra).
+        async with self._quota_lock:
+            spent_minor = (self.ledger.spent_today_minor(agent)
+                           if hasattr(self.ledger, "spent_today_minor")
+                           else int(round(self.ledger.spent_today(agent) * MINOR)))
+            if spent_minor + self.price_minor > self.quota_minor:
+                self._metrics["quota_402_total"] += 1
+                self.ledger.append("permission_decision", agent, path,
+                                   payload={"decision": "deny", "rule_id": "quota_exceeded",
+                                            "spent_today_minor": spent_minor})
+                return await self._send_json(
+                    send, 402,
+                    {"error": "quota_exceeded", "agent": agent,
+                     "spent_today": spent_minor / MINOR, "daily_quota": self.quota_minor / MINOR,
+                     "retry_after": "yerel-geceyarısı (günlük-kota sıfırlanır)"},
+                )
 
-        amount_real = self.price_minor / MINOR
-        self._metrics["charges_total"] += 1
-        rec = self.ledger.append("charge_receipt", agent, path, amount_real,
-                                 amount_minor=self.price_minor,
+            amount_real = self.price_minor / MINOR
+            self._metrics["charges_total"] += 1
+            rec = self.ledger.append("charge_receipt", agent, path, amount_real,
+                                     amount_minor=self.price_minor,
                                  payload={"nonce": nonce, "paid": amount_real,
                                           "scheme": parsed["scheme"]})
         settle_once = {"done": False}
