@@ -73,6 +73,18 @@ class PgLedger:
     def __init__(self, db_path: str | os.PathLike[str] | None = None, *,
                  secret: str = "dev-secret", dsn: str | None = None):
         # db_path kabul edilir (Ledger-parite) ama DSN asıl kaynaktır
+        # AT-179-BULGU-2 ( pg-yüzeyi): 'dev-secret'-BİLİNEN-değer — gürültülü-
+        # uyarı + üretimde-reddet ( Ledger-ile-aynı-desen).
+        if secret in ("dev-secret", "", None):
+            import warnings
+            warnings.warn(
+                "insecure-secret: 'dev-secret'-BİLİNEN-değer — sahte-HMAC-"
+                "üretilebilir; üretimde-gerçek-secret-geçin — AT-179",
+                stacklevel=2)
+            if os.environ.get("SESTER_REQUIRE_SECURE_SECRET"):
+                raise ValueError(
+                    "insecure-secret-fail-closed: bilinen-değer-reddedildi "
+                    "( SESTER_REQUIRE_SECURE_SECRET=1) — AT-179")
         self.secret = secret.encode()
         self.dsn = dsn or os.environ.get("SESTER_PG_DSN")
         if not self.dsn:

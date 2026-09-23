@@ -94,13 +94,22 @@ def main(argv: list[str] | None = None) -> int:
                                  description="SQLite→PG hash-koruyan migrasyon")
     ap.add_argument("--sqlite", default="sester.sqlite3")
     ap.add_argument("--dsn", default=None)
-    ap.add_argument("--secret", default=DEFAULT_SECRET)
+    ap.add_argument("--secret", default=None,
+                    help="üretim-secret'ı ZORUNLU ( varsayılan-YOK — AT-179)")
     ap.add_argument("--batch", type=int, default=500)
     mode = ap.add_mutually_exclusive_group()
     mode.add_argument("--plan", action="store_true")
     mode.add_argument("--dry-run", action="store_true")
     mode.add_argument("--verify", action="store_true")
     args = ap.parse_args(argv)
+    # AT-179-BULGU-2 ( migrate-yüzeyi): DEFAULT_SECRET-'dev-secret'-artık-
+    # varsayılan-DEĞİL — secret-ZORUNLU ( fail-closed; bilinen-değer-reddi).
+    if not args.secret:
+        ap.error("--secret ZORUNLU: üretim-secret'ı geçin ( 'dev-secret' "
+                 "varsayılanı kaldırıldı — AT-179)")
+    if args.secret == DEFAULT_SECRET:
+        ap.error("--secret 'dev-secret' BİLİNEN değer — geçerli bir üretim "
+                 "secret'ı geçin — AT-179")
 
     # kaynak-tarafı kontrolleri ÖNCE: DSN'siz de plan/dry-run/bozuk-kaynak-ret çalışır
     src = Ledger(args.sqlite, secret=args.secret)
