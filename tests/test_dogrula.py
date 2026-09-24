@@ -252,7 +252,7 @@ def test_ledger_append_rejects_negative_receipt(tmp_path):
     veya-bool-amount'u-rede-der — sadece-okumaya-bırakmaz."""
     led = Ledger(tmp_path / "wr.sqlite3", secret="wr")
     try:
-        with pytest.raises(ValueError, match="negatif-amount|sayı-değil"):
+        with pytest.raises(ValueError, match="non-positive-amount|negatif-amount|sayı-değil"):
             led.append("charge_receipt", "a1", "/w", -1.0)
         with pytest.raises(ValueError, match="bool"):
             led.append("charge_receipt", "a1", "/w", True)

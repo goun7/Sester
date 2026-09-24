@@ -286,11 +286,19 @@ class Ledger:
         if isinstance(amount, bool) or not isinstance(amount, (int, float)):
             raise ValueError(
                 f"amount sayı-değil: {amount!r} (bool-sayı-giydirme-tuzağı)")
-        if amount < 0 and event_type in ("charge_receipt", "settlement",
-                                        "webhook_delivery"):
+        if amount < 0:
+            # AT-062: negatif-amount-HERHANGİ-bir-olayda-yasak ( spent_today'yi
+            # düşürür → kota-bypass; değer-çıkarma-yolu).
             raise ValueError(
                 f"negatif-amount {amount} {event_type} için yasak — kota-bypass "
                 "(spent_today-negatif düşer); değer-çıkarma-yolu (AT-062)")
+        if amount <= 0 and event_type == "charge_receipt":
+            raise ValueError(
+                f"non-positive-amount {amount} charge_receipt için yasak — kota-"
+                "bypass (negatif: spent_today-negatif düşer; sıfır: anlam-boş "
+                "boş-ödeme-gerçeği kaydedilir); değer-çıkarma-yolu (AT-062/"
+                "AT-188). settlement/webhook_delivery kayıtları 0.0-taşıyabilir "
+                "( başarısızlık-kaydı-GERÇEK-ödeme-DEĞİL — middleware:501)")
         if amount_minor is None:
             # geri-uyum: major-unit'ten türet (0.0 → 0; major-kayan nokta uçları
             # ancak çağıran tam-sayıyı bilirse birebir — middleware v0.4'te öyle)
