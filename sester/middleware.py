@@ -48,11 +48,12 @@ class SesterMeter:
         price: float = 0.05,
         daily_quota: float = 25.0,
         currency: str = "USDC-sim",
-        # AT-179-BULGU-2-düzeltmesi: 'dev-secret'-BİLİNEN-varsayılandı — saldırgan
-        # sahte-ödeme-zarfı-HMAC'i-üretebilir-uyarı-YOKDU. Ledger'a-zaten-geçilmiş
-        # secret varsa-onu-miras-al ( tek-kaynak); aksi-halde-bilinen-değer-için
-        # gürültülü-uyarı, üretimde-SESTER_REQUIRE_SECURE_SECRET=1-ile-reddedilir.
-        secret: str = "dev-secret",
+        # AT-190-BULGU-1-düzeltmesi: varsayılan 'dev-secret'-HÂLÂ-açık-bırakıyordu
+        # ( AT-179-uyarı+zorunlu-mod-eklendi-AMA-varsayılan-kaldı). Artık-ZORUNLU:
+        # None → import-anında-DEĞİL-ama-ilk-HMAC-yolunda-RED ( AT-162-deseni-gibi
+        # ama-geri-uyumlu: None-açıkça-geçilirse-hızlı-başarısız). Üretim-
+        # yanlış-konfig → sahte-ödeme-zarfı-HMAC'i-üretilemez.
+        secret: str | None = None,
         pay_to: str = "sester:demo-seller",
         facilitator: Any | None = None,   # sester.facilitator.Facilitator (exact için)
         burst_capacity: float | None = None,
@@ -84,9 +85,21 @@ class SesterMeter:
             _led_secret = getattr(getattr(ledger, "_led"), "secret", None)
             if isinstance(_led_secret, (bytes, bytearray)):
                 _led_secret = _led_secret.decode("utf-8", "replace")
-        if _led_secret and secret == "dev-secret":
+        if _led_secret and (secret is None or secret == "dev-secret"):
             secret = _led_secret
         _INSECURE = ("dev-secret", "", None)
+        if secret is None and not _led_secret:
+            # AT-190-BULGU-1: secret-ZORUNLU — varsayılan-YOK ( None-RED).
+            raise ValueError(
+                "secret-required: SesterMeter-secret-ZORUNLU — 'dev-secret'-"
+                "varsayılanı-artık-YOK ( AT-190); ledger-secret'ı-geçin-veya-"
+                "açık-secret-verin")
+        if secret == "":
+            # AT-190-N2: boş-string-DE-bilinen-değer — None-ile-AYNI-tehlike
+            # ( boş-anahtarla-sahte-HMAC). None-RED'ye-tutarlı-kapatma.
+            raise ValueError(
+                "secret-empty: boş-secret-KABUL-EDİLMEZ — bilinen-değer-ile "
+                "aynı-tehlike ( sahte-ödeme-zarfı-HMAC'i-üretilebilir) — AT-190-N2")
         if secret in _INSECURE:
             import warnings
             warnings.warn(
