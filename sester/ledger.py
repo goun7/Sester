@@ -216,16 +216,21 @@ def seal(secret: bytes, canonical: str) -> str:
 
 
 class Ledger:
-    def __init__(self, db_path: str | os.PathLike[str] = "sester.sqlite3", secret: str = "dev-secret"):
-        # AT-179-BULGU-2-düzeltmesi: 'dev-secret'-BİLİNEN-varsayıntı-saldırgana
-        # sahte-HMAC-üretme-imkanı-verir ( önceki-uyarı-YOKTU-sessiz-kabul).
-        # Artık-bilinen-değer için-gürültülü-uyarı ( gömülü-test-sabitleri-ile-
-        # geri-uyumlu); üretimde-SESTER_REQUIRE_SECURE_SECRET=1-ile-reddedilir.
-        if secret in ("dev-secret", "", None):
+    def __init__(self, db_path: str | os.PathLike[str] = "sester.sqlite3", secret: str | None = None):
+        # AT-193-BULGU-1: AT-190 'dev-secret-varsayılanı-kaldı'-demiş-AMA-bu-
+        # varsayılan-Ledger'da-kalmıştı → SesterMeter-miras-yoluyla-None-bile
+        # KABUL-ediliyordu ( sahte-ödeme-zarfı-HMAC'i-hâlâ-üretilebilir).
+        # Artık-ZORUNLU ( SesterMeter ile-tutarlı; AT-162-deseni).
+        if secret is None:
+            raise ValueError(
+                "secret-required: Ledger-secret-ZORUNLU — 'dev-secret'-"
+                "varsayılanı-artık-YOK ( AT-193); açık-secret-geçin")
+        # AT-193-BULGU-1: açık-geçilen-bilinen-değer-hâlâ-uyarır+zorunlu-mod-RED
+        if secret in ("dev-secret", ""):
             import warnings
             warnings.warn(
                 "insecure-secret: 'dev-secret'-BİLİNEN-değer — sahte-HMAC-"
-                "üretilebilir; üretimde-gerçek-secret-geçin — AT-179",
+                "üretilebilir; üretimde-gerçek-secret-geçin — AT-179/AT-193",
                 stacklevel=2)
             if os.environ.get("SESTER_REQUIRE_SECURE_SECRET"):
                 raise ValueError(

@@ -91,10 +91,13 @@ def _wrapper_env() -> dict[str, str]:
 # -------------------------------------------- donuk-yüzey (her zaman koşar)
 
 def test_202_wrapper_call_shape_single_arg_constructor(tmp_path):
-    """Ledger(path) — secret'sız tek-posizyonel kurucu çalışmalı ( uyarı-ile)."""
+    """Ledger(path) — AT-193: secret'sız-tek-posizyonel-kurucu-artık-RED
+    ( dev-secret-varsayılanı-kaldırıldı; SesterMeter-ile-tutarlı)."""
     db = tmp_path / "sv.sqlite3"
-    with pytest.warns(UserWarning, match="insecure-secret"):
-        led = Ledger(str(db))  # secret YOK — sarmalayıcının çağrı şekli
+    with pytest.raises(ValueError, match="secret-required"):
+        Ledger(str(db))  # secret YOK → RED ( AT-193-BULGU-1)
+    # secret-verilince-dürüst-yol-çalışır
+    led = Ledger(str(db), secret="test-secret-32byte-2026-aaaa")
     try:
         assert hasattr(led, "verify_chain")
         assert hasattr(led, "close")  # finally bloğu buna bağlı
