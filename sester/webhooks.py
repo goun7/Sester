@@ -1,7 +1,7 @@
 """SESTER webhooks — v0.6.0 adım-3: kanıt-olaylarının imzalı dışa-akışı.
 
 Üretici:
-    payload = {"type", "agent", "resource", "amount", "seq", "hash", "ts"}
+    payload = {"event_id", "type", "agent", "resource", "amount", "seq", "hash", "ts"}
     başlıklar:
       X-Sester-Signature: t=<unix>, v1=<hex-hmac-sha256(secret, f"{t}.{body}")>
 Alıcı (spec-only doğrulama; sıfır-import — K0 §7 disiplini):
@@ -43,6 +43,11 @@ def build_webhook_payload(rec: dict[str, Any]) -> dict[str, Any]:
     ({seq, ts, hash, prev_hash}) kabul eder — eksik-alan nötr-default.
     """
     return {
+        # AT-184-BULGU-1: stabil-DEDUP-anahtarı — alıcı-çift-teslimi-ayırt-edip
+        # reddedebilir ( retry-ack-kaybı/partition-ardışı-yeniden-gönderim).
+        # seq+kaynak+hash'ten-türetilir ( aynı-event → aynı-id; deterministic).
+        "event_id": f"{rec.get('seq', 0)}:{rec.get('agent_id', '')}:"
+                    f"{rec.get('hash', '')[:16]}",
         "type": rec.get("event_type", ""),
         "agent": rec.get("agent_id", ""),
         "resource": rec.get("host", ""),
