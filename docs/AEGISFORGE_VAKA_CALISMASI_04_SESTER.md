@@ -25,11 +25,11 @@ bu rapor `docs/` altına yerleştirildi.
 ## 2. Tarama Sonucu
 
 ```
-stage 5 (source): 2742 file(s) scanned, 0 finding(s)
+stage 5 (source): 5157 file(s) scanned, 0 finding(s)
                    0 critical / 0 high / 0 medium
 clean score:       100/100
-target hash:       0x74d7d8e08543c014d9bb3515f9ddab4fb1abff0a3b6f146d5f21ecd69e56fade
-PoV_Hash:          0x00fc8fc3005f441a3ee1e1fe96bc9bf9498e08a8ca964055dee64581a56214de
+target hash:       0x5d0cceb2536d230faed301068b3b79320a8ad0812255df286210c8c6be4c4a3e
+PoV_Hash:          0x8628545c4bd91c0023e6b963e494da6a54442c9c89a1bf31d84e91a48f032af5
 ```
 
 **Hiçbir bilinen arka kapı imzası tetiklenmedi.** Bu, "güvenli" demek değildir
@@ -43,7 +43,7 @@ PoV_Hash:          0x00fc8fc3005f441a3ee1e1fe96bc9bf9498e08a8ca964055dee64581a56
 | 2 — Metamorfik fuzz | n/a | Eşzamanlı vault durumu yok |
 | 3 — Tokenomics | n/a | Token veya likidite havuzu değil |
 | 4 — EVM gizli tarama | n/a | EVM bytecode'u değil, Python kaynağı |
-| **5 — Kaynak imza** | **ÇALIŞTI** | 2742 dosya tarandı |
+| **5 — Kaynak imza** | **ÇALIŞTI** | 5157 dosya tarandı |
 
 ## 3. Süreç Boyunca Bulunan Yapısal Anormallik
 
@@ -59,7 +59,7 @@ içerir:
 └── .venv/
 ```
 
-Bu, tarayıcıda **iki gerçek hatayı ortaya çıkardı** — her ikisi de bu vaka
+Bu, tarayıcıda **dört gerçek hatayı ortaya çıkardı** — hepsi bu vaka
 çalışmasının doğrudan çıktısıdır ve AegisForge tarafında düzeltildi:
 
 ### Hata 1: `.venv` atlanmıyordu
@@ -74,7 +74,39 @@ listesinde değildi. **Düzeltme:** `.venv`, `venv`, `env`, `site-packages`,
 3526 dosya). **Düzeltme:** `MAX_SCAN_DEPTH = 32` sınırı her iki yürüyüş
 fonksiyonuna da eklendi.
 
-**Not:** 2742 dosyanın çoğu bu öz-yinelemeli kopyalardan gelir; deponun
+**Kök neden (sembolik bağlantı):** `63-Sester` **kendine işaret eden bir
+sembolik bağlantıdır**:
+
+```
+63-Sester -> /home/gokun/projects/01_unicorn/63-Sester
+```
+
+Bu sonsuz öz-yineleme yaratır. **Disk israfı yoktur** (inode'lar paylaşılır,
+152 MB tek seferlik), ama `find`, `grep -r`, `tar` sonsuz dönebilir.
+Ayrıntılar: `AEGISFORGE_FINDINGS.md`.
+
+### Hata 3: Config dosyalarındaki secret'lar görünmüyordu
+
+`.txt`, `.md`, `.env`, `.ini` uzantıları tarama yüzeyinin **dışındaydı** —
+bir AWS anahtarı `aws.txt`'de görünmezdi. **Düzeltme:** config/doc uzantıları
+taramaya eklendi; `.env` gibi uzantısız dotfile'lar basename ile tanınır.
+
+### Hata 4: Markdown false-positive'leri
+
+Config taraması eklendiğinde ilk koşu **194 CRITICAL + 96 HIGH** üretti —
+**hepsi false positive**:
+
+| Kaynak | Sayı | Gerçek mi? |
+|---|---|---|
+| README tablo ayırıcıları `\| Shipped` → `\| sh` | 130 CRITICAL | **Hayır** |
+| `authorized_keys`, `.onion/` prose geçişleri | 64 CRITICAL | **Hayır** |
+| `` `.npmrc` `` dokümantasyon geçişleri | 192 MEDIUM | **Hayır** |
+
+**Düzeltme:** `is_prose` bayrağı — markdown'da command/persistence imzaları
+kapatıldı; canlı anahtar biçimleri (AKIA, ghp_) hâlâ tetikler. **Hiçbir
+CRITICAL finding yayınlanmadan gürültü teşhis edildi ve temizlendi.**
+
+**Not:** 5157 dosyanın çoğu bu öz-yinelemeli kopyalardan gelir; deponun
 **birinci-el kaynakları ~86 dosyadır.** İmza taraması açısından bu
 güvenlidir (her kopya aynı şekilde taranır), ancak bir bulgu çıksaydı
 **hangi kopyada** olduğunu ayırt etmek ek çaba gerektirirdi.
