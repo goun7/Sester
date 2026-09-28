@@ -17,6 +17,7 @@ import json
 import os
 import sqlite3
 import threading
+import calendar
 import time
 from typing import Any
 
@@ -341,9 +342,15 @@ class Ledger:
     # ---------- sayaç / kota ----------
 
     def spent_today(self, agent_id: str, *, day: str | None = None) -> float:
-        """Net harcama: charge_receipt pozitif, refund negatif (iade, harcamadan düşer)."""
-        day = day or time.strftime("%Y-%m-%d")
-        lo = time.mktime(time.strptime(day, "%Y-%m-%d"))
+        """Net harcama: charge_receipt pozitif, refund negatif (iade, harcamadan düşer).
+
+        Gün-sınırı UTC-midnight'e-sabitlenir (calendar.timegm): ts-sütunu
+        time.time() ile UTC-epoch-yazılır-AMA eski-time.mktime yerel-TZ'i
+        yorumlayıp UTC-epoch'a-karşı hatalı-gün-yapıyordu (CI'da-UTC-tutarlı;
+        yerel-TZ'de-gün-sınırında-kayma). timegm-ile-ikisi-de-UTC → tutarlı.
+        """
+        day = day or time.strftime("%Y-%m-%d", time.gmtime())
+        lo = calendar.timegm(time.strptime(day, "%Y-%m-%d"))
         hi = lo + 86400
         row = self.conn.execute(
             "SELECT COALESCE(SUM(CASE event_type WHEN 'charge_receipt' THEN amount"
