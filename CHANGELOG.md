@@ -3,6 +3,64 @@
 All notable changes to SESTER (sester) are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/) · SemVer.
 
+## [0.7.4] — 2026-09-28
+
+### Added
+- **Payment receipts (node-cosigned, secretless-verifiable)** —
+  `sester/receipt.py`: every completed charge can now yield a single-payment
+  receipt whose `proof` is `sha256(ts|event_type|agent|resource|amount|payload|
+  prev_proof)` — recomputable by a third party with **no Sester installed and no
+  secrets**, plus an optional HMAC node co-signature (`node_cosign` /
+  `node_key_id`) for non-repudiation when a node-secret is shared. Falsifying
+  any core field (amount/resource/agent/time/payload) breaks the proof;
+  falsifying metadata breaks the co-signature. Public surface:
+  `issue_receipt` / `verify_receipt` / `receipt_json` / `receipt_hash` /
+  `proof_of` / `cosign_receipt` / `verify_cosign` / `load_receipt_json` /
+  `RECEIPT_VERSION` / `ReceiptError` (pinned by `tests/test_receipt.py`, 25
+  cases: tamper-matrices, secretless/node verification tiers, fail-closed
+  non-charge refusal, and two middleware cases proving the x402 response
+  carries a third-party-verifiable receipt).
+  Closes the "facilitator says paid, receiver cannot prove it" gap documented
+  in `docs/arastirma/` (USENIX Sec 2026 / arXiv:2607.19545 — violations in all
+  15 tested facilitators; Tamarin analysis arXiv:2609.00060 — 40 new findings;
+  AP2 whisper attacks arXiv:2609.11757 — 90/56/73.3% success).
+- **CLI (`sester`)** — `[project.scripts]` entry: `sester verify
+  <receipt.json|->` (standalone receiver-side verification, rc=0 KABUL / rc=1
+  RED), `sester receipt <seq>` (produce a receipt from a ledger event),
+  `sester history`, `sester bundle` (evidence export), `sester version`.
+  `tests/test_cli.py` (11 cases) covers stdin/inline/file inputs, tamper-RED,
+  non-charge refusal and fail-closed missing-secret.
+- **MCP server** — `mcp/` (Model Context Protocol 2025-06-18, JSON-RPC 2.0 over
+  stdio, pure stdlib): tools `pay` / `verify_receipt` / `balance` / `history`;
+  embedded mode runs a local SQLite ledger ($0 — no keys, no testnet), remote
+  mode (`SESTER_MCP_ENDPOINT`) pays a real Sester-protected API. Ships with
+  `mcp/smithery.yaml` (publishable to Smithery/Arcade) and `mcp/README.md`.
+  `tests/test_mcp.py` (13 cases) runs the full JSON-RPC handshake via
+  subprocess: initialize/tools-list/tools-call, quota fail-closed, unknown
+  method `-32601`, unknown tool `-32602`.
+- **Ledger** — `Ledger.append()` return now carries full event context
+  (`event_type`/`agent_id`/`host`/`amount`/`amount_minor`/`payload`) so
+  receipts are produced from a single source; existing keys unchanged.
+- **Research docs** — `docs/arastirma/`: 01 x402 vulnerability analysis with
+  Sester's coverage/closure table (incl. deliberate non-closures), 02
+  receipt-schema rationale (canonical formula, verification tiers,
+  EIP-3009/JWS/Merkle comparison), 03 MCP registry market gap + publish plan.
+  Every cited source was fetched 2026-09-28 (arXiv abstracts, x402-foundation
+  spec, MCP 2025-06-18 specification, Smithery CLI README).
+
+### Changed
+- `__version__` 0.7.3 → 0.7.4 (both `pyproject.toml` and `sester/__init__.py`;
+  pinned by `test_69b`).
+- **Middleware** — successful x402 responses now also emit
+  `X-Sester-Receipt-Bundle` (base64 url-safe receipt JSON). Backward-compatible:
+  the existing `X-Sester-Receipt` / `X-Sester-Amount` / `X-Sester-Seq` headers
+  are unchanged. Receipt-production failure never blocks the paid response —
+  the charge is already in the ledger; the failure is counted in
+  `receipt_fail_total` and logged to stderr (no silent pass-through).
+- README: 30-second "what is this" block with runnable `$0` examples, payment
+  receipt section with receiver-side proof snippet, MCP section, feature map
+  and test-count updates. No AI-hype claims; deliberate non-goals updated.
+
 ## [Unreleased]
 
 ### Added

@@ -22,6 +22,10 @@ from .escalation import EscalationQueue
 from .ledger import Ledger
 from .middleware import PaymentErr, SesterMeter
 from .policy import Decision, DenyAll, Policy, PolicyCorruptError
+from .receipt import (RECEIPT_VERSION, ReceiptError, cosign_receipt,
+                      issue_receipt, load_receipt_json, proof_of,
+                      receipt_hash, receipt_json, verify_cosign,
+                      verify_receipt)
 from .webhooks import (build_webhook_payload, deliver_webhook, sign_webhook,
                        verify_webhook)
 
@@ -43,6 +47,17 @@ __all__ = [
     "verify_webhook",
     "build_webhook_payload",
     "deliver_webhook",
+    # ödeme-kanıtı (receipt) — node-cosigned, secret'sız-doğrulanabilir
+    "issue_receipt",
+    "verify_receipt",
+    "receipt_json",
+    "receipt_hash",
+    "proof_of",
+    "cosign_receipt",
+    "verify_cosign",
+    "load_receipt_json",
+    "RECEIPT_VERSION",
+    "ReceiptError",
 ]
 
-__version__ = "0.7.3"
+__version__ = "0.7.4"

@@ -59,6 +59,8 @@ class SesterMeter:
         burst_capacity: float | None = None,
         burst_refill_per_sec: float | None = None,
         policy: Any | None = None,        # v0.7.2: Policy-DSL katmanı (None → atlanır)
+        receipt_node_secret: str | None = None,  # v0.7.4: node-cosign anahtarı
+        receipt_node_id: str = "sester:node",    # v0.7.4: node kimliği (receipt.iss)
         exempt_prefixes: tuple[str, ...] = (
             "/panel", "/healthz", "/agents.json", "/docs", "/openapi.json",
             "/redoc", "/favicon.ico", "/metrics",
@@ -123,6 +125,11 @@ class SesterMeter:
         # Verildiğinde-ilk-eşleşen-kural-uygulanır (allow → normal-akış,
         # escalate → 402 + insan-onay, deny → 402 policy_denied).
         self.policy = policy
+        # v0.7.4: ödeme-kanıtı header'ı — charge tamamlandığında node-cosigned
+        # receipt. receipt_node_secret None → receipt cosign'siz üretilir
+        # (asıl kanıt proof hâlâ secret'sız doğrulanabilir; dürst-eksiklik).
+        self.receipt_node_secret = receipt_node_secret
+        self.receipt_node_id = receipt_node_id
         self._buckets: dict[str, tuple[float, float]] = {}  # agent → (tokens, last_ts)
         # AT-181-BULGU-1-düzeltmesi: kota-TOCTOU — check( spent_today) ile
         # act( append-charge) arasındaki pencerede paralel-istekler kotayı
@@ -493,6 +500,27 @@ class SesterMeter:
                 headers.append((b"x-sester-receipt", rec["hash"][:16].encode()))
                 headers.append((b"x-sester-amount", f"{amount_real:.6f}".encode()))
                 headers.append((b"x-sester-seq", str(rec["seq"]).encode()))
+                # v0.7.4: TAM kanıt zarfı — alıcı bu başlıktan bağımsızca
+                # doğrular (base64 url-safe, header-güvenli). proof secret'sız;
+                # cosign yalnızca node-secret verilmişse taşınır.
+                try:
+                    from .receipt import issue_receipt, receipt_json
+                    _head = (self.ledger.chain_head()
+                             if hasattr(self.ledger, "chain_head") else None)
+                    rcpt = issue_receipt(rec, node_id=self.receipt_node_id,
+                                         node_secret=self.receipt_node_secret,
+                                         chain_head=_head)
+                    blob = base64.urlsafe_b64encode(
+                        receipt_json(rcpt).encode()).rstrip(b"=")
+                    headers.append((b"x-sester-receipt-bundle", blob))
+                except Exception as e:
+                    # kanıt-üretim-hatası yanıtı GECIKTIRMEZ (ödeme zaten
+                    # ledger'da); sessiz-geçiş yok — denetim-izi olarak logla.
+                    self._metrics["receipt_fail_total"] = (
+                        self._metrics.get("receipt_fail_total", 0) + 1)
+                    import sys as _sys
+                    print(f"SESTER: receipt-üretim-hatası seq={rec['seq']}: "
+                          f"{e}", file=_sys.stderr, flush=True)
                 message = {**message, "headers": headers}
                 send_with_receipt._stamped = True  # type: ignore[attr-defined]
             await send(message)

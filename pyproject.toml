@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "sester"
-version = "0.7.3"
+version = "0.7.4"
 description = "SESTER — x402-style metering, quota, fail-closed policy and hash-chain receipts for AI-agent APIs, as one ASGI middleware."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -25,6 +25,11 @@ classifiers = [
 ]
 # Çekirdek saf ASGI + stdlib: sıfır zorunlu bağımlılık
 dependencies = []
+
+[project.scripts]
+# Bağımsız-doğrulama CLI'ı: `sester verify receipt.json` alıcı-tarafıdır —
+# Sester/node-secret olmadan kanıtı sha256 ile doğrular.
+sester = "sester.cli:main"
 
 [project.optional-dependencies]
 evm = ["eth-account>=0.13"]           # exact-sester EVM imza-dogrulaması

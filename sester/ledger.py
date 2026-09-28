@@ -322,7 +322,13 @@ class Ledger:
                 (ts, event_type, agent_id, host, amount, payload_s, prev_hash, h,
                  int(amount_minor)),
             )
-        return {"seq": cur.lastrowid, "ts": ts, "hash": h, "prev_hash": prev_hash}
+        return {"seq": cur.lastrowid, "ts": ts, "hash": h, "prev_hash": prev_hash,
+                # v0.7.4: tam-olay-bağlamı — node-cosigned receipt (sester/receipt.py)
+                # append()'in döndürdüğü zarfı tek-kaynaktan üretmek için. Geri-
+                # uyumlu: mevcut anahtarlar aynen; yalnızca yeni alanlar eklendi.
+                "event_type": event_type, "agent_id": agent_id, "host": host,
+                "amount": float(amount), "amount_minor": int(amount_minor),
+                "payload": payload_s}
 
     def verify_chain(self) -> bool:
         rows = self.conn.execute(

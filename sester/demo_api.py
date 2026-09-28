@@ -200,6 +200,11 @@ app = FastAPI(title="SESTER demo API", version=__version__,
               description="x402-simülasyonlu ücretli endpoint — B-katmanı vitrini")
 app.add_middleware(SesterPolicyMeter, ledger=ledger, price=PRICE,
                    daily_quota=DAILY_QUOTA, secret=SECRET,
+                   # v0.7.4: ödeme-kanıtı — demo-varsayılan cosign'siz (dürüst);
+                   # SESTER_DEMO_NODE_SECRET set-i̇se node-imzalı receipt gelir.
+                   receipt_node_secret=os.environ.get("SESTER_DEMO_NODE_SECRET"),
+                   receipt_node_id=os.environ.get("SESTER_DEMO_NODE_ID",
+                                                  "sester:demo-node"),
                    exempt_prefixes=("/panel", "/healthz", "/agents.json", "/docs",
                                     "/openapi.json", "/redoc", "/favicon.ico",
                                     "/approvals", "/escalations", "/ucp/issue"))

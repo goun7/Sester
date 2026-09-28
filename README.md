@@ -32,7 +32,49 @@ verify with nothing but `sha256`. Four agent-commerce protocols — **x402**,
 (`ChargeIntent`/`ChargeReceipt`), so adding a fifth protocol is one adapter, not
 a rewrite.
 
-## Why fail-closed matters
+## 30 seconds: what is this?
+
+**Sester is a payment-metering + receipt layer for APIs that AI agents call.**
+It does not move funds (non-custodial). It does three concrete things:
+
+1. **402 gate** — every paid request must present a valid payment envelope or
+   the request is rejected (fail-closed, never "free on error").
+2. **Spend rules** — per-agent daily quotas, per-request price caps, host
+   allow-lists, burst limits, human-escalation for large spends.
+3. **Verifiable receipts** — every charge lands in a hash-chained ledger and
+   yields a **receipt that anyone can verify with `sha256` alone**, no Sester
+   installed, no secrets. This is the piece the x402 ecosystem is missing:
+   a facilitator can say "paid", but without a receipt the receiver cannot
+   *prove* it (USENIX Security 2026 found rule violations in all 15 major
+   x402 facilitators — see [`docs/arastirma/`](docs/arastirma/)).
+
+Zero required dependencies (pure stdlib ASGI middleware). Try it for **$0** —
+local embedded ledger, no keys, no testnet:
+
+```bash
+pip install "sester[demo]"
+uvicorn sester.demo_api:app --port 8402          # paid API up
+python -m sester.demo_api --mac agent-1:n1:0.05 /weather
+curl -H "X-Sester-Agent: agent-1" \
+     -H "X-Payment: <envelope-from-above>" \
+     "http://127.0.0.1:8402/weather?city=istanbul"   # 200 + X-Sester-Receipt
+```
+
+And the proof layer (no server needed at all):
+
+```bash
+export SESTER_LEDGER_DB=/tmp/l.sqlite3 SESTER_LEDGER_SECRET=demo
+# (in your app, a charge already happened — produce its receipt:)
+sester receipt 1 --out receipt.json
+# ...hand receipt.json to a third party. They verify WITHOUT Sester:
+sester verify receipt.json                          # KABUL (rc=0) / RED (rc=1)
+```
+
+AI agents can do both through an MCP server (Model Context Protocol
+2025-06-18) — [`mcp/`](mcp/README.md): `pay`, `verify_receipt`, `balance`,
+`history`.
+
+
 
 Sester is built on one doctrine: **every failure path denies spend**. A corrupt
 policy file → `DENY_ALL`. An unknown payment scheme → 402. A tampered evidence
@@ -68,6 +110,21 @@ The flow: `curl` without payment → **402 + `X-Payment-Required` challenge**;
 with payment → **200 + `X-Sester-Receipt`** evidence header; the 5th call →
 **402 quota exceeded**; `/panel` shows who called, how much, and a live
 chain-integrity badge.
+
+Since v0.7.4 the paid 200 also carries `X-Sester-Receipt-Bundle` — a base64
+**node-cosigned receipt** the caller can hand to a third party who verifies it
+without Sester:
+
+```bash
+# 5) (optional) cosign the demo receipts; the default is cosign-free but
+#    the receipt's `proof` is still independently verifiable with sha256 alone
+export SESTER_DEMO_NODE_SECRET=demo-node-key
+# restart uvicorn, redo the paid call, then:
+curl -s -D - -o /dev/null -H "X-Sester-Agent: agent-1" \
+     -H "X-Payment: $PAY" "http://127.0.0.1:8402/weather" \
+  | grep -i 'receipt-bundle:' | cut -d' ' -f2 | base64 -d > receipt.json
+sester verify receipt.json          # KABUL (rc=0) — receiver-side, zero deps
+```
 
 ## Use it in your own app (one middleware)
 
@@ -129,6 +186,9 @@ human-approval ticket instead of denying outright (`then: "escalate"`).
 | Evidence webhooks | HMAC-signed delivery of charge/settlement events with receiver-side verification, retry+backoff, ledger failure-log | v0.6 |
 | Meter package | Single public import — `from sester import SesterMeter, Policy, Ledger, ...`; `__all__` is the locked surface | v0.7.2 |
 | Evidence export | External-verifier bundles — anyone can audit with `sha256` alone, no Sester installed | v0.3+ |
+| **Payment receipts** | **Node-cosigned receipt per charge: `proof` recomputable with `sha256` only; `sester verify` is the standalone receiver-side CLI** | **v0.7.4** |
+| **CLI** | **`sester verify \| receipt \| history \| bundle` — receiver-side proof verification with zero deps installed** | **v0.7.4** |
+| **MCP server** | **AI agents pay and verify receipts: `pay`, `verify_receipt`, `balance`, `history` (MCP 2025-06-18, stdio, stdlib)** | **v0.7.4** |
 
 ## Policy template bank
 
@@ -156,7 +216,68 @@ typo like `hostt_in` fails loudly instead of silently never matching):
 First match wins; no match → **deny** (fail-closed,
 `test_bank_template_validates`).
 
-## Sister-product bridges (OSS adapter v0.1)
+## Payment receipts — proving "paid" without trusting the payee
+
+The gap: x402 facilitators verify a payment and return a settlement response,
+but a *receiver* (an auditor, a buyer's employer, a marketplace) gets nothing
+it can independently re-check later. USENIX Security 2026
+([arXiv:2607.19545](https://arxiv.org/abs/2607.19545)) found rule violations in
+**all 15** major facilitators it tested. Sester's answer is a single, boring,
+verifiable object:
+
+```json
+{
+  "receipt_version": 1,        "iss": "sester:node",
+  "sub": "agent-1",            "resource": "/weather",
+  "amount": "0.050000",        "amount_minor": 50000,
+  "ts": 1789456789.123456,     "seq": 7,
+  "proof": "<sha256 hex>",     "prev_proof": "<prev sha256 hex>",
+  "chain_head": "<sha256 hex>","node_cosign": "<HMAC hex>"
+}
+```
+
+The `proof` is `sha256(ts | event_type | agent | resource | amount | payload |
+prev_proof)` — recomputable with pencil and a hash function. Tampering with
+*any* of those fields breaks it; tampering with the metadata breaks the
+optional node co-signature. The receiver needs **nothing but `sha256`**:
+
+```python
+# receiver side — Sester is NOT installed
+import hashlib, json
+r = json.loads(receipt_text)
+assert r["receipt_version"] == 1
+manual = "|".join([f"{float(r['ts']):.6f}", r["event_type"], r["sub"],
+                   r["resource"], f"{float(r['amount']):.6f}",
+                   r["payload"], r["prev_proof"]])
+assert hashlib.sha256(manual.encode()).hexdigest() == r["proof"]   # proved
+```
+
+```bash
+# or, one command — rc=0 KABUL, rc=1 RED
+sester verify receipt.json
+```
+
+Schema rationale, field-by-field security analysis and comparison against
+EIP-3009 / JWS / Merkle bundles:
+[`docs/arastirma/02_receipt_schema.md`](docs/arastirma/02_receipt_schema.md).
+
+## MCP server — agents pay, agents verify
+
+[`mcp/server.py`](mcp/server.py) speaks Model Context Protocol 2025-06-18 over
+stdio (JSON-RPC 2.0, pure stdlib) and exposes four tools:
+
+| Tool | Purpose |
+|---|---|
+| `pay` | charge an agent for a resource → returns the node-cosigned receipt |
+| `verify_receipt` | verify any receipt independently (receiver-side) |
+| `balance` | daily spend / quota / remaining per agent |
+| `history` | hash-chain events |
+
+Embedded mode runs a local ledger — **$0, no keys, no testnet**. Remote mode
+(`SESTER_MCP_ENDPOINT`) pays a real Sester-protected API. Publishable to
+Smithery/Arcade (`mcp/smithery.yaml`): full setup in [`mcp/README.md`](mcp/README.md).
+
+
 
 Sester does not merge with its sisters — it bridges them. `sester.bridges`
 emits **receiver-independent** evidence envelopes; the counterpart verifies
@@ -199,10 +320,12 @@ wallet means one shared quota. Register your own via `register_scheme` /
 .venv/bin/python -m pytest tests/ -q    # full suite: policy, ledger, middleware, EVM schemes,
                                         # evidence, facilitator, protocol adapters, escalation,
                                         # JWS, signed policy, UCP, settlement, minor units,
-                                        # payee registry, S6 joint acceptance — 260+ passing tests
-                                        # (25 env-gated skips: PG/sibling-repos/external tools)
+                                        # payee registry, S6 joint acceptance, receipts, CLI,
+                                        # MCP server — 380+ passing tests
+                                        # (9 env-gated skips: PG/sibling-repos/external tools)
 python scripts/s1_dogfood.py            # S1 acceptance scenario → KABUL (accepted)
 python scripts/dogrula.py adoption/s1-kanit-bundle.json   # receiver side — no Sester needed
+sester verify receipt.json                                # standalone proof CLI (rc=0 KABUL / rc=1 RED)
 ```
 
 > Cross-repo bridge tests (`tests/test_bridges_crossrepo.py`) run external
@@ -216,6 +339,7 @@ python scripts/dogrula.py adoption/s1-kanit-bundle.json   # receiver side — no
 | Document | Contents |
 |---|---|
 | [`docs/K0_SHARED_ENVELOPE_SPEC.md`](docs/K0_SHARED_ENVELOPE_SPEC.md) | Shared evidence-envelope wire contract (external anchors, audit feeds) |
+| [`docs/arastirma/`](docs/arastirma/) | Academic security research (USENIX'26 x402 facilitator study, Tamarin analysis, AP2 whisper attacks) + receipt-schema rationale + MCP market gap |
 | [`docs/ROADMAP.md`](docs/ROADMAP.md) | Shipped by version, what's next, deliberate non-goals |
 | Architecture decision records | Scope, doctrine, deliberate limits — see the repository's decision documents |
 | Policy DSL specification | Semantics + test-vector discipline — see the repository's spec documents |
@@ -227,8 +351,11 @@ python scripts/dogrula.py adoption/s1-kanit-bundle.json   # receiver side — no
 
 Non-goals by decision, not by omission (see the repository's decision records): transaction
 signing stays out of the library (non-custodial — the signing party is yours),
-live PSP certification is pending real-world traffic, and the CLI surface is
-minimal by design. Everything else on the roadmap through v0.5.0 is implemented
+live PSP certification is pending real-world traffic, and the receipt/CLI/MCP
+surface covers proof-of-payment, not LLM intent binding (the third AP2
+"whisper" attack is a decision-layer problem — see
+[`docs/arastirma/01_x402_guvenlik_aciklari.md`](docs/arastirma/01_x402_guvenlik_aciklari.md)
+§3). Everything else on the roadmap through v0.5.0 is implemented
 and gated by the test suite above.
 
 ## Environment variables
@@ -242,6 +369,7 @@ in effect** — the production secrets never live in the repository.
 | `SESTER_DEMO_SECRET` | `sester-demo-secret-v0` | Ledger seal for the demo; a startup warning is printed when the default is in effect. |
 | `SESTER_UCP_SECRET` / `SESTER_AP2_SECRET` | `sester-demo-ucp` / `sester-demo-ap2` | Per-protocol adapter secrets for the demo's four-protocol flow. |
 | `SESTER_DEMO_STRICT` | `0` | Set `1` to make the demo **fail-closed** on unsigned ACP/UCP envelopes (default tolerates them for the demo light-path). |
+| `SESTER_DEMO_NODE_SECRET` / `SESTER_DEMO_NODE_ID` | *(none)* / `sester:demo-node` | Cosign-key for demo receipts. Without it the receipt's `proof` is still sha256-verifiable; with it the response also carries a node co-signature (v0.7.4). |
 | `SESTER_ESCALATION_DB` / `SESTER_DEMO_LEDGER_DB` | `sester-escalation.sqlite3` / `sester-demo.sqlite3` | DB paths — also used for test isolation (`conftest` moves these into tmp dirs). |
 | `SESTER_PG_DSN` | *(none)* | Postgres parity: when set, `PgLedger` is exercised (the PG test-legs are skipped otherwise). |
 | `SESTER_TAMGA_REPO` / `SESTER_VERIDICT_REPO` | *(none)* | Enable the cross-repo CI job that pins K1/K2 bridge compatibility against the sibling products' current `main`. |
