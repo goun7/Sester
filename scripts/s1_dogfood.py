@@ -118,11 +118,13 @@ def main() -> int:
 
     # S1.a — gün-içi 5 çağrı
     ok_a = True
+    _a_sts = []
     for i in range(5):
         st, _ = call(meter, "/weather", pay(f"s1-a{i}"))
+        _a_sts.append(st)
         ok_a &= st == 200
     results.append(("S1.a  10:00 — 5×$9.99 çağrı → 200 (günlük-$49.95)", ok_a,
-                    "kanıt: charge_receipt × 5"))
+                    f"statuslar={_a_sts} (5×200-beklenir)"))
 
     # S1.b — 6. çağrı: kota
     st, body = call(meter, "/weather", pay("s1-b"))
