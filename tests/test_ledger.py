@@ -230,3 +230,24 @@ def test_35_malformed_payment_denied(tmp_path):
     assert status == 402
     assert json.loads(body)["error"].startswith("malformed_payment")
     led.close()
+
+
+def test_36_spent_today_utc_day_boundary(tmp_path):
+    """Gün-sınırı UTC-midnight'a-sabitli: ts(UTC-epoch) ↔ pencere(UTC).
+
+    Kök-neden (2026-09-28): spent_today time.mktime kullanıyordu — mktime
+    YEREL-TZ'i-yorumlar-AMA ts-sütunu time.time() ile UTC-yazılır. TZ≠UTC'de
+    gün-sınırında-kayma → kota-hesabı-yanlış. Düzeltme: calendar.timegm.
+    Bu-test TZ-bağımsız-doğrular: gün-son-çağrısı hâlâ-hesapta-olmalı.
+    """
+    led = Ledger(tmp_path / "t.sqlite3", secret="test-tz36")
+    # bugünün-UTC-tarihinde-events-yaz (ts-UTC-epoch — Ledger.doğal-yolu)
+    for i in range(3):
+        led.append("charge_receipt", "tz-agent", "h", amount=10.0)
+    total = led.spent_today("tz-agent")
+    assert total == 30.0, f"UTC-gün-sınırı-kayması: {total} ≠ 30.0"
+    # gün-dışı-kontrol: dünü-sorgula → 0 (pencere-dışı)
+    import time as _t
+    yesterday = _t.strftime("%Y-%m-%d", _t.gmtime(_t.time() - 86400))
+    assert led.spent_today("tz-agent", day=yesterday) == 0.0
+    led.close()
