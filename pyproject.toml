@@ -9,7 +9,12 @@ description = "SESTER — x402-style metering, quota, fail-closed policy and has
 readme = "README.md"
 requires-python = ">=3.11"
 license = "Apache-2.0 OR AGPL-3.0"
-license-files = ["LICENSE", "LICENSES/*"]
+# Dağıtım-disiplini (preupload_check §5): license-files hem wheel hem sdist'e
+# force-include edilir; "LICENSES/*" deseni sdist köküne LICENSES/ dizini açtığı
+# için buradan çıkarıldı (2026-09-29, preupload RED'inin kök-nedeni). Paket
+# dual-license işaretçisini (LICENSE: SPDX Apache-2.0 OR AGPL-3.0) taşır; tam
+# metinler GitHub'da LICENSES/ altında yaşamaya devam eder.
+license-files = ["LICENSE"]
 authors = [{ name = "SESTER contributors" }]
 keywords = ["x402", "ai-agents", "metering", "payments", "middleware", "asgi", "quota", "ap2", "acp", "ucp", "escalation", "sester"]
 classifiers = [
