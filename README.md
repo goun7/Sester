@@ -22,6 +22,42 @@
 > tamper-evident hash-chain receipt ledger into your API — as one ASGI
 > middleware, with zero required dependencies.
 
+**`pip install sester`** · 649 downloads (mirrors excluded) · 389 tests · 0 forced deps
+
+## Quick start
+
+```python
+from fastapi import FastAPI
+from sester import SesterMeter
+
+app = FastAPI()
+app.add_middleware(
+    SesterMeter,
+    ledger="receipts.db",          # tamper-evident hash-chain ledger
+    secret="your-server-secret",   # signs dose envelopes
+    pay_to="0xYourTreasury",       # where agents pay (USDC)
+    price=0.001,                   # price per paid call
+    daily_quota=100,               # free daily quota per agent
+    exempt_prefixes=("/healthz", "/docs"),
+)
+
+@app.get("/paid")
+def paid():
+    return {"data": "this call cost the agent $0.001"}
+```
+
+Agents pay with a signed dose envelope (EIP-191 personal_sign); the
+middleware verifies, deducts from quota, and appends a receipt.
+No payment, no response — **fail-closed by design**.
+
+```
+Agent ──(X-Payment: signed dose)──▶ SesterMeter ──▶ your route
+                                      │  verify · deduct · receipt
+                                      ▼
+                              hash-chain ledger (SQLite)
+```
+
+
 **What it does, in one paragraph:** every paid request passes through a 402 →
 payment → receipt handshake; spend is metered in integer minor units against
 per-agent daily quotas; a fail-closed policy engine (host allow-lists, time
