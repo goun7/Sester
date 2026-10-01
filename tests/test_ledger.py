@@ -297,3 +297,42 @@ def test_anchor_verification_rejects_wrong_secret(tmp_path):
     led2 = Ledger(str(tmp_path / "anchor2.sqlite3"), secret="yanlis")
     assert led2.verify_chain() is False, "yanlis secret ile dogrulama reddedilir"
     led2.close()
+
+
+# LEAD 2026-10-01 — x402 #2332: "reddin pozitif artifakti" (aeoess'in notu)
+# "If refusals produce silence, an auditor infers what did NOT happen.
+#  Inference is not evidence." → DENY de allow kadar imzali kayit olmali.
+def test_anchor_records_refusals_as_positive_artifacts(tmp_path):
+    """Reddedilen istekler de chain'de birer artifakt olmalidir."""
+    led = Ledger(str(tmp_path / "refuse.sqlite3"), secret="k")
+    # 1) DENY kaydi (kota asimi)
+    led.append("permission_decision", "agent-a", "/paid", 0.0,
+               payload={"decision": "deny", "reason": "quota_exceeded"})
+    # 2) ALLOW + odeme
+    led.append("permission_decision", "agent-a", "/paid", 1.0,
+               payload={"decision": "allow"})
+    led.append("charge_receipt", "agent-a", "/paid", 0.05,
+               payload={"amount_minor": 50000, "currency": "USDC"})
+    # 3) bir DENY daha (politika ihlali)
+    led.append("permission_decision", "agent-a", "/admin", 0.0,
+               payload={"decision": "deny", "reason": "policy_violation"})
+
+    import sqlite3
+    conn = sqlite3.connect(str(tmp_path / "refuse.sqlite3"))
+    try:
+        verdicts = [json.loads(r[0])["decision"]
+                    for r in conn.execute("SELECT payload FROM events "
+                                          "WHERE event_type='permission_decision'")]
+        reasons = [json.loads(r[0]).get("reason")
+                   for r in conn.execute("SELECT payload FROM events "
+                                         "WHERE event_type='permission_decision'")]
+    finally:
+        conn.close()
+
+    # DENY + ALLOW + DENY — hepsi chain'de, hicbiri sessiz degil
+    assert verdicts == ["deny", "allow", "deny"]
+    # neden alanı dolu (aeoess'in istedigi 'reason' zorunlulugu)
+    assert reasons == ["quota_exceeded", None, "policy_violation"]
+    # chain butun — reddieler de dahil
+    assert led.verify_chain() is True
+    led.close()
