@@ -191,3 +191,77 @@ def test_110_decide_note_defaults_empty_and_persists(q):
     r = q.decide(t["esc_id"], approve=True, by="auditor")
     assert r["note"] == ""
     assert r["decided_at"] is not None
+
+
+# LEAD 2026-10-01 — x402 #2887: dispute layer, oracle-bound resolution
+# "Resolution runs against a source NEITHER PARTY CONTROLS"
+def test_oracle_bound_decision_kaydedilir(tmp_path):
+    """decide_with_oracle — payload'da oracle_ref tasiyan ledger kaydi."""
+    led_path = tmp_path / "oracle.sqlite3"
+    q = EscalationQueue(str(tmp_path / "esc.db"), ledger=None, ttl_seconds=60)
+    t = q.park("agent-d", "/api/paid", 1.0, "rule-1", reason="buyuk-tutar")
+    out = q.decide_with_oracle(
+        t["esc_id"], approve=True, by="auditor-1",
+        oracle_ref="github.com/x/y/pull/42", note="PR merge kaniti")
+    assert out["status"] == "approved"
+    q.close()
+
+
+def test_bos_oracle_reddedilir(tmp_path):
+    """oracle_ref bos olamaz — 'bagli degil' diye sey yoktur (#2887)."""
+    q = EscalationQueue(str(tmp_path / "esc2.db"), ledger=None, ttl_seconds=60)
+    t = q.park("agent-e", "/api/x", 0.5, "rule-2")
+    for bos in ("", "   "):
+        with pytest.raises(ValueError, match="oracle_ref bos"):
+            q.decide_with_oracle(t["esc_id"], True, "a", oracle_ref=bos)
+    q.close()
+
+
+def test_oracle_ledger_payload_taşir(tmp_path):
+    """Ledger'a yazilan kayit oracle_ref tasiyor (denetci teyit edebilir)."""
+    from sester.ledger import Ledger
+    led = Ledger(str(tmp_path / "led.sqlite3"), secret="k")
+    q = EscalationQueue(str(tmp_path / "esc3.db"), ledger=led, ttl_seconds=60)
+    t = q.park("agent-f", "/api/y", 0.5, "rule-3")
+    q.decide_with_oracle(
+        t["esc_id"], approve=False, by="auditor-2",
+        oracle_ref="kalshi.com/markets/XYZ/settled", note="pazar sonucu")
+
+    import sqlite3
+    conn = sqlite3.connect(str(tmp_path / "led.sqlite3"))
+    try:
+        rows = conn.execute(
+            "SELECT event_type, payload FROM events "
+            "WHERE event_type IN ('escalation_approved','escalation_denied')"
+        ).fetchall()
+    finally:
+        conn.close()
+    assert len(rows) == 1
+    import json
+    payload = json.loads(rows[0][1])
+    assert payload["oracle_ref"] == "kalshi.com/markets/XYZ/settled"
+    assert rows[0][0] == "escalation_denied"
+    led.close()
+    q.close()
+
+
+def test_klasik_decide_oracle_taşimaz(tmp_path):
+    """decide() (insan karari) oracle_ref eklemez — geri-uyumlu."""
+    from sester.ledger import Ledger
+    led = Ledger(str(tmp_path / "led2.sqlite3"), secret="k")
+    q = EscalationQueue(str(tmp_path / "esc4.db"), ledger=led, ttl_seconds=60)
+    t = q.park("agent-g", "/api/z", 0.5, "rule-4")
+    q.decide(t["esc_id"], approve=True, by="human-1")
+
+    import sqlite3, json
+    conn = sqlite3.connect(str(tmp_path / "led2.sqlite3"))
+    try:
+        rows = conn.execute(
+            "SELECT payload FROM events WHERE event_type='escalation_approved'"
+        ).fetchall()
+    finally:
+        conn.close()
+    payload = json.loads(rows[0][0])
+    assert "oracle_ref" not in payload
+    led.close()
+    q.close()

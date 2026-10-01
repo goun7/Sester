@@ -148,6 +148,26 @@ class EscalationQueue:
     def decide(self, esc_id: str, approve: bool, by: str, note: str = ""
                ) -> dict[str, Any]:
         """Tek-yönlü karar: pending → approved/denied. Bozuk-geçiş hata."""
+        return self._decide(esc_id, approve, by, note, oracle_ref=None)
+
+    def decide_with_oracle(self, esc_id: str, approve: bool, by: str,
+                           oracle_ref: str, note: str = "") -> dict[str, Any]:
+        """x402 #2887: karari tarafsiz kaynaga baglama.
+
+        oracle_ref, ne tarafin KONTROL ETMEDIGI bir cozum kaynagidir
+        (merged GitHub PR, settle edilmis market, raw HTTP probe).
+        Bos string reddedilir — 'bagli degil' diye bir sey yoktur;
+        ya bir oracle var ya da insan karari (decide()).
+        """
+        if not oracle_ref or not oracle_ref.strip():
+            raise ValueError(
+                "oracle_ref bos olamaz — tarafsiz kaynak belirtilmeli (#2887)"
+            )
+        return self._decide(esc_id, approve, by, note,
+                            oracle_ref=oracle_ref.strip())
+
+    def _decide(self, esc_id: str, approve: bool, by: str, note: str,
+                oracle_ref: str | None) -> dict[str, Any]:
         now = time.time()
         with self._lock:
             self._expire()
@@ -167,9 +187,12 @@ class EscalationQueue:
             out = self._row(self._conn.execute(
                 "SELECT * FROM escalations WHERE esc_id=?", (esc_id,)).fetchone())
         if self.ledger:
+            payload = {"esc_id": esc_id, "by": by, "note": note}
+            if oracle_ref is not None:
+                # #2887: karar tarafsiz kaynaga bagli — denetci teyit edebilir
+                payload["oracle_ref"] = oracle_ref
             self.ledger.append(f"escalation_{status}", out["agent"],
-                               out["resource"], 0.0,
-                               payload={"esc_id": esc_id, "by": by, "note": note})
+                               out["resource"], 0.0, payload=payload)
         return out
 
     def consume(self, esc_id: str) -> bool:
