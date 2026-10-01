@@ -358,13 +358,32 @@ contract; receivers reject unknown versions (K0 §7 rule 2). Cross-repo CI
 |---|---|---|---|
 | x402 (HMAC compat) | `X-Payment` | `pugio0 agent:nonce:amount:mac` | HMAC-SHA256 |
 | x402 v2 (EVM) | `X-Payment` | EIP-3009/EIP-712 exact scheme | wallet address = agent identity |
+| **A2A x402 Extension** | `X-Payment` | `x402-payment {base64(json)}` | intentId / deterministic nonce |
 | AP2 | `AP2-Mandate` | base64 JWS mandate | HS256/ES256, body-binding |
 | ACP | `ACP-Session` | base64 JWS checkout session | JWS + vendor-side issuing |
 | UCP | `UCP-Checkout` | base64 JWS web-monetization | vendor-sealed, merchant-bound |
 
-All four compile to the same `ChargeIntent`/`ChargeReceipt` core — one shared
+All six compile to the same `ChargeIntent`/`ChargeReceipt` core — one shared
 wallet means one shared quota. Register your own via `register_scheme` /
 `ProtocolAdapter`.
+
+## x402 extension modules (ecosystem alignment)
+
+Sester implements the x402 Foundation's most-discussed extension gaps as
+separate, testable modules:
+
+| Module | x402 issue | What it closes |
+|---|---|---|
+| `sester/ledger.py` (`verify_chain`) | [#2332](https://github.com/x402-foundation/x402/issues/2332) (214+) | post-settlement accountability — tamper-evident anchor |
+| `sester/trust.py` | [#1777](https://github.com/x402-foundation/x402/issues/1777) (119) | agent-trust: DID parse, attestations, trust-based pricing |
+| `sester/reputation.py` | [#1024](https://github.com/x402-foundation/x402/issues/1024) | reputation with **wash-trade resistance** (#2833) |
+| `sester/agreement.py` | [#3646](https://github.com/x402-foundation/x402/issues/3646) | agreement-session: terms-bound lifecycle, budget, expiry |
+| `sester/escalation.py` | [#2887](https://github.com/x402-foundation/x402/issues/2887) (86) | dispute layer: oracle-bound decisions |
+| `sester/delivery.py` | [#1195](https://github.com/x402-foundation/x402/issues/1195) (87) | delivery attestation (SAR): settlement ≠ delivery |
+
+Each module is read-only over the ledger where possible, adds **no new event
+types** (fail-closed taxonomy stays intact), and carries its own test suite
+(see `tests/test_{trust,reputation,agreement,delivery}.py`).
 
 ## Test suites & acceptance runs
 
