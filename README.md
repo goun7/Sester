@@ -68,6 +68,12 @@ verify with nothing but `sha256`. Four agent-commerce protocols — **x402**,
 (`ChargeIntent`/`ChargeReceipt`), so adding a fifth protocol is one adapter, not
 a rewrite.
 
+> **A2A uyumluluğu (2026-10):** Google'ın resmi [A2A x402 Extension](https://github.com/google-agentic-commerce/a2a-x402)
+> spesifikasyonu (v0.1) ile uyumlu akış. Sester'ın insan-onay kuyruğu
+> (`escalation`), A2A ödeme akışına **human-in-the-loop** katar:
+> `Payment Required → [Sester: insan onayı] → Payment Submitted → Payment Completed`.
+> Agent'lar arası ticarette büyük tutarlar için insan onayı standart hale geliyor.
+
 ## 30 seconds: what is this?
 
 **Sester is a payment-metering + receipt layer for APIs that AI agents call.**
