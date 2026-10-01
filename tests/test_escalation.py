@@ -154,3 +154,40 @@ def test_park_rejects_negative_and_fake_amount(tmp_path):
         assert t["amount"] == 2.0
     finally:
         q.close()
+
+
+# ------------------------------------------- decide() doğrudan testleri
+
+def test_107_decide_missing_ticket_raises_keyerror(q):
+    """Olmayan bilet → KeyError (boş sorgu)."""
+    with pytest.raises(KeyError, match="bilet yok"):
+        q.decide("yok-ki", approve=True, by="auditor")
+
+
+def test_108_decide_is_one_way_pending_to_approved(q):
+    """Tek-yönlü: approved bilete tekrar karar → ValueError."""
+    t = q.park("ag-1", "/large", 5.00, "r1")
+    r1 = q.decide(t["esc_id"], approve=True, by="auditor", note="ilk")
+    assert r1["status"] == APPROVED
+    assert r1["decided_by"] == "auditor"
+    assert r1["note"] == "ilk"
+    # tekrar karar verilemez
+    with pytest.raises(ValueError):
+        q.decide(t["esc_id"], approve=False, by="baska")
+
+
+def test_109_decide_denied_path_sets_status_and_by(q):
+    t = q.park("ag-2", "/large", 9.99, "r1")
+    r = q.decide(t["esc_id"], approve=False, by="red-verici", note="çok pahalı")
+    assert r["status"] == DENIED
+    assert r["decided_by"] == "red-verici"
+    # denied da tekrar karar verilemez
+    with pytest.raises(ValueError):
+        q.decide(t["esc_id"], approve=True, by="baska")
+
+
+def test_110_decide_note_defaults_empty_and_persists(q):
+    t = q.park("ag-3", "/x", 1.00, "r1")
+    r = q.decide(t["esc_id"], approve=True, by="auditor")
+    assert r["note"] == ""
+    assert r["decided_at"] is not None
