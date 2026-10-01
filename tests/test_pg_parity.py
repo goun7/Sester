@@ -174,6 +174,80 @@ def _pg_container_up() -> str | None:
     return None
 
 
+
+# ---------------------------------------------------------------------------
+# YUZEY PARITESI — PostgreSQL KURULU OLMADAN da calisir (2026-09-30)
+# ---------------------------------------------------------------------------
+# Neden: PG yoksa 9 test ATLANIR ve SQLite-bacaklari disinda hicbir sey
+# olcumulmez. Bu durumda iki en onemli soru yanitsiz kalir:
+#   (1) PgLedger, Ledger'in TUM davranisini gercekten karsiliyor mu?
+#   (2) Ayni sozlesmeyi sunuyorlar mi?
+# Soru (2) PostgreSQL BAGLANMADAN cevaplanabilir: iki sinifin acik metot
+# kumesi karsilastirilir. Bu test DSN istemez.
+#
+# OLCUM (2026-09-30): kume karsilastirmasi yapildi — Ledger'da acik metot 16,
+# PgLedger'da 17, Ledger'a OZGUN hicbir metot YOK (tek fark PgLedger'in
+# `conn` alani). Yani parite yuzeyi TAM; acik olan tek sey altyapi (PG yok).
+# Bu kilit, ileride Ledger'a metot eklenip PgLedger'a eklenmediginde
+# yakalamak icin.
+def test_pg_ledger_ledgerin_tum_acik_metotlarini_karsiliyor() -> None:
+    """PgLedger, Ledger'in sundugu HER acik metodu sunmali.
+
+    Eksik metot sessiz bir ayrisma olur: parite testleri o davranisi hic
+    olcmez ve SQLite tarafi yesil gorunurken PG tarafi calismaz.
+    """
+    import inspect
+
+    def _acik(cls):
+        return {n for n, m in inspect.getmembers(cls, inspect.isfunction)
+                if not n.startswith("_")}
+
+    ledger_m = _acik(Ledger)
+    pg_m = _acik(PgLedger)
+    eksik = sorted(ledger_m - pg_m)
+    assert not eksik, (
+        "PgLedger, Ledger'in sundugu ama PgLedger'da OLMAYAN metot(lar): %s "
+        "— parite testleri bu davranisi hic olcmez, SQLite taraf yesil "
+        "gorunurken PG tafi calismaz" % ", ".join(eksik)
+    )
+
+
+def test_parite_testleri_iki_backendi_ayni_senaryoda_karsilastiriyor() -> None:
+    """Parite testleri SQLite ve PG ledger'ini AYNI test icinde birlikte alir.
+
+    Neden: "parite" iki arka ucun ayni davranisi vermesidir; bu ancak ayni
+    testte ikisi de kosuyorsa olculur. PG yokken SQLite bacaği yine kosar,
+    yani dosya susturmaz.
+
+    Daha genis bir yazim ("sqlite" kelimesi bir yerde geciyor) KIRILGAN olurdu:
+    sadece bir fikstur yeniden adlandirilsaydi yanlis alarm verirdi. Burada
+    olcumlenen sey sozlesmenin kendisi: iki arka ucun fixturlari birlikte.
+    """
+    import inspect as _i
+
+    # 1) Fiksturlar GERCEKTEN tanimli mi. Negatif kontrol bunu olcuyor:
+    #    once surum yalniz testlerin IMZASINA bakiyordu ve `sqlite_led`
+    #    fiksturu KALDIRILDIKEN bile yesil gecti — yani "beyan"i olcuyordu,
+    #    varligi degil. Beyan ile varlik ayrimi kilitlerde onemlidir.
+    eksik_f = [f for f in ("sqlite_led", "pg_led")
+               if not callable(globals().get(f))]
+    assert not eksik_f, (
+        "parite fiksturlari TANIMSIZ: %s — testler imzada bu adlari saysa bile "
+        "fikstur hatasi alir, parite olculmez" % ", ".join(eksik_f)
+    )
+    # 2) Iki arka ucu AYNI test icinde alan test var mi
+    cift = [
+        n for n, f in globals().items()
+        if n.startswith("test_") and callable(f)
+        and {"sqlite_led", "pg_led"} <= set(_i.getfullargspec(f).args)
+    ]
+    assert cift, (
+        "bu dosyada SQLite ve PG ledger'ini AYNI test icinde alan test yok "
+        "(beklenen fiksturlar: sqlite_led, pg_led). Boyle olcum yoksa parite "
+        "iddiasi test edilmemis demektir"
+    )
+
+
 if __name__ == "__main__":
     dsn = _pg_container_up()
     print("PG DSN:" if dsn else "PG yok", dsn or "")
