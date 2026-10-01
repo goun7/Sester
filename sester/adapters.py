@@ -39,6 +39,19 @@ Her üç adaptör de şema-Registry'sine takılır: başlık-önekinden
 ChargeIntent üretir. Ortak kural: ajan-kimliği = cüzdan-adresi
 (non-custodial tez), nonce = mandate_id / session_id / intent_id (kalıcı
 replay-koruması), kanıt = hash-chain'li charge_receipt olayı.
+
+  A2A x402 Extension (google-agentic-commerce/a2a-x402, v0.1 — EYLÜL 2026):
+    Agent-to-Agent protokolüne resmi x402 extension. Ajanlar arası ödeme:
+    Payment Required → Payment Submitted → Payment Completed.
+    Extension URI: https://github.com/google-a2a/a2a-x402/v0.1
+    Auth:     "x402-payment <b64(payload)>"  (A2A taskUpdate içinde)
+    Required: {x402Version: 1, accepts: [{scheme, network, resource, amount,
+               description, mimeType, maxAmountRequired?}],
+               paymentRequirements: [{scheme, network, amount, resource,
+               description, mimeType, maxAmountRequired?}]}
+    SESTER katkısı: A2A akışına *human-in-the-loop* katar — büyük tutarlar
+    için escalation kuyruğu Payment Submitted ile Payment Completed arasına
+    girer (insan onayı olmadan settle edilmez).
 """
 
 from __future__ import annotations
@@ -581,6 +594,49 @@ def install_adapters(register_scheme: Any, *, price_minor: int,
     register_scheme("AP2-Mandate", _ap2)
     register_scheme("ACP-Session", _acp)
     register_scheme("UCP-Checkout", _ucp)
+
+    # A2A x402 Extension v0.1 (google-agentic-commerce/a2a-x402)
+    def _a2a(header: str, resource: str) -> dict[str, Any]:
+        try:
+            # header: "x402-payment <b64url(json)>" — once token'i ayir
+            tok = header.strip()
+            prefix = "x402-payment"
+            if not tok.startswith(prefix + " "):
+                raise AdapterError(f"başlık {prefix} önekiyle değil")
+            raw = tok[len(prefix) + 1:]
+            try:
+                padded = raw + "=" * (-len(raw) % 4)
+                payload = json.loads(base64.urlsafe_b64decode(padded))
+            except (binascii.Error, ValueError, json.JSONDecodeError) as e:
+                raise AdapterError(f"A2A zarf base64/JSON bozuk: {e}") from e
+            req = payload.get("paymentRequirements") or payload.get("accepts") or []
+            if not req:
+                raise AdapterError("A2A x402: paymentRequirements eksik")
+            first = req[0]
+            # nonce: intentId > taskId > deterministik fallback (agent+resource)
+            nid = payload.get("intentId") or payload.get("taskId")
+            if not nid:
+                nid = hashlib.sha256(
+                    f"{payload.get('buyer','')}:{first.get('resource','')}".encode()
+                ).hexdigest()[:32]
+            intent = ChargeIntent(
+                protocol="A2A-x402",
+                nonce=str(nid),
+                agent=str(payload.get("buyer") or payload.get("from") or ""),
+                resource=str(first.get("resource") or resource),
+                amount_minor=int(first.get("amount", 0)),
+                currency=str(first.get("currency", "USDC")),
+                principal=str(payload.get("seller") or payload.get("to") or ""),
+            )
+            if on_intent:
+                on_intent(intent)
+        except AdapterError as e:
+            raise PaymentErr(f"A2A x402 reddedildi: {e}") from e
+        return {"agent": intent.agent, "nonce": intent.nonce,
+                "amount_minor": intent.amount_minor, "scheme": "a2a-x402",
+                "intent": intent}
+
+    register_scheme("x402-payment", _a2a)
 
 
 def protocol_intent_event(intent: ChargeIntent) -> dict[str, Any]:

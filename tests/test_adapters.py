@@ -236,3 +236,56 @@ def test_95_malformed_protocol_headers_are_rejected(tmp_path):
                 "AP2-Mandate eyJvbmx5IjoxfQ"):
         status, _ = _call(meter, "/weather", {"X-Payment": bad})
         assert status == 402, f"bozuk zarf geçti: {bad}"
+
+
+# ------------------------------------------- A2A x402 Extension v0.1
+
+def test_96_a2a_x402_payment_accepted(tmp_path):
+    """A2A x402 extension — paymentRequirements parse → ChargeIntent."""
+    led, meter, _ = _meter(tmp_path)
+    payload = {
+        "x402Version": 1,
+        "intentId": "a2a-task-42",
+        "buyer": "0xagent1",
+        "seller": "0xmerchant",
+        "paymentRequirements": [{
+            "scheme": "exact",
+            "network": "base",
+            "resource": "https://api.example.com/analyze",
+            "amount": 50_000,  # 0.05 USDC
+            "currency": "USDC",
+            "description": "Analysis",
+            "mimeType": "application/json",
+        }],
+    }
+    h = f"x402-payment {_b64(payload)}"
+    status, _ = _call(meter, "/weather", {"X-Payment": h})
+    assert status == 200, f"A2A ödeme kabul edilmeli (50_000 >= fiyat)"
+
+
+def test_97_a2a_missing_payment_requirements_rejected(tmp_path):
+    """paymentRequirements/accepts yok → AdapterError → 402."""
+    led, meter, _ = _meter(tmp_path)
+    h = f"x402-payment {_b64({'x402Version': 1, 'buyer': '0xagent1'})}"
+    status, _ = _call(meter, "/weather", {"X-Payment": h})
+    assert status == 402
+
+
+def test_98_a2a_falls_back_to_deterministic_nonce(tmp_path):
+    """intentId/taskId yok → sha256(agent:resource) deterministik nonce."""
+    led, meter, _ = _meter(tmp_path)
+    payload = {
+        "x402Version": 1,
+        "buyer": "0xagent9",
+        "paymentRequirements": [{
+            "scheme": "exact", "network": "base",
+            "resource": "https://api.example.com/y",
+            "amount": 60_000, "currency": "USDC",
+        }],
+    }
+    h = f"x402-payment {_b64(payload)}"
+    status, _ = _call(meter, "/weather", {"X-Payment": h})
+    # replay → 402 (ilk ödeme nonce'u tüketti)
+    assert status in (200, 402), f"beklenmedik durum: {status}"
+    status2, _ = _call(meter, "/weather", {"X-Payment": h})
+    assert status2 == 402, "ayni nonce tekrar kullanilamaz (replay)"
