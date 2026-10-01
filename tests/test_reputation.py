@@ -88,3 +88,74 @@ def test_eksik_veritabani_fail_safe_nötr(tmp_path):
     assert r.agent == "a3"
     assert r.score == 0.5
     assert rep.top_agents() == []
+
+
+# LEAD 2026-10-01 — x402 #2833: "Volume is not trust" wash-trade saldirisi
+# Iki cuzdan sonsuz islem uretip reputation'i sisebilir.
+# Cozum: diversity_ratio (unique host / islem) ile wash_resistant_score.
+def test_wash_trade_tek_host_sisme_engellenir(tmp_path):
+    """1000 islem TEK host'ta → wash_resistant cok dusuk (0.032)."""
+    led = _ledger(tmp_path)
+    try:
+        for _ in range(1000):
+            led.append("permission_decision", "wash-agent", "/x", 0.001,
+                       payload={"decision": "allow"})
+        rep = ReputationLedger(led.db_path)
+        r = rep.reputation("wash-agent")
+        assert r.completed == 1000
+        assert r.unique_resources == 1
+        assert r.diversity_ratio == 0.001
+        # klasik score saldiriya yenik (0.999)
+        assert r.score > 0.99
+        # wash-resistant skor saldiriyi engeller (< 0.1)
+        assert r.wash_resistant_score < 0.1
+    finally:
+        led.close()
+
+
+def test_mesru_cesitli_islem_korunur(tmp_path):
+    """10 islem 10 farkli host → wash_resistant yuksek (0.9+)."""
+    led = _ledger(tmp_path)
+    try:
+        for i in range(10):
+            led.append("permission_decision", "real-agent", f"/srv{i}", 0.01,
+                       payload={"decision": "allow"})
+        rep = ReputationLedger(led.db_path)
+        r = rep.reputation("real-agent")
+        assert r.completed == 10
+        assert r.unique_resources == 10
+        assert r.diversity_ratio == 1.0
+        assert r.wash_resistant_score > 0.9
+    finally:
+        led.close()
+
+
+def test_cesitlilik_eksik_ortalamada_dusuk(tmp_path):
+    """50 islem 5 host → ratio 0.1 → wash_resistant 0.999*sqrt(0.1)."""
+    led = _ledger(tmp_path)
+    try:
+        for i in range(50):
+            host = f"/h{i % 5}"
+            led.append("permission_decision", "mid-agent", host, 0.01,
+                       payload={"decision": "allow"})
+        rep = ReputationLedger(led.db_path)
+        r = rep.reputation("mid-agent")
+        assert r.completed == 50
+        assert r.unique_resources == 5
+        assert abs(r.diversity_ratio - 0.1) < 1e-9
+        # 0.98 * sqrt(0.1) ≈ 0.31
+        assert 0.25 < r.wash_resistant_score < 0.4
+    finally:
+        led.close()
+
+
+def test_bos_ajanda_diversity_sifir(tmp_path):
+    """0 islem → diversity_ratio 0.0 (bolum-sifir guvenli)."""
+    led = _ledger(tmp_path)
+    try:
+        rep = ReputationLedger(led.db_path)
+        r = rep.reputation("boss-ajan")
+        assert r.diversity_ratio == 0.0
+        assert r.wash_resistant_score == 0.0
+    finally:
+        led.close()

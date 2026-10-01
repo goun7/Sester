@@ -40,6 +40,7 @@ class Reputation:
     completed: int = 0
     denied: int = 0
     total_spent: float = 0.0
+    unique_resources: int = 0  # #2833: wash-trade direnci
 
     @property
     def score(self) -> float:
@@ -48,6 +49,30 @@ class Reputation:
         0 islem → 0.5 (nötr); her red 0'a, her tamamlama 1'e yaklastirir.
         """
         return (self.completed + 1.0) / (self.completed + self.denied + 2.0)
+
+    @property
+    def diversity_ratio(self) -> float:
+        """#2833: islem cesitliligi — wash-tradeye karsi anahtar metrik.
+
+        1000 islem TEK resource'ta → ratio 1/1000 ≈ 0.001 (sentetik).
+        10 islem 10 farkli resource'ta → ratio 1.0 (gercek aktivite).
+        Cuzdan-cifti wash trade bu metrigi yukselemez.
+        """
+        if self.completed <= 0:
+            return 0.0
+        return self.unique_resources / self.completed
+
+    @property
+    def wash_resistant_score(self) -> float:
+        """Cesitlilik-ayarlanmis skor: wash trade ile sismeye karsi.
+
+        score * sqrt(diversity_ratio): sqrt, tek-tek islemleri tam
+        sifirlamaz ama coklayarak 1.0'a ulasmayi engeller.
+        1000 islem 1 resource → 0.999 * sqrt(0.001) ≈ 0.032
+        10 islem 10 resource → 1.0 * 1.0 = 1.0
+        """
+        import math
+        return self.score * math.sqrt(max(0.0, self.diversity_ratio))
 
     @property
     def total(self) -> int:
@@ -70,11 +95,13 @@ class ReputationLedger:
             conn = sqlite3.connect(self._db_path)
             try:
                 # tamamlanan = izin verilen ödeme; reddedilen = deny
+                # #2833: COUNT(DISTINCT resource) — wash-trade direnci
                 row = conn.execute(
                     """SELECT
                          SUM(CASE WHEN json_extract(payload,'$.decision')='allow' THEN 1 ELSE 0 END),
                          SUM(CASE WHEN json_extract(payload,'$.decision')='deny'  THEN 1 ELSE 0 END),
-                         COALESCE(SUM(amount), 0.0)
+                         COALESCE(SUM(amount), 0.0),
+                         COUNT(DISTINCT host)
                        FROM events
                        WHERE agent_id=? AND event_type='permission_decision'""",
                     (agent,),
@@ -91,6 +118,7 @@ class ReputationLedger:
             completed=int(row[0] or 0),
             denied=int(row[1] or 0),
             total_spent=float(row[2] or 0.0),
+            unique_resources=int(row[3] or 0),
         )
 
     def reputation(self, agent: str) -> Reputation:
