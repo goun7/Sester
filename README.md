@@ -74,6 +74,16 @@ a rewrite.
 > `Payment Required → [Sester: insan onayı] → Payment Submitted → Payment Completed`.
 > Agent'lar arası ticarette büyük tutarlar için insan onayı standart hale geliyor.
 
+> **Post-settlement accountability (2026-10):** x402'nin en sıcak tartışması
+> [#2332](https://github.com/x402-foundation/x402/issues/2332) (211+ yorum)
+> tam olarak Sester'ın çözdüğü boşluk: `payment_hash` ödemenin tamamlandığını
+> kanıtlar ama **agent'ın ödedikten sonra ne yaptığını kanıtlamaz**.
+> **EU AI Act Madde 12** (2 Aralık 2027, Annex III) otomatik loglama zorunlu
+> kılıyor — ama logların nasıl korunduğunu veya kimin doğrulayacağını söylemiyor.
+> **Loglar yeniden yazılabilir; hash-chain anchor olamaz.** Sester'ın
+> tamper-evident ledger'ı bu harici anchor'dur: üçüncü taraflar
+> (regülatör, denetçi, karşı taraf) yalnızca `sha256` ile bağımsız doğrular.
+
 ## 30 seconds: what is this?
 
 **Sester is a payment-metering + receipt layer for APIs that AI agents call.**

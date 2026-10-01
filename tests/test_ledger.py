@@ -251,3 +251,49 @@ def test_36_spent_today_utc_day_boundary(tmp_path):
     yesterday = _t.strftime("%Y-%m-%d", _t.gmtime(_t.time() - 86400))
     assert led.spent_today("tz-agent", day=yesterday) == 0.0
     led.close()
+
+
+# LEAD 2026-10-01 — x402 #2332 post-settlement accountability
+# "Loglar yeniden yazilabilir; hash-chain anchor olamaz."
+# Ucuncu taraf (regulator/auditor) sadece sha256 ile bagimsiz dogrular.
+def test_anchor_external_verification_detects_tamper(tmp_path):
+    """Harici dogrulayici: ledger temiz i True, cozumlu payload hack'i False."""
+    import sqlite3
+
+    led = Ledger(str(tmp_path / "anchor.sqlite3"), secret="k")
+    led.append("permission_decision", "agent-a", "/paid", 1.0,
+               payload={"decision": "allow"})
+    led.append("charge_receipt", "agent-a", "/paid", 0.05,
+               payload={"amount_minor": 50000, "currency": "USDC"})
+    led.append("permission_decision", "agent-a", "/other", 1.0,
+               payload={"decision": "deny"})
+
+    # 1) temiz ledger → bagimsiz dogrulama gecer
+    assert led.verify_chain() is True
+
+    # 2) cozumcu 'allow' kararini 'deny' olarak degistirir (EU AI Act log saldirisi)
+    conn = sqlite3.connect(str(tmp_path / "anchor.sqlite3"))
+    try:
+        conn.execute(
+            'UPDATE events SET payload=? WHERE rowid=1',
+            (json.dumps({"decision": "deny"}),))
+        conn.commit()
+    finally:
+        conn.close()
+
+    # 3) anchor tespit eder: chain kopar
+    assert led.verify_chain() is False, "hash-chain anchor tespit etmeli"
+    led.close()
+
+
+# ayni bagimsiz dogrulama FARKLI secret ile yapilamaz (fail-closed)
+def test_anchor_verification_rejects_wrong_secret(tmp_path):
+    """Yanlis secret → bagimsiz dogrulama reddeder (trust anchor binding)."""
+    led = Ledger(str(tmp_path / "anchor2.sqlite3"), secret="dogru")
+    led.append("permission_decision", "agent-a", "/paid", 1.0,
+               payload={"decision": "allow"})
+    led.close()
+
+    led2 = Ledger(str(tmp_path / "anchor2.sqlite3"), secret="yanlis")
+    assert led2.verify_chain() is False, "yanlis secret ile dogrulama reddedilir"
+    led2.close()
