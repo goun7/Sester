@@ -14,7 +14,14 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 SERVER = ROOT / "mcp" / "server.py"
-VENV_PY = str(ROOT / ".venv" / "bin" / "python")
+# CI checkout'unda .venv YOKTUR (.gitignore'lu) — sabit-yol FileNotFoundError
+# verip 13 MCP testini DÜŞÜRÜYORDU (CI #101+, 2026-10-03'te teşhis-edildi).
+# Bu yüzden önce yerel dev-venv'i dene; yoksa testi zaten koşturan
+# yorumlayıcıya dön — CI'da `pip install -e .[dev]` sester'i sys.executable'a
+# kurar. Suit'in diğer tüm subprocess-testleri aynı kalıbı kullanır
+# (sys.executable); bu-tek-dosya ondan-sapmıştı.
+_VENV_PY = ROOT / ".venv" / "bin" / "python"
+PY = str(_VENV_PY) if _VENV_PY.is_file() else sys.executable
 PROTOCOL_VERSION = "2025-06-18"
 
 
@@ -32,7 +39,7 @@ def _rpc(tmp_db: str, secret="mcp-secret", node_secret="node-secret",
     if extra_env:
         env.update(extra_env)
     reqs = list(lines or [])
-    proc = subprocess.run([VENV_PY, str(SERVER)], input="\n".join(reqs) + "\n",
+    proc = subprocess.run([PY, str(SERVER)], input="\n".join(reqs) + "\n",
                           capture_output=True, text=True, env=env, timeout=60,
                           cwd=str(ROOT))
     out = []
