@@ -17,6 +17,19 @@ decision = policy.evaluate(amount=0.01, host="/weather", agent="my-agent")
 | `budget_guard_policy.json` | per-request + daily ceiling, escalation | hard quota enforcement and the escalate verdict |
 | `f1_policy.json` | fleet telemetry lane | host allow-list with an hour window and timezone |
 | `business_hours_policy.json` | business-hours-only lane | narrow allow window, deny-everything-else |
+| `fastapi_client_demo.py` | client-side agent | a real `Sester-EVM` payment against the demo API |
+
+## Running the client demo
+
+```bash
+pip install "sester[demo]" httpx eth-account uvicorn
+uvicorn sester.demo_api:app --port 8402      # in one terminal
+SESTER_EXAMPLE_GATEWAY=http://127.0.0.1:8402 python examples/fastapi_client_demo.py
+```
+
+With a fresh ledger this prints `ödeme onaylandı` four times (the demo quota
+is 0.20 USDC-sim at 0.05 per request) and `reddedildi` on the fifth — the
+fail-closed deny path, verified against the live gateway.
 
 ## Editing rules
 
