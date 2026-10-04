@@ -65,8 +65,15 @@ class S1Meter(SesterMeter):
     def __init__(self, *a, policy: Policy, **kw):
         super().__init__(*a, **kw)
         self.policy = policy
+        # Fix-2026-10-03 (CI #133, S1.a-RED): super (SesterMeter) kendi
+        # policy.evaluate'ini GERÇEK sistem saatiyle çağırıyordu — senaryo
+        # saati S1State.now olmalıydı. Üst-sınıfın _policy_now'unu senaryo-
+        # saatiyle sabitler (gece/CI koşusunda 01:00 → deny değil).
+        self._policy_now = S1State.now
 
     async def __call__(self, scope, receive, send):
+        # Senaryo saati her çağrıda taze okunur (S1.c 23:30'a ilerletir).
+        self._policy_now = S1State.now
         if scope["type"] == "http" and not any(
             scope.get("path", "").startswith(p) for p in self.exempt_prefixes
         ):

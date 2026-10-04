@@ -125,6 +125,9 @@ class SesterMeter:
         # Verildiğinde-ilk-eşleşen-kural-uygulanır (allow → normal-akış,
         # escalate → 402 + insan-onay, deny → 402 policy_denied).
         self.policy = policy
+        # Fix-2026-10-03 (CI #133): dogfood/senaryo saati inject etmek için
+        # (None → gerçek sistem saati, production davranışı değişmez).
+        self._policy_now: _dt.datetime | None = None
         # v0.7.4: ödeme-kanıtı header'ı — charge tamamlandığında node-cosigned
         # receipt. receipt_node_secret None → receipt cosign'siz üretilir
         # (asıl kanıt proof hâlâ secret'sız doğrulanabilir; dürst-eksiklik).
@@ -383,7 +386,17 @@ class SesterMeter:
         if self.policy is not None:
             from .policy import ALLOW, ESCALATE, PolicyCorruptError
             try:
-                dec = self.policy.evaluate(self.price, path, agent=agent)
+                # Fix-2026-10-03 (CI #133, s1_dogfood-S1.a-RED): evaluate'e
+                # `now` geçirilmiyordu → policy GERÇEK sistem-saatini kullanıyordu.
+                # S1 senaryosu Saat-10:00'da çalışır ama CI/gece koşusunda gerçek
+                # saat 01:00 olunca hour_between[08:00,22:00] penceresi-DIŞI →
+                # allow yerine deny → 5 çağrı da 402 policy_denied. Çözüm:
+                # `_policy_now` inject edilebilir (test/dogfood deterministik);
+                # None ise eski davranış (gerçek saat) korunur — production etkisi YOK.
+                dec = self.policy.evaluate(
+                    self.price, path, agent=agent,
+                    now=self._policy_now if self._policy_now is not None else None,
+                )
             except PolicyCorruptError:
                 self.ledger.append("permission_decision", agent, path,
                                    payload={"decision": "deny",
