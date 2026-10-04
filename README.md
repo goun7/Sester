@@ -122,6 +122,17 @@ sester receipt 1 --out receipt.json
 sester verify receipt.json                          # KABUL (rc=0) / RED (rc=1)
 ```
 
+An auditor who wants everything in one file rather than a single receipt can
+export the whole ledger for one agent:
+
+```bash
+sester bundle --agent demo-agent --out bundle.json   # full evidence export
+```
+
+The bundle is self-contained — receipts plus the ledger chain segment the
+agent participated in — so it can be re-verified later without the live
+ledger.
+
 AI agents can do both through an MCP server (Model Context Protocol
 2025-06-18) — [`mcp/`](mcp/README.md): `pay`, `verify_receipt`, `balance`,
 `history`.
