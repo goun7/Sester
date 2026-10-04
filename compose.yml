@@ -1,0 +1,34 @@
+# SESTER demo API — one-command evaluation surface.
+#
+#   docker compose up
+#
+# Health:   http://localhost:8402/healthz
+# Docs:     http://localhost:8402/docs
+#
+# The demo ledger is an isolated SQLite file inside the container by default.
+# Uncomment the volumes block to persist it across restarts.
+#
+# Demo credentials are generated for THIS container only; do not point real
+# money rails at this stack — it is the evaluation surface, not production.
+
+services:
+  sester-demo:
+    build: .
+    image: sester-demo
+    container_name: sester-demo
+    ports:
+      - "8402:8402"
+    environment:
+      # Isolated demo state (override with a mounted volume below).
+      SESTER_DEMO_LEDGER_DB: /tmp/sester-demo.sqlite3
+      SESTER_ESCALATION_DB: /tmp/sester-escalation.sqlite3
+      PYTHONUNBUFFERED: "1"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys;sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8402/healthz',timeout=4).status==200 else 1)"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+    # volumes:
+    #   - ./data/sester-demo.sqlite3:/tmp/sester-demo.sqlite3
+    #   - ./data/sester-escalation.sqlite3:/tmp/sester-escalation.sqlite3
+    restart: unless-stopped

@@ -1,0 +1,35 @@
+{
+  "wallet_policy": {
+    "id": "wpol-2026-10-business-hours",
+    "owner": "did:agent:kok:demo-treasury",
+    "wallet": "evm:0xDEMO0000000000000000000000000000DEMO42",
+    "defaults": {
+      "currency": "USDC-sim",
+      "per_request_max": 0.25,
+      "daily_max": 5.00,
+      "timezone": "Europe/Istanbul"
+    },
+    "rules": [
+      {
+        "id": "allow-paid-endpoints-in-business-hours",
+        "when": {
+          "host_in": ["/weather", "/forecast", "/signals"],
+          "hour_between": ["09:00", "18:00"]
+        },
+        "then": "allow"
+      },
+      {
+        "id": "escalate-out-of-hours",
+        "when": {
+          "host_in": ["/weather", "/forecast", "/signals"]
+        },
+        "then": "escalate"
+      },
+      {
+        "id": "deny-unknown",
+        "when": { "host_in": [] },
+        "then": "deny"
+      }
+    ]
+  }
+}
