@@ -265,3 +265,109 @@ def test_klasik_decide_oracle_taşimaz(tmp_path):
     assert "oracle_ref" not in payload
     led.close()
     q.close()
+
+
+# ----------------------------------------------- decide() davranış-testleri
+# LEAD-2026-10-05 audit-kapanışı: EscalationQueue.decide — approve/reject
+# yolları, opsiyonel-note, tek-yönlü-disiplin (consume-sonrası-dahil),
+# decide'ın-kendi-TTL-süpürmesi ve (agent,resource)-izolasyonu.
+
+def test_decide_approve_returns_full_ticket_consistent_with_get(q):
+    """approve yolu: dönen bilet park'taki TÜM alanları korur (karar-yazımı
+    orijinal-alanları-ezmez) ve DB'den-tekrar-okunduğu-için get() ile birebirdir."""
+    t = q.park("agent-keep", "/keep", 7.50, "rule-keep", reason="neden-1")
+    d = q.decide(t["esc_id"], approve=True, by="auditor-keep", note="tamam")
+    assert d["esc_id"] == t["esc_id"]
+    assert d["agent"] == "agent-keep"
+    assert d["resource"] == "/keep"
+    assert d["amount"] == 7.50
+    assert d["rule_id"] == "rule-keep"
+    assert d["reason"] == "neden-1"
+    assert d["created_at"] == t["created_at"]
+    assert d["expires_at"] == t["expires_at"]
+    assert d["status"] == APPROVED
+    assert d["decided_by"] == "auditor-keep"
+    assert d["note"] == "tamam"
+    assert d["decided_at"] is not None
+    # dönen dict DB'den-tekrar-okunur → get() ile birebir-aynı
+    assert q.get(t["esc_id"]) == d
+
+
+def test_decide_approve_enables_approved_for(q):
+    """approve yolu: onaydan-sonra approved_for(agent, resource) biletin-kendisini
+    döner (decided_by + note ile) — bu tüketilebilir-onay-contract'idir."""
+    t = q.park("agent-ap", "/ap", 3.00, "r-ap")
+    assert q.approved_for("agent-ap", "/ap") is None
+    d = q.decide(t["esc_id"], approve=True, by="onaylayan", note="go")
+    ap = q.approved_for("agent-ap", "/ap")
+    assert ap is not None
+    assert ap["esc_id"] == d["esc_id"]
+    assert ap["decided_by"] == "onaylayan"
+    assert ap["note"] == "go"
+
+
+def test_decide_deny_removes_from_pending_and_blocks_consumption(q):
+    """reject yolu: denied bilet pending()'ten-düşer, approved_for yine None'dır
+    ve consume red 'tek-kezlik-tüketim' kuralını-delmez."""
+    t = q.park("agent-dn", "/dn", 12.00, "r-dn")
+    assert any(r["esc_id"] == t["esc_id"] for r in q.pending())
+    q.decide(t["esc_id"], approve=False, by="reddeden", note="çok pahalı")
+    assert not any(r["esc_id"] == t["esc_id"] for r in q.pending())
+    assert q.approved_for("agent-dn", "/dn") is None
+    assert q.consume(t["esc_id"]) is False, "reddedilen bilet tüketilemez"
+    assert q.get(t["esc_id"])["status"] == DENIED
+
+
+def test_decide_note_optional_defaults_empty_and_persists_arbitrary(q):
+    """note opsiyonel: verilmezse ''; uzun + unicode + tırnaklı-note aynen
+    persist-olur (karar-gerekçesi denetim-icin-saklanır)."""
+    t = q.park("agent-note", "/n", 1.00, "r-n")
+    d0 = q.decide(t["esc_id"], approve=True, by="a")
+    assert d0["note"] == ""
+    assert q.get(t["esc_id"])["note"] == ""
+    t2 = q.park("agent-note", "/n2", 1.00, "r-n")
+    long_note = "ışık: äöüß-\"tırnak\"—" + "x" * 200
+    d1 = q.decide(t2["esc_id"], approve=True, by="a", note=long_note)
+    assert d1["note"] == long_note
+    assert q.get(t2["esc_id"])["note"] == long_note
+
+
+def test_decide_on_consumed_ticket_is_rejected(q):
+    """tek-yönlü-disiplin consume-sonrası-da-geçerli: consumed bilete tekrar
+    karar → ValueError (karar yalnızca-pending'de-verilir)."""
+    t = q.park("agent-c", "/c", 2.00, "r-c")
+    q.decide(t["esc_id"], approve=True, by="a")
+    assert q.consume(t["esc_id"]) is True
+    with pytest.raises(ValueError):
+        q.decide(t["esc_id"], approve=False, by="too-late")
+    with pytest.raises(ValueError):
+        q.decide(t["esc_id"], approve=True, by="too-late")
+
+
+def test_decide_sweeps_own_ttl_expirations_fail_closed(q, monkeypatch):
+    """decide kendi _expire() süpürmesini-çalıştırır: TTL'i-dolmuş-pending,
+    karar-anında expired'a-döner → fail-closed (sessiz post-expiry onay YOK),
+    ValueError 'expired' sözcüğünü-taşır; durum-makinesi tek-yönlü."""
+    t = q.park("agent-ex", "/ex", 4.00, "r-ex")
+    real_time = esc_mod.time.time
+    monkeypatch.setattr(esc_mod.time, "time", lambda: real_time() + 3600)
+    with pytest.raises(ValueError, match="expired"):
+        q.decide(t["esc_id"], approve=True, by="gec-onay")
+    assert q.get(t["esc_id"])["status"] == EXPIRED
+    assert q.approved_for("agent-ex", "/ex") is None
+
+
+def test_decide_isolated_across_agent_resource_pairs(q):
+    """bir biletin-kararı diğer (agent, resource) biletlerini-etkilemez —
+    karar yanlışlıkla-komşu-kaynağa-taşmaz."""
+    t1 = q.park("agent-iso-a", "/x", 5.00, "r")
+    t2 = q.park("agent-iso-b", "/x", 5.00, "r")
+    t3 = q.park("agent-iso-a", "/y", 5.00, "r")
+    q.decide(t1["esc_id"], approve=False, by="a")
+    assert q.get(t2["esc_id"])["status"] == PENDING, "komşu bilet bozuldu"
+    assert q.get(t3["esc_id"])["status"] == PENDING, "komşu bilet bozuldu"
+    assert q.approved_for("agent-iso-b", "/x") is None
+    assert q.approved_for("agent-iso-a", "/y") is None
+    q.decide(t3["esc_id"], approve=True, by="a")
+    assert q.approved_for("agent-iso-a", "/y") is not None
+    assert q.approved_for("agent-iso-b", "/x") is None, "izolasyon-delindi"
