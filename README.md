@@ -429,6 +429,53 @@ sester verify receipt.json                                # standalone proof CLI
 | [`CONTRIBUTING.md`](CONTRIBUTING.md) | Hard rules for PRs (fail-closed, K0-frozen, test-first) |
 | [`SECURITY.md`](SECURITY.md) | Reporting policy — replay/quota/signature-bypass bugs |
 
+## Academic grounding
+
+Sester is built on a specific bet about agent payments: the spending path is a
+*policy* problem (owner-set, fail-closed) before it is a cryptography problem,
+and "paid" must be provable by someone who never trusted the payee. The recent
+literature lets each half of that bet be pinned to real work:
+
+- **Five Attacks on x402 Agentic Payment Protocol** ([arXiv:2605.11781](https://arxiv.org/abs/2605.11781),
+  Li/Wang/Wang, cs.CR, May 2026) — formally analyses x402 and demonstrates five
+  practical attacks on its authorization, binding and **replay protection**,
+  validated on a local testbed, Base Sepolia and live endpoints, with failures
+  on both sides ("unpaid service" and "paid-but-denied"). That cross-layer gap
+  is the threat model Sester's metering layer is shaped against: replay is
+  closed by the persistent `seen_nonces` table (atomic first-writer-wins, so a
+  restart cannot reopen the window) plus the fail-closed quota 402s counted in
+  `/metrics`. **The difference:** the paper diagnoses the protocol-level gap
+  and proposes mitigations; Sester ships the receiver-side half the protocol
+  cannot give you — a node-cosigned, hash-chained receipt re-verifiable with
+  `sha256` alone (`sester verify`), so a buyer's auditor confirms a charge
+  *after* the fact without trusting the facilitator.
+- **A402: Binding Cryptocurrency Payments to Service Execution** ([arXiv:2603.01179](https://arxiv.org/abs/2603.01179),
+  Li et al., cs.DC, Mar 2026) — argues x402 lacks end-to-end atomicity across
+  service execution, payment and result delivery, and fixes it with Atomic
+  Service Channels: TEE-assisted adaptor signatures bind payment to execution,
+  and many micropayments aggregate into a single on-chain settlement. Sester's
+  on-chain batch path shares the same "aggregate, then settle" instinct —
+  pure-stdlib keccak-256, a Merkle root recomputable in the EVM, non-custodial.
+  **The difference:** A402 buys its atomicity with a TEE and a channel
+  protocol — trust-minimized, but heavyweight and chain-bound; Sester stays
+  deliberately at the HTTP layer with zero dependencies and keeps transaction
+  signing *out* of the library, so the guarantee it offers is accounting and
+  evidence (a ledger chain anyone can recompute), not a cryptographic claim
+  about how the service executed.
+- **Sovereign-by-Design** ([arXiv:2602.05486](https://arxiv.org/abs/2602.05486),
+  Esposito/Marchesi/Tonelli/Lenarduzzi, cs.SE, Feb 2026) — argues digital
+  sovereignty has to be a *first-class architectural quality attribute* rather
+  than a regulatory afterthought, and gives a reference architecture pairing
+  self-sovereign identity, blockchain-based auditability and sovereign data
+  governance with Generative AI held under explicit architectural control. That
+  is the doctrine Sester implements on the spending axis: the owner signs the
+  policy, tightening is instant while loosening is delayed 24 h, settlement is
+  non-custodial, and the evidence ledger stays on your node. **The
+  difference:** the paper is a reference architecture — which properties
+  compose and why; Sester is the concrete instantiation of one of them on the
+  payment path — "the agent spends only what the owner allowed, provably" —
+  delivered as a single ASGI middleware behind `pip install sester`.
+
 ## Deliberate v0 limits
 
 Non-goals by decision, not by omission (see the repository's decision records): transaction
