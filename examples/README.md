@@ -54,3 +54,28 @@ python3 -c "import json; from sester.policy import Policy; \
 ```
 
 If that prints without raising, the file parses and every rule validates.
+
+## FastAPI
+
+This example shows how to protect a FastAPI endpoint with Sester payments.
+
+Install the demo dependencies:
+
+```bash
+pip install "sester[demo]"
+```
+
+Run the example:
+
+```bash
+uvicorn examples.fastapi_demo:app
+```
+
+Then call:
+
+```bash
+curl http://127.0.0.1:8000/weather
+```
+
+Without a valid payment envelope, Sester returns 402 Payment Required.
+With a valid payment envelope, the request runs normally.

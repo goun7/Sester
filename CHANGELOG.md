@@ -64,6 +64,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/) · SemVer.
 ## [Unreleased]
 
 ### Added
+- Added a minimal FastAPI integration example in `examples/fastapi_demo.py`, with usage instructions in `examples/README.md`.
 - **Sovereign-wrapper surface lock** — `tests/test_sovereign_compat.py` (5
   tests): pins the exact call shape Tamga's `tools/sovereign_verify.py`
   depends on (`Ledger(path)` → `verify_chain()` → `close()`), clean→GREEN and
