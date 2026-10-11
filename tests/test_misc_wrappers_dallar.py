@@ -25,11 +25,14 @@ def test_load_ledger_returns_ledger():
     assert isinstance(lg, Ledger)
 
 
-@pytest.mark.parametrize("db", [":memory:", "test-a.db", "test-b.sqlite3"])
-def test_load_ledger_db_param(db):
-    """ORTAM: db argümanı Ledger'a pass-through (gercek DOSYA acilmaz —
-    Ledger constructor sadece kaydeder)."""
+@pytest.mark.parametrize("fname", ["test-a.db", "test-b.sqlite3"])
+def test_load_ledger_db_param(tmp_path, fname):
+    """ORTAM: db argümani Ledger'a pass-through — Kural-4: tmp_path altinda
+    (gercek repo-dosyasi YAZILMAZ, kalinti-birakmaz)."""
+    from sester.ledger import Ledger
+    db = str(tmp_path / fname)
     lg = _load_ledger(db, "s")
+    assert isinstance(lg, Ledger)
     assert getattr(lg, "db", getattr(lg, "_db", None)) in (db, None)
 
 
