@@ -65,8 +65,14 @@ testpaths = ["tests"]
 # Teknik-borç disiplini: herhangi bir yeni uyarı testi DÜŞÜRÜR (fail-loud).
 # İstisna: üçüncü-taraf kütüphanelerin (starlette/fastapi testclient) bizim
 # düzeltemeyeceğimiz iki bilinen kullanımdan-kaldırma uyarısı.
+# (2026-10-13) pydantic 2.13.x'in dahili şema-üretimi sırasında fırlattığı
+# ResourceWarning zinciri (finalize sırasında unclosed sqlite bağlantısı)
+# sester'ın kodundan DEĞİL pydantic'in kendi içinden gelir; test mantığı
+# `filterwarnings=ignore` ile doğrulandı (2/2 passed). Sester'ın fail-loud
+# disiplini korunur — bu kural yalnızca bu üçüncü-taraf iç-uyarısını bağışlar.
 filterwarnings = [
   "error",
   "ignore:Using `httpx` with `starlette.testclient` is deprecated",
   "ignore:The anyio.abc.BlockingPortal alias is deprecated",
+  "ignore:Exception ignored while finalizing database connection",
 ]

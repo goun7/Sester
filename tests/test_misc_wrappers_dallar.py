@@ -65,8 +65,16 @@ def test_load_ledger_uses_delayed_import():
 
 
 def test_load_ledger_empty_secret():
-    """ORTAM: bos-secret -> b'' (fail-closed DEGIL bu seviyede)."""
-    lg = _load_ledger(":memory:", "")
+    """ORTAM: bos-secret -> b'' (fail-closed DEGIL bu seviyede).
+
+    Bos-secret AT-193'te bilinen-değer sayilir ve insecure-secret uyarisi
+    firlatir ( Ledger.__init__ ); uyarinin-yakalanmasi testin-amacini-
+    degistirmez — ledger yine b'' ile-olusturulur ve fail-llosed DEGILDIR
+    ( SESTER_REQUIRE_SECURE_SECRET ayarli-degilse)."""
+    import warnings as _w
+    with _w.catch_warnings():
+        _w.simplefilter("ignore", UserWarning)
+        lg = _load_ledger(":memory:", "")
     assert lg.secret == b""
 
 
