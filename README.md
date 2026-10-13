@@ -22,7 +22,7 @@
 > tamper-evident hash-chain receipt ledger into your API — as one ASGI
 > middleware, with zero required dependencies.
 
-**`pip install sester`** · 649 downloads (mirrors excluded) · 528 tests (9 skipped, LEAD-verified 2026-10-03) · 0 forced deps
+**`pip install sester`** · 649 downloads (mirrors excluded) · 2.923 tests (11 skipped, 0 failed rc=0 — LEED-verified 2026-10-13) · 0 forced deps
 
 ## Quick start
 
