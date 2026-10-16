@@ -242,7 +242,14 @@ class Ledger:
         # check_same_thread=False: FastAPI/uvicorn threadpool'larından gelen append'ler
         # için gerekli; zincir-bütünlüğü _lock ile serileştirilir (test_27 kanıtı).
         self._lock = threading.Lock()
-        self.conn = sqlite3.connect(self.db_path, isolation_level=None, check_same_thread=False)
+        # DALGA-7-BULGU: "file:..." SQLite-URI-adresleri uri=True olmadan HAM
+        # DOSYA-ADI sayilir — pqhaven testleri "file::memory:?cache=shared" dosyasını
+        # repo-root'a yaziyordu. Legal-URI-adresi tespit-edilirse uri=True moda
+        # girilir; normal yol-adresleri için davranış DEĞİŞMEZ.
+        if self.db_path.startswith("file:"):
+            self.conn = sqlite3.connect(self.db_path, isolation_level=None, check_same_thread=False, uri=True)
+        else:
+            self.conn = sqlite3.connect(self.db_path, isolation_level=None, check_same_thread=False)
         self.conn.execute("PRAGMA journal_mode=WAL")
         self.conn.execute("PRAGMA busy_timeout=5000")
         self.conn.executescript(SCHEMA)
