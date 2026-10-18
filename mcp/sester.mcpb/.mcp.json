@@ -1,0 +1,63 @@
+{
+  "schema_version": "1.0.0",
+  "name": "sester",
+  "display_name": "Sester — Agent Payment-Proof Tools",
+  "description": "AI agents pay and verify receipts. pay charges against an embedded local proof-chain and returns a node-cosigned receipt; verify_receipt checks a receipt independently on the receiving side with no Sester install and no node secret — the proof is recomputed with sha256. balance/history give daily spend, quota and the audit trail. Embedded mode is $0 with no keys, no testnet, no mainnet.",
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/goun7/Sester",
+  "repository": "https://github.com/goun7/Sester",
+  "categories": ["payments-and-billing", "finance", "autonomous-agents"],
+  "transport": "stdio",
+  "install": {
+    "command": "python",
+    "args": ["mcp/server.py"],
+    "env": {
+      "SESTER_MCP_DB": {
+        "description": "Ledger SQLite path (embedded mode).",
+        "required": false
+      },
+      "SESTER_MCP_SECRET": {
+        "description": "Ledger seal. Required in production; when empty a demo secret is used with a warning.",
+        "required": false
+      },
+      "SESTER_MCP_NODE_SECRET": {
+        "description": "Node-cosign key. When empty receipts are issued without cosign; the primary proof still verifies without a secret.",
+        "required": false
+      },
+      "SESTER_MCP_NODE_ID": {
+        "description": "Node identity (receipt.iss field).",
+        "required": false
+      },
+      "SESTER_MCP_QUOTA": {
+        "description": "Per-agent daily quota, major units.",
+        "required": false
+      },
+      "SESTER_MCP_ENDPOINT": {
+        "description": "Remote mode URL of a real Sester-protected API. Empty = embedded local proof-chain ($0).",
+        "required": false
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "pay",
+      "description": "Pay for a resource on an agent's behalf and return a node-cosigned receipt. Embedded mode writes a charge to the local proof-chain — no keys, no testnet, $0."
+    },
+    {
+      "name": "verify_receipt",
+      "description": "Verify a receipt INDEPENDENTLY on the receiving side. No Sester install, no node secret: the proof is recomputed with sha256."
+    },
+    {
+      "name": "balance",
+      "description": "Show an agent's daily spend, quota and remaining budget (embedded mode)."
+    },
+    {
+      "name": "history",
+      "description": "List proof-chain events (charge/refund) with chain head for audit."
+    }
+  ],
+  "privacy": {
+    "keys": "The ledger seal (SESTER_MCP_SECRET) and node-cosign key stay server-side and never appear in a receipt. Verification of the primary proof needs no secret at all.",
+    "network": "None in embedded mode. Remote mode (SESTER_MCP_ENDPOINT) makes one outbound x402-HMAC call to the configured endpoint only."
+  }
+}

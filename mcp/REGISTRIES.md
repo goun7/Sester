@@ -1,6 +1,8 @@
 # MCP Registry Kayıt Rehberi — Sester
 
-**Durum:** dosyalar HAZIR. **Kayıt YAPILMADI** — kullanıcı onayı bekleniyor.
+**Durum:** dosyalar HAZIR. Kayıt YAPILMADI — **smithery publish OAuth-login**
+gerektiriyor (non-TTY readline-çökmesi). El-kitabı: `mcp/KAYIT_EL_KITABI.md`.
+Ön-ölçüm ( 2026-10-18): initialize+tools/list+pay-çağrısı-hepsi-gerçek-protokol-üzerinden-yeşil.
 Maliyet: **$0** (yalnızca ücretsiz tier'lar).
 
 ---
