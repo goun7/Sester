@@ -83,7 +83,7 @@ Bu üç kanal **OAuth-login istemez**, ama **insan-onayı** gerektirir
 | punkpeye/awesome-mcp-servers | GitHub PR ( bir-satır-README-entry) | $0 |
 
 **Neden-yapmıyorum:** Bunların her-biri **kullanıcı-hesabından** yapılırsa
-anlamlı ( PR Nikon凄dir; form-domain-kredibilitesi-ister). Agent-olarak
+anlamlı ( PR insan-elinden-dir; form-domain-kredibilitesi-ister). Agent-olarak
 kullanıcı-adına-pull-request-açmak **onay-sız** doğru-değil.
 
 ---

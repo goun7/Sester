@@ -1,0 +1,59 @@
+# Smithery registry yapılandırması — SESTER MCP server.
+#
+# Yayınlama (Smithery CLI, Node.js 20+):
+#   smithery mcp publish https://<sunucu-url> -n <org>/sester
+# veya paket-bundle ile: smithery mcp publish ./sester.mcpb -n <org>/sester
+#
+# Yerel deneme (registry olmadan):
+#   smithery mcp add ./mcp/server.py --id sester   # stdio ile yerel çalıştır
+#   smithery tool list sester
+#   smithery tool call sester pay '{"agent":"demo","resource":"/weather","amount":0.05}'
+#
+# Docs: https://smithery.ai/docs  ·  MCP spec: https://modelcontextprotocol.io/specification/2025-06-18
+version: 1
+
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    properties:
+      db:
+        type: string
+        description: "Ledger SQLite yolu (embedded mod; $0, testnet yok)"
+        default: "sester-mcp.sqlite3"
+      quota:
+        type: number
+        description: "Ajan-başına günlük kota (major birim)"
+        default: 5.00
+      endpoint:
+        type: string
+        description: "Remote mod: gerçek Sester-korumalı API URL'si (boş = embedded)"
+        default: ""
+  command: python
+  args:
+    - mcp/server.py
+  env:
+    SESTER_MCP_DB:
+      description: "Ledger SQLite yolu"
+      default: "sester-mcp.sqlite3"
+      required: false
+    SESTER_MCP_SECRET:
+      description: "Ledger-mührü. Üretimde zorunlu; boşsa demo-secret ile çalışır ve uyarır."
+      default: ""
+      required: false
+    SESTER_MCP_NODE_SECRET:
+      description: "Node-cosign anahtarı. Boşsa receipt'ler cosign'siz üretilir (asıl kanıt hâlâ secret'sız doğrulanabilir)."
+      default: ""
+      required: false
+    SESTER_MCP_NODE_ID:
+      description: "Node kimliği (receipt.iss alanı)"
+      default: "sester:mcp-node"
+      required: false
+    SESTER_MCP_QUOTA:
+      description: "Ajan-başına günlük kota"
+      default: "5.00"
+      required: false
+    SESTER_MCP_ENDPOINT:
+      description: "Remote mod URL'si; boş = embedded (lokal kanıt-zinciri, $0)"
+      default: ""
+      required: false
