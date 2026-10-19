@@ -340,6 +340,12 @@ Embedded mode runs a local ledger — **$0, no keys, no testnet**. Remote mode
 (`SESTER_MCP_ENDPOINT`) pays a real Sester-protected API. Publishable to
 Smithery/Arcade (`mcp/smithery.yaml`): full setup in [`mcp/README.md`](mcp/README.md).
 
+**Packaging note.** The MCP server lives in the GitHub checkout but is
+deliberately outside the sdist/wheel (`[tool.hatch.build.targets.sdist]
+only-include` ships the library alone — the sdist carries the distribution
+truth, not the agent surface). `pip install sester` gives you the library
+and CLI, not `mcp/server.py`; run the server from a source checkout.
+
 
 
 Sester does not merge with its sisters — it bridges them. `sester.bridges`

@@ -202,3 +202,16 @@ def test_missing_secret_warns_but_runs(tmp_path):
     ])
     assert "SESTER-MCP UYARI" in proc.stderr  # gürültülü-uyarı, sessiz-değil
     assert out[0]["result"]["isError"] is False
+# ------------------------------------------------------- G22-dagitim-notu
+
+def test_readme_documents_mcp_packaging_limit():
+    """G22-pini: README mcp/server.py'i tanitiyorsa, pip-ile-gelen kullanicinin
+    onu BULAMAYACAGINI da soylemelidir — aksi halde wheel'de olmayan bir
+    giris-noktasi oldugu izlenimi olur ( dagitim-grayhole / over-imply).
+    Hatch sdist only-include bilinçle mcp/'yi disarda birakir ( divergence-
+    truth karari); README bu gercegi tasiyor olmali."""
+    readme = (Path(__file__).resolve().parents[1]
+              / "README.md").read_text(encoding="utf-8")
+    assert "mcp/server.py" in readme, "README mcp sunucu-yolunu vermiyor"
+    assert "Packaging note" in readme, (
+        "README MCP dagitim-sinirini belirtmiyor ( over-imply-riski)")
