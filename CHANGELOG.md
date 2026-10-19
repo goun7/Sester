@@ -3,7 +3,6 @@
 All notable changes to SESTER (sester) are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/) · SemVer.
 
-## [0.7.4] — 2026-09-28
 
 ### Added
 - **Payment receipts (node-cosigned, secretless-verifiable)** —
@@ -62,6 +61,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/) · SemVer.
   and test-count updates. No AI-hype claims; deliberate non-goals updated.
 
 ## [Unreleased]
+
+## [0.7.5] — 2026-10-19
+
 
 ### Added
 - Added a minimal FastAPI integration example in `examples/fastapi_demo.py`, with usage instructions in `examples/README.md`.
@@ -172,6 +174,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/) · SemVer.
   (`test_pg_parity`, `test_migrate_pg`, `test_minor_unit`), so the
   SQLite↔PG identical-chain claim is exercised instead of asserted. The
   cross-repo `bridges` job additionally runs `tests/test_sovereign_compat.py`.
+
+## [0.7.4] — 2026-09-28
 
 ## [0.7.0] — 2026-09-14
 
