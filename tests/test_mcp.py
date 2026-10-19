@@ -231,3 +231,36 @@ def test_head_commit_message_is_ascii_safe():
     non_ascii = [c for c in msg if ord(c) > 127]
     assert not non_ascii, (
         "HEAD commit-mesajinda ASCII-disi-karakterler var: %r" % non_ascii)
+
+
+# -------------------------------------------------- G27-README-test-sayisi
+
+def test_readme_test_count_is_not_stale():
+    """G27-pini: README'nin test-sayisi-iddiasi gercek-collect'e-esit.
+    G24-fleksa-olgusu-ayni-sinifta: yeni-test-eklenince-README-sayisi-stale-
+    kaldi. Pin, iddia-ile-gercek-arasindaki-farki-olcer; yeni-test-bu-testi
+    DUSURUR - sessiz-gecmesin."""
+    import re as _re
+    import subprocess as _sub
+    import sys as _sys
+    root = Path(__file__).resolve().parents[1]
+    readme = (root / "README.md").read_text(encoding="utf-8")
+    m = _re.search(r"([\d.,]+)\s*tests\s*\((\d+)\s*passed", readme)
+    assert m, "README test-sayisi-satiri-bulunamadi"
+    # binlik-ayraci ( 2.957 / 2,957) - kaldir
+    claimed_total = int(m.group(1).replace(".", "").replace(",", ""))
+    claimed_passed = int(m.group(2))
+    res = _sub.run(
+        [_sys.executable, "-m", "pytest", "tests/", "--collect-only"],
+        capture_output=True, text=True, cwd=str(root), timeout=600)
+    assert res.returncode == 0, res.stderr[-400:]
+    num = None
+    for ln in res.stdout.splitlines():
+        mm = _re.search(r"(\d+)\s*tests?\s*collected", ln)
+        if mm:
+            num = int(mm.group(1))
+    assert num is not None, "collect-total-ayristirilamadi: %r" % res.stdout[-300:]
+    assert num == claimed_total, (
+        "README-stale-test-sayisi: iddia=%d gercek=%d" % (claimed_total, num))
+    assert claimed_passed <= claimed_total, (
+        "passed>total-imkansiz: %d>%d" % (claimed_passed, claimed_total))
