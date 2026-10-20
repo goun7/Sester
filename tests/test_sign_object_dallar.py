@@ -193,39 +193,44 @@ def test_alg_case_sensitive():
         _sign_object({"a": 1}, alg="hs256", key=KEY)
 
 
+def _es256_pem():
+    """ES256-ozel-anahtar-uretip-PEM-verir ( cryptography-50-API).
+
+    C2-duzeltme-2026-10-20: eski-testler `ECPrivateKey.generate()`
+    cagiriyordu - boyle-bir-API cryptography'in-HICBIR-surumunde-yok
+    ( dogrusu `ec.generate_private_key(curve)`). Yanlis-import-bare
+    `except ImportError`-yakalanip "cryptography yok"-skip'ine-donustugu
+    icin bu-testler-YILLARDIR-gorunmez-bir-sekilde-oluyordu ( cryptography
+    KURULU-olmasina-ragmen). Artik-dogru-API-kullaniliyor-VE-import-hatasi
+    ayrik-tutuluyor ( named-except)."""
+    from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives.asymmetric import ec
+    k = ec.generate_private_key(ec.SECP256R1())
+    return k.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption())
+
+
 def test_es256_calisir():
     """ES256 cryptography ile (opsiyonel)."""
     try:
-        from cryptography.hazmat.primitives.asymmetric.ec import (
-            ECPrivateKey)
-        from cryptography.hazmat.primitives import serialization
-        k = ECPrivateKey.generate()
-        pem = k.private_bytes(
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PrivateFormat.PKCS8,
-            encryption_algorithm=serialization.NoEncryption())
-        r = _sign_object({"a": 1}, alg="ES256", key=pem)
-        assert len(r.split(".")) == 3
+        pem = _es256_pem()
     except ImportError:
         pytest.skip("cryptography yok")
+    r = _sign_object({"a": 1}, alg="ES256", key=pem)
+    assert len(r.split(".")) == 3
 
 
 def test_es256_deterministik_degil():
     """ES256 her-imzada farkli (r,s nonce)."""
     try:
-        from cryptography.hazmat.primitives.asymmetric.ec import (
-            ECPrivateKey)
-        from cryptography.hazmat.primitives import serialization
-        k = ECPrivateKey.generate()
-        pem = k.private_bytes(
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PrivateFormat.PKCS8,
-            encryption_algorithm=serialization.NoEncryption())
-        r1 = _sign_object({"a": 1}, alg="ES256", key=pem)
-        r2 = _sign_object({"a": 1}, alg="ES256", key=pem)
-        assert r1 != r2
+        pem = _es256_pem()
     except ImportError:
         pytest.skip("cryptography yok")
+    r1 = _sign_object({"a": 1}, alg="ES256", key=pem)
+    r2 = _sign_object({"a": 1}, alg="ES256", key=pem)
+    assert r1 != r2
 
 
 # == anahtar turleri ============================================================================
