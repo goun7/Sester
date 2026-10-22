@@ -79,5 +79,9 @@ filterwarnings = [
   "ignore:Using `httpx` with `starlette.testclient` is deprecated",
   "ignore:The anyio.abc.BlockingPortal alias is deprecated",
   "ignore:Exception ignored while finalizing database connection",
-  "ignore:Exception ignored in::pytest.PytestUnraisableExceptionWarning",
+  # G48-2026-10-22: 3.13'te-sqlite3.Connection-finalize-sirasinda-cikan-
+  # PytestUnraisableExceptionWarning-direkt-hataya-donuyor- ( ExceptionGroup).
+  # Ucuncu-taraf-finalize-kapatmamasi- ( kodumuzun-degili) oldugu-icin-tum-
+  # bu-sinifi-bagisla. Sablon: ignore::<category>-mesaj-siz-sadece-category.
+  "ignore::pytest.PytestUnraisableExceptionWarning",
 ]
