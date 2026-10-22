@@ -40,6 +40,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Sistem-bagimliliklari ( librsvg)
+        # G48-2026-10-22: scripts/make_brand_assets.py-rsvg-convert-ister
+        # ( fail-loud). CI-runner'inda-vardi-yoktu -> test_make_og_dallar.py
+        # 10-test-SystemExit(RED)-ile-patliyordu.
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq librsvg2-bin
       - name: Install
         run: pip install -e .[dev]
       - name: Fail-closed smoke (bozuk politika testi)
