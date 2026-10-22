@@ -70,9 +70,14 @@ testpaths = ["tests"]
 # sester'ın kodundan DEĞİL pydantic'in kendi içinden gelir; test mantığı
 # `filterwarnings=ignore` ile doğrulandı (2/2 passed). Sester'ın fail-loud
 # disiplini korunur — bu kural yalnızca bu üçüncü-taraf iç-uyarısını bağışlar.
+# G48-2026-10-22: PytestUnraisableExceptionWarning-da-ayni-sinifa-bagli-oldugu
+# icin-category-belirtmek-gerekir ( mesaj-tek-basi-ne-eslesmiyor).
+# 3.13'te: "Exception ignored in: <sqlite3.Connection object ...>"
+# finalize-sirasi- ( kodumuzun-degili) kapanmamis-baglanti.
 filterwarnings = [
   "error",
   "ignore:Using `httpx` with `starlette.testclient` is deprecated",
   "ignore:The anyio.abc.BlockingPortal alias is deprecated",
   "ignore:Exception ignored while finalizing database connection",
+  "ignore:Exception ignored in::pytest.PytestUnraisableExceptionWarning",
 ]
